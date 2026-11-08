@@ -340,7 +340,6 @@
         if (id === 'home-screen') loadQuizzes();
     }
 
-    // Открытие конструктора с пустыми полями
     function openCreator() {
         document.getElementById('quiz-title-input').value = '';
         document.getElementById('quiz-winner-input').value = '';
@@ -436,7 +435,6 @@
                 `;
             }
 
-            // Индикатор победителя в списке, если он назначен
             let winnerBadge = q.winner_name ? `<span class="text-[11px] text-emerald-400 block mt-0.5">🏆 Победитель: ${q.winner_name}</span>` : '';
 
             container.innerHTML += `
@@ -470,7 +468,7 @@
             alert('Ошибка при удалении: ' + error.message);
         } else {
             alert('Викторина успешно удалена.');
-            loadQuizzes();
+            await loadQuizzes();
         }
     }
 
@@ -656,7 +654,6 @@
 
         document.getElementById('res-summary').innerText = `Правильных: ${correctCount} из ${sessionResults.length} | Время: ${totalTime}с`;
         
-        // Показываем победителя викторины, если он назначен организатором
         renderWinnerBadge(currentQuiz);
 
         const tbody = document.getElementById('res-tbody');
@@ -770,7 +767,6 @@
             }
             let catStr = Object.entries(catStats).map(([cat, st]) => `${cat}: ${st.correct}/${st.total}`).join('<br>');
 
-            // Делаем ник кликабельным для открытия подробной статистики игрока
             tbody.innerHTML += `
                 <tr class="border-b border-slate-800/40">
                     <td class="p-2 font-medium">
@@ -787,7 +783,6 @@
         });
     }
 
-    // Открытие модального окна с детальной статистикой конкретного игрока
     async function openPlayerStats(nickname) {
         document.getElementById('modal-player-title').innerText = `Статистика игрока: ${nickname}`;
         const contentDiv = document.getElementById('modal-player-content');
@@ -825,7 +820,7 @@
 
             html += `
                 <div class="bg-slate-950/60 border border-slate-800 p-3 rounded-xl mb-2">
-                    <div class="font-bold text-slate-200 text-xs mb-1">🎯 ${attempt.quizzes ? attempt.quizzes.title : 'Викторена удалена'}</div>
+                    <div class="font-bold text-slate-200 text-xs mb-1">🎯 ${attempt.quizzes ? attempt.quizzes.title : 'Викторина удалена'}</div>
                     <div class="text-[11px] text-slate-400">Баллы: <b class="text-emerald-400">${attempt.score}/${attempt.total}</b> | Время: ${attempt.time_spent}</div>
                 </div>
             `;
