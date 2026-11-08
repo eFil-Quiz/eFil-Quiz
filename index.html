@@ -426,14 +426,27 @@
                 `;
             }
 
-            let deleteBtn = '';
-            if (isAdmin) {
-                deleteBtn = `
-                    <button onclick="deleteQuiz('${q.id}', '${q.title.replace(/'/g, "\\'")}')" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs px-2.5 py-2 rounded-xl border border-red-500/20 transition-all" title="Удалить викторину">
-                        🗑️
-                    </button>
-                `;
-            }
+            async function deleteQuiz(quizId, quizTitle) {
+        const firstConfirm = confirm(`⚠️ Вы уверены, что хотите полностью удалить викторину "${quizTitle}"?`);
+        if (!firstConfirm) return;
+
+        const secondConfirm = confirm(`❗ ВНИМАНИЕ: Это действие удалит викторину и все результаты участников без возможности восстановления!\n\nПодтверждаете удаление?`);
+        if (!secondConfirm) return;
+
+        // Удаляем связанные вопросы и попытки
+        await supabaseClient.from('questions').delete().eq('quiz_id', quizId);
+        await supabaseClient.from('quiz_attempts').delete().eq('quiz_id', quizId);
+        
+        // Удаляем саму викторину
+        const { error } = await supabaseClient.from('quizzes').delete().eq('id', quizId);
+
+        if (error) {
+            alert('Ошибка при удалении: ' + error.message);
+        } else {
+            // Мгновенно удаляем карточку викторины со страницы без перезагрузки
+            loadQuizzes();
+        }
+    }
 
             let winnerBadge = q.winner_name ? `<span class="text-[11px] text-emerald-400 block mt-0.5">🏆 Победитель: ${q.winner_name}</span>` : '';
 
