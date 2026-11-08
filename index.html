@@ -3,206 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quizify — Викторины с аналитикой</title>
+    <title>Quizify — Платформа викторин</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Подключаем Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
-            --primary: #6366f1;
-            --primary-hover: #4f46e5;
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border: #334155;
-            --success: #22c55e;
-            --danger: #ef4444;
+            --primary: #6366f1; --primary-hover: #4f46e5;
+            --bg-color: #0f172a; --card-bg: #1e293b;
+            --text-main: #f8fafc; --text-muted: #94a3b8;
+            --border: #334155; --success: #22c55e; --danger: #ef4444;
         }
-
-        * {
-            box-sizing: border-box;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .app-container {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
-            max-width: 650px;
-            width: 100%;
-            padding: 30px;
-            position: relative;
-        }
-
-        h1, h2, h3 {
-            font-weight: 700;
-            margin-bottom: 12px;
-            letter-spacing: -0.5px;
-        }
-
-        p {
-            color: var(--text-muted);
-            font-size: 15px;
-            line-height: 1.5;
-        }
-
-        .btn {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 14px 24px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-            margin-top: 16px;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-        }
-
-        .btn:hover { background-color: var(--primary-hover); transform: translateY(-1px); }
-        .btn-secondary { background-color: transparent; color: var(--text-main); border: 1px solid var(--border); box-shadow: none; }
-        .btn-secondary:hover { background-color: rgba(255, 255, 255, 0.05); }
-        .btn-danger { background-color: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); width: auto; padding: 8px 16px; font-size: 14px; margin: 0; box-shadow: none; }
-        .btn-danger:hover { background-color: var(--danger); color: white; }
-
+        * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; padding: 0; }
+        body { background-color: var(--bg-color); color: var(--text-main); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .app-container { background: var(--card-bg); border: 1px solid var(--border); border-radius: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); max-width: 700px; width: 100%; padding: 30px; position: relative; }
+        h1, h2, h3 { font-weight: 700; margin-bottom: 12px; }
+        p { color: var(--text-muted); font-size: 15px; line-height: 1.5; }
+        .btn { background-color: var(--primary); color: white; border: none; padding: 14px 24px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 16px; }
+        .btn:hover { background-color: var(--primary-hover); }
+        .btn-secondary { background-color: transparent; color: var(--text-main); border: 1px solid var(--border); }
+        .btn-danger { background-color: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); width: auto; padding: 6px 12px; font-size: 14px; margin: 0; }
         .hidden { display: none !important; }
-
-        /* Списки и карточки */
-        .quiz-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin: 20px 0;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .quiz-item {
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid var(--border);
-            padding: 16px 20px;
-            border-radius: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        input {
-            width: 100%;
-            padding: 14px 16px;
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            color: var(--text-main);
-            font-size: 15px;
-            margin-bottom: 12px;
-            outline: none;
-        }
+        input { width: 100%; padding: 14px 16px; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); border-radius: 12px; color: var(--text-main); font-size: 15px; margin-bottom: 12px; outline: none; }
         input:focus { border-color: var(--primary); }
-
         label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500; }
-        .question-block {
-            background: rgba(15, 23, 42, 0.4);
-            border: 1px solid var(--border);
-            padding: 20px;
-            border-radius: 16px;
-            margin-bottom: 16px;
-        }
-
-        /* Прохождение */
-        .options-container {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 20px;
-        }
-
-        .option-btn {
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid var(--border);
-            color: var(--text-main);
-            padding: 16px 20px;
-            border-radius: 14px;
-            font-size: 16px;
-            cursor: pointer;
-            text-align: left;
-            transition: all 0.2s;
-            font-weight: 500;
-        }
-        .option-btn:hover:not(:disabled) { border-color: var(--primary); background: rgba(99, 102, 241, 0.05); }
+        
+        .quiz-list { display: flex; flex-direction: column; gap: 12px; margin: 20px 0; max-height: 300px; overflow-y: auto; }
+        .quiz-item { background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); padding: 16px 20px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; }
+        .question-block { background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border); padding: 20px; border-radius: 16px; margin-bottom: 16px; }
+        
+        .options-container { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+        .option-btn { background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); color: var(--text-main); padding: 16px 20px; border-radius: 14px; font-size: 16px; cursor: pointer; text-align: left; font-weight: 500; }
         .option-btn.correct { background: rgba(34, 197, 94, 0.2); border-color: var(--success); color: #4ade80; }
         .option-btn.incorrect { background: rgba(239, 68, 68, 0.2); border-color: var(--danger); color: #f87171; }
-
-        .timer-box {
-            display: flex;
-            justify-content: space-between;
-            font-size: 13px;
-            color: var(--text-muted);
-            margin-bottom: 15px;
-        }
-
-        /* Таблица результатов */
-        .results-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            font-size: 14px;
-        }
-        .results-table th, .results-table td {
-            border: 1px solid var(--border);
-            padding: 10px;
-            text-align: center;
-        }
+        
+        .results-table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 14px; }
+        .results-table th, .results-table td { border: 1px solid var(--border); padding: 10px; text-align: center; }
         .results-table th { background: rgba(15, 23, 42, 0.8); }
         .badge-green { color: var(--success); font-weight: bold; }
         .badge-red { color: var(--danger); font-weight: bold; }
+        
+        .auth-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--text-muted); }
     </style>
 </head>
 <body>
 
 <div class="app-container">
+    <div class="auth-bar" id="auth-bar">
+        <span id="user-email-display">Не авторизован</span>
+        <button class="btn btn-danger" id="logout-btn" onclick="logout()" style="display:none;">Выйти</button>
+    </div>
+
+    <!-- ЭКРАН ВХОДА / РЕГИСТРАЦИИ -->
+    <div id="auth-screen">
+        <h2>Вход в систему 🔐</h2>
+        <p>Введите вашу почту и пароль для участия в викторинах.</p>
+        <input type="email" id="auth-email" placeholder="email@example.com">
+        <input type="password" id="auth-password" placeholder="Пароль">
+        <button class="btn" onclick="handleLogin()">Войти / Зарегистрироваться</button>
+    </div>
+
     <!-- ГЛАВНЫЙ ЭКРАН -->
-    <div id="home-screen">
-        <h1>Викторины для друзей 🎯</h1>
-        <p>Пройди тест, узнай свои результаты и время прохождения!</p>
+    <div id="home-screen" class="hidden">
+        <h1>Доступные викторины 🎯</h1>
         <div class="quiz-list" id="quiz-list"></div>
-        <button class="btn" onclick="showScreen('creator-screen')">✨ Создать свою викторину</button>
+        <button class="btn" onclick="showScreen('creator-screen')">✨ Создать новую викторину</button>
+        <button class="btn btn-secondary" onclick="openOrganizerDashboard()">📊 Панель организатора</button>
     </div>
 
-    <!-- ВВОД ИМЕНИ ПЕРЕД СТАРТОМ -->
-    <div id="name-screen" class="hidden">
-        <h2>Представься, участник 👋</h2>
-        <p>Введите ваше Имя и Фамилию, чтобы организатор видел ваши результаты.</p>
-        <input type="text" id="participant-name" placeholder="Например: Иван Иванов">
-        <button class="btn" onclick="startQuizProcess()">Начать викторину 🚀</button>
-        <button class="btn btn-secondary" onclick="showScreen('home-screen')">Назад</button>
-    </div>
-
-    <!-- КОНСТРУКТОР -->
+    <!-- АДМИНКА / СОЗДАНИЕ ВИКТОРИНЫ -->
     <div id="creator-screen" class="hidden">
         <h2>Конструктор викторины</h2>
         <label>Название викторины</label>
-        <input type="text" id="quiz-title-input" placeholder="Например: Насколько хорошо ты меня знаешь?">
+        <input type="text" id="quiz-title-input" placeholder="Например: Новогодний квиз">
         
-        <div id="questions-container" style="max-height: 280px; overflow-y: auto; padding-right: 4px;">
+        <div id="questions-container" style="max-height: 250px; overflow-y: auto; padding-right: 4px;">
             <div class="question-block">
                 <label>Вопрос 1</label>
                 <input type="text" class="q-text" placeholder="Текст вопроса">
@@ -216,113 +91,142 @@
         </div>
 
         <button class="btn btn-secondary" onclick="addQuestionField()">➕ Добавить вопрос</button>
-        <button class="btn" onclick="saveQuiz()">💾 Сохранить</button>
+        <button class="btn" onclick="saveQuizToSupabase()">💾 Сохранить викторину в облако</button>
         <button class="btn btn-secondary" onclick="showScreen('home-screen')">← Назад</button>
     </div>
 
     <!-- ПРОХОЖДЕНИЕ -->
     <div id="play-screen" class="hidden">
-        <div class="timer-box">
-            <span id="question-counter">Вопрос 1/1</span>
-            <span id="question-timer">⏱️ Время на вопрос: 0с</span>
+        <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--text-muted); margin-bottom: 10px;">
+            <span id="q-counter">Вопрос 1/1</span>
+            <span id="q-timer">⏱️ 0с</span>
         </div>
-        <h2 id="question-title" style="font-size: 20px; margin-bottom: 15px;">Загрузка...</h2>
-        <div id="play-options" class="options-container"></div>
-        <button id="next-btn" class="btn hidden" onclick="nextQuestion()">Следующий вопрос ➡️</button>
+        <h2 id="q-title">Загрузка...</h2>
+        <div id="q-options" class="options-container"></div>
+        <button id="next-q-btn" class="btn hidden" onclick="nextQuestion()">Следующий вопрос ➡️</button>
     </div>
 
-    <!-- РЕЗУЛЬТАТЫ И СВОДНАЯ ТАБЛИЦА -->
+    <!-- РЕЗУЛЬТАТЫ УЧАСТНИКА -->
     <div id="result-screen" class="hidden">
-        <h2>Итоги прохождения 🎉</h2>
-        <p id="participant-greeting" style="font-weight: 600; color: #f8fafc; margin-bottom: 10px;"></p>
-        <p id="total-time-text" style="margin-bottom: 15px;"></p>
-        
-        <div style="max-height: 250px; overflow-y: auto;">
+        <h2>Викторина завершена! 🎉</h2>
+        <p id="res-summary" style="font-weight:600; margin-bottom: 10px;"></p>
+        <div style="max-height: 220px; overflow-y: auto;">
+            <table class="results-table">
+                <thead><tr><th>№</th><th>Вопрос</th><th>Ответ</th><th>Время</th></tr></thead>
+                <tbody id="res-tbody"></tbody>
+            </table>
+        </div>
+        <button class="btn" onclick="showScreen('home-screen')" style="margin-top: 15px;">На главную</button>
+    </div>
+
+    <!-- ПАНЕЛЬ ОРГАНИЗАТОРА -->
+    <div id="organizer-screen" class="hidden">
+        <h2>Панель организатора 📊</h2>
+        <p>Результаты всех участников:</p>
+        <div style="max-height: 350px; overflow-y: auto; margin-top: 15px;">
             <table class="results-table">
                 <thead>
                     <tr>
-                        <th>№</th>
-                        <th>Вопрос</th>
-                        <th>Ответ</th>
+                        <th>Участник (Почта)</th>
+                        <th>Викторина</th>
+                        <th>Баллы</th>
                         <th>Время</th>
+                        <th>Дата</th>
                     </tr>
                 </thead>
-                <tbody id="results-table-body"></tbody>
+                <tbody id="org-tbody"></tbody>
             </table>
         </div>
-
-        <button class="btn" onclick="showScreen('home-screen')" style="margin-top: 20px;">На главную</button>
+        <button class="btn btn-secondary" onclick="showScreen('home-screen')" style="margin-top: 15px;">← Назад</button>
     </div>
 </div>
 
 <script>
-    let quizzes = JSON.parse(localStorage.getItem('my_quizzes')) || [
-        {
-            title: "Тестовая викторина 🧠",
-            questions: [
-                { question: "Сколько будет 2 + 2 * 2?", options: ["6", "8", "4", "2"], correct: 0 }
-            ]
-        }
-    ];
-
-    let currentQuizIndex = null;
-    let currentQuestionIndex = 0;
-    let participantName = "";
-    let questionStartTime = 0;
-    let totalStartTime = 0;
-    let timerInterval = null;
+    // ⚠️ ВСТАВЬТЕ СВОИ ДАННЫЕ ИЗ SUPABASE API SETTINGS:
+    const SUPABASE_URL = 'https://kronawysbxzjwdokmusa.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_tCErXZb02kl0dJY3UmTeJw_ylaWGfdH';
     
-    // Сбор статистики текущего прохождения
-    let sessionResults = [];
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    function showScreen(screenId) {
-        ['home-screen', 'name-screen', 'creator-screen', 'play-screen', 'result-screen'].forEach(id => {
-            document.getElementById(id).classList.add('hidden');
-        });
-        document.getElementById(screenId).classList.remove('hidden');
-        if (screenId === 'home-screen') renderQuizList();
+    let currentUser = null;
+    let quizzes = [];
+    let currentQuiz = null;
+    let currentQIndex = 0;
+    let sessionResults = [];
+    let qStartTime = 0, totalStartTime = 0, timerInterval = null;
+
+    // Проверка авторизации при загрузке
+    async function initAuth() {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) {
+            currentUser = session.user;
+            document.getElementById('user-email-display').innerText = `👤 ${currentUser.email}`;
+            document.getElementById('logout-btn').style.display = 'block';
+            showScreen('home-screen');
+        } else {
+            showScreen('auth-screen');
+        }
     }
 
-    function renderQuizList() {
+    async function handleLogin() {
+        const email = document.getElementById('auth-email').value.trim();
+        const password = document.getElementById('auth-password').value.trim();
+        if (!email || !password) { alert('Введите почту и пароль!'); return; }
+
+        // Пробуем войти
+        let { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) {
+            // Если аккаунта нет — регистрируем
+            let { data: regData, error: regError } = await supabaseClient.auth.signUp({ email, password });
+            if (regError) {
+                alert('Ошибка входа/регистрации: ' + regError.message);
+                return;
+            }
+            alert('Регистрация успешна! Проверьте почту или вы вошли автоматически.');
+        }
+        initAuth();
+    }
+
+    async function logout() {
+        await supabaseClient.auth.signOut();
+        currentUser = null;
+        document.getElementById('logout-btn').style.display = 'none';
+        document.getElementById('user-email-display').innerText = 'Не авторизован';
+        showScreen('auth-screen');
+    }
+
+    function showScreen(id) {
+        ['auth-screen', 'home-screen', 'creator-screen', 'play-screen', 'result-screen', 'organizer-screen'].forEach(s => {
+            document.getElementById(s).classList.add('hidden');
+        });
+        document.getElementById(id).classList.remove('hidden');
+        if (id === 'home-screen') loadQuizzes();
+    }
+
+    // Загрузка викторин из Supabase
+    async function loadQuizzes() {
+        const { data, error } = await supabaseClient.from('quizzes').select('*, questions(*)');
+        if (error) { console.error(error); return; }
+        quizzes = data || [];
+        
         const container = document.getElementById('quiz-list');
         container.innerHTML = '';
         if (quizzes.length === 0) {
-            container.innerHTML = '<p style="text-align:center;">Пока нет викторин.</p>';
+            container.innerHTML = '<p>Пока нет ни одной викторины.</p>';
             return;
         }
-        quizzes.forEach((quiz, index) => {
+        quizzes.forEach((q, idx) => {
             const div = document.createElement('div');
             div.className = 'quiz-item';
             div.innerHTML = `
-                <div><h3>${quiz.title}</h3><span>Вопросов: ${quiz.questions.length}</span></div>
-                <div style="display:flex; gap:8px;">
-                    <button class="btn" style="width:auto; padding:8px 16px; margin:0; font-size:14px;" onclick="prepareQuiz(${index})">Пройти</button>
-                    <button class="btn btn-danger" onclick="deleteQuiz(${index})">Удалить</button>
-                </div>
+                <div><h3>${q.title}</h3><span>Вопросов: ${q.questions.length}</span></div>
+                <button class="btn" style="width:auto; padding:8px 16px; margin:0; font-size:14px;" onclick="startQuiz(${idx})">Пройти</button>
             `;
             container.appendChild(div);
         });
     }
 
-    function prepareQuiz(index) {
-        currentQuizIndex = index;
-        showScreen('name-screen');
-    }
-
-    function startQuizProcess() {
-        const nameInput = document.getElementById('participant-name').value.trim();
-        if (!nameInput) {
-            alert('Пожалуйста, введите ваше имя!');
-            return;
-        }
-        participantName = nameInput;
-        currentQuestionIndex = 0;
-        sessionResults = [];
-        totalStartTime = Date.now();
-        showScreen('play-screen');
-        loadQuestion();
-    }
-
+    // Конструктор
     function addQuestionField() {
         const container = document.getElementById('questions-container');
         const count = container.getElementsByClassName('question-block').length + 1;
@@ -341,13 +245,14 @@
         container.appendChild(block);
     }
 
-    function saveQuiz() {
+    async function saveQuizToSupabase() {
         const title = document.getElementById('quiz-title-input').value.trim();
         if (!title) { alert('Введите название!'); return; }
         const blocks = document.getElementsByClassName('question-block');
-        const questions = [];
+        let questionsToSave = [];
+
         for (let block of blocks) {
-            const qText = block.getElementsByClassName('q-text')[0].value.trim();
+            const text = block.getElementsByClassName('q-text')[0].value.trim();
             const opts = [
                 block.getElementsByClassName('opt-0')[0].value.trim(),
                 block.getElementsByClassName('opt-1')[0].value.trim(),
@@ -355,122 +260,168 @@
                 block.getElementsByClassName('opt-3')[0].value.trim()
             ];
             const correct = parseInt(block.getElementsByClassName('q-correct')[0].value) - 1;
-            if (!qText || opts.some(o => !o)) { alert('Заполните все поля!'); return; }
-            questions.push({ question: qText, options: opts, correct: correct });
+            if (!text || opts.some(o => !o)) { alert('Заполните все поля!'); return; }
+            questionsToSave.push({ question_text: text, options: opts, correct_index: correct });
         }
-        quizzes.push({ title, questions });
-        localStorage.setItem('my_quizzes', JSON.stringify(quizzes));
+
+        // Сохраняем викторину
+        const { data: quizData, error: quizError } = await supabaseClient.from('quizzes').insert([{ title }]).select();
+        if (quizError) { alert('Ошибка: ' + quizError.message); return; }
+        
+        const quizId = quizData[0].id;
+        for (let q of questionsToSave) { q.quiz_id = quizId; }
+
+        const { error: qError } = await supabaseClient.from('questions').insert(questionsToSave);
+        if (qError) { alert('Ошибка сохранения вопросов: ' + qError.message); return; }
+
+        alert('Викторина успешно создана в облаке!');
         showScreen('home-screen');
     }
 
-    function deleteQuiz(index) {
-        if (confirm('Удалить викторину?')) {
-            quizzes.splice(index, 1);
-            localStorage.setItem('my_quizzes', JSON.stringify(quizzes));
-            renderQuizList();
+    // Прохождение викторины с защитой от повторных попыток
+    async function startQuiz(index) {
+        currentQuiz = quizzes[index];
+
+        // Проверяем, проходил ли пользователь уже эту викторину
+        const { data, error } = await supabaseClient
+            .from('quiz_attempts')
+            .select('*')
+            .eq('quiz_id', currentQuiz.id)
+            .eq('user_email', currentUser.email);
+
+        if (data && data.length > 0) {
+            alert('⚠️ Вы уже проходили эту викторину! У вас доступна только одна попытка.');
+            return;
         }
+
+        if (currentQuiz.questions.length === 0) {
+            alert('В этой викторине пока нет вопросов!');
+            return;
+        }
+
+        currentQIndex = 0;
+        sessionResults = [];
+        totalStartTime = Date.now();
+        showScreen('play-screen');
+        loadQuestion();
     }
 
     function loadQuestion() {
-        const quiz = quizzes[currentQuizIndex];
-        const q = quiz.questions[currentQuestionIndex];
-        
-        document.getElementById('question-counter').innerText = `Вопрос ${currentQuestionIndex + 1} из ${quiz.questions.length}`;
-        document.getElementById('question-title').innerText = q.question;
-        document.getElementById('next-btn').classList.add('hidden');
+        const q = currentQuiz.questions[currentQIndex];
+        document.getElementById('q-counter').innerText = `Вопрос ${currentQIndex + 1} из ${currentQuiz.questions.length}`;
+        document.getElementById('q-title').innerText = q.question_text;
+        document.getElementById('next-q-btn').classList.add('hidden');
 
-        let seconds = 0;
-        questionStartTime = Date.now();
+        let sec = 0;
+        qStartTime = Date.now();
         clearInterval(timerInterval);
         timerInterval = setInterval(() => {
-            seconds++;
-            document.getElementById('question-timer').innerText = `⏱️ Время: ${seconds}с`;
+            sec++;
+            document.getElementById('q-timer').innerText = `⏱️ ${sec}с`;
         }, 1000);
 
-        const container = document.getElementById('play-options');
+        const container = document.getElementById('q-options');
         container.innerHTML = '';
-
         q.options.forEach((opt, idx) => {
             const btn = document.createElement('button');
             btn.className = 'option-btn';
             btn.innerText = opt;
-            btn.onclick = () => selectAnswer(idx, btn);
+            btn.onclick = () => selectOpt(idx, btn);
             container.appendChild(btn);
         });
     }
 
-    function selectAnswer(selectedIndex, selectedBtn) {
+    function selectOpt(idx, btn) {
         clearInterval(timerInterval);
-        const timeSpent = ((Date.now() - questionStartTime) / 1000).toFixed(1);
-        const quiz = quizzes[currentQuizIndex];
-        const correctIndex = quiz.questions[currentQuestionIndex].correct;
-        const isCorrect = (selectedIndex === correctIndex);
+        const timeSpent = ((Date.now() - qStartTime) / 1000).toFixed(1);
+        const q = currentQuiz.questions[currentQIndex];
+        const isCorrect = (idx === q.correct_index);
 
-        // Подсветка правильного и неправильного
         const buttons = document.getElementsByClassName('option-btn');
         for (let i = 0; i < buttons.length; i++) {
             buttons[i].disabled = true;
-            if (i === correctIndex) buttons[i].classList.add('correct');
-            if (i === selectedIndex && !isCorrect) buttons[i].classList.add('incorrect');
+            if (i === q.correct_index) buttons[i].classList.add('correct');
+            if (i === idx && !isCorrect) buttons[i].classList.add('incorrect');
         }
 
-        // Записываем результат вопроса
         sessionResults.push({
-            question: quiz.questions[currentQuestionIndex].question,
+            question: q.question_text,
             isCorrect: isCorrect,
             time: timeSpent
         });
 
-        // Показываем кнопку далее
-        document.getElementById('next-btn').classList.remove('hidden');
+        document.getElementById('next-q-btn').classList.remove('hidden');
     }
 
     function nextQuestion() {
-        currentQuestionIndex++;
-        const quiz = quizzes[currentQuizIndex];
-        if (currentQuestionIndex < quiz.questions.length) {
+        currentQIndex++;
+        if (currentQIndex < currentQuiz.questions.length) {
             loadQuestion();
         } else {
-            showResult();
+            finishQuiz();
         }
     }
 
-    function showResult() {
+    async function finishQuiz() {
         showScreen('result-screen');
-        const totalTimeSec = ((Date.now() - totalStartTime) / 1000).toFixed(1);
+        const totalTime = ((Date.now() - totalStartTime) / 1000).toFixed(1);
         const correctCount = sessionResults.filter(r => r.isCorrect).length;
+
+        document.getElementById('res-summary').innerText = `Правильных ответов: ${correctCount} из ${sessionResults.length} (Время: ${totalTime}с)`;
         
-        document.getElementById('participant-greeting').innerText = `${participantName}, ваш результат: ${correctCount} из ${sessionResults.length} верно`;
-        document.getElementById('total-time-text').innerText = `Общее время прохождения: ${totalTimeSec} сек.`;
-
-        const tbody = document.getElementById('results-table-body');
+        const tbody = document.getElementById('res-tbody');
         tbody.innerHTML = '';
-
-        sessionResults.forEach((res, index) => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>Q${index + 1}</td>
-                <td style="text-align:left;">${res.question}</td>
-                <td>${res.isCorrect ? '<span class="badge-green">✓ Верно</span>' : '<span class="badge-red">✕ Неверно</span>'}</td>
-                <td>${res.time}с</td>
-            `;
-            tbody.appendChild(tr);
+        sessionResults.forEach((r, idx) => {
+            tbody.innerHTML += `<tr><td>Q${idx+1}</td><td style="text-align:left;">${r.question}</td><td>${r.isCorrect ? '<span class="badge-green">✓</span>' : '<span class="badge-red">✕</span>'}</td><td>${r.time}с</td></tr>`;
         });
 
-        // Опционально: сохраняем отчет в общую историю браузера для организатора
-        let allReports = JSON.parse(localStorage.getItem('quiz_reports')) || [];
-        allReports.push({
-            name: participantName,
-            quizTitle: quizzes[currentQuizIndex].title,
-            score: `${correctCount}/${sessionResults.length}`,
-            totalTime: `${totalTimeSec}с`,
-            date: new Date().toLocaleString(),
+        // Сохраняем результат в Supabase (благодаря уникальному индексу повторная запись заблокируется)
+        const { error } = await supabaseClient.from('quiz_attempts').insert([{
+            quiz_id: currentQuiz.id,
+            user_email: currentUser.email,
+            score: correctCount,
+            total: sessionResults.length,
+            time_spent: `${totalTime}с`,
             details: sessionResults
-        });
-        localStorage.setItem('quiz_reports', JSON.stringify(allReports));
+        }]);
+
+        if (error) {
+            console.error('Ошибка сохранения результата:', error.message);
+        }
     }
 
-    renderQuizList();
+    // Панель организатора
+    async function openOrganizerDashboard() {
+        showScreen('organizer-screen');
+        const { data, error } = await supabaseClient
+            .from('quiz_attempts')
+            .select('*, quizzes(title)')
+            .order('created_at', { ascending: false });
+
+        const tbody = document.getElementById('org-tbody');
+        tbody.innerHTML = '';
+
+        if (error || !data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5">Результатов пока нет.</td></tr>';
+            return;
+        }
+
+        data.forEach(row => {
+            const dateStr = new Date(row.created_at).toLocaleString();
+            tbody.innerHTML += `
+                <tr>
+                    <td style="text-align:left;">${row.user_email}</td>
+                    <td style="text-align:left;">${row.quizzes ? row.quizzes.title : 'Удалена'}</td>
+                    <td><b>${row.score}/${row.total}</b></td>
+                    <td>${row.time_spent}</td>
+                    <td style="font-size:12px;">${dateStr}</td>
+                </tr>
+            `;
+        });
+    }
+
+    // Старт инициализации при загрузке страницы
+    initAuth();
 </script>
 
 </body>
