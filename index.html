@@ -3,132 +3,475 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Викторина для друзей</title>
+    <title>Quizify — Викторины для друзей</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --success: #22c55e;
+            --danger: #ef4444;
+        }
+
         * {
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 0;
+            padding: 0;
         }
+
         body {
-            background-color: #f4f7f6;
+            background-color: var(--bg-color);
+            color: var(--text-main);
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            margin: 0;
             padding: 20px;
         }
-        .quiz-card {
-            background: #ffffff;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-            max-width: 500px;
+
+        .app-container {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
             width: 100%;
-            padding: 30px;
-            text-align: center;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
         }
-        h1 {
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 24px;
+
+        h1, h2 {
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
         }
-        .options {
+
+        p {
+            color: var(--text-muted);
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 16px;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            box-shadow: none;
+        }
+
+        .btn-secondary:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .btn-danger {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            width: auto;
+            padding: 8px 16px;
+            font-size: 14px;
+            margin: 0;
+            box-shadow: none;
+        }
+
+        .btn-danger:hover {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Список викторин */
+        .quiz-list {
             display: flex;
             flex-direction: column;
             gap: 12px;
-            margin-top: 20px;
+            margin: 24px 0;
+            max-height: 350px;
+            overflow-y: auto;
+            padding-right: 4px;
         }
-        .btn {
-            background-color: #4A90E2;
-            color: white;
-            border: none;
-            padding: 14px 20px;
-            border-radius: 10px;
+
+        .quiz-item {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border);
+            padding: 16px 20px;
+            border-radius: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: border-color 0.2s;
+        }
+
+        .quiz-item:hover {
+            border-color: var(--primary);
+        }
+
+        .quiz-info h3 {
+            font-size: 16px;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .quiz-info span {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .quiz-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        /* Формы и поля ввода */
+        input {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-main);
+            font-size: 15px;
+            margin-bottom: 12px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .question-block {
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 16px;
+        }
+
+        /* Экран прохождения */
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .option-btn {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 16px 20px;
+            border-radius: 14px;
             font-size: 16px;
             cursor: pointer;
-            transition: background 0.2s ease, transform 0.1s ease;
+            text-align: left;
+            transition: all 0.2s;
+            font-weight: 500;
         }
-        .btn:hover {
-            background-color: #357ABD;
+
+        .option-btn:hover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
         }
-        .btn:active {
-            transform: scale(0.98);
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            margin-bottom: 24px;
+            overflow: hidden;
         }
-        .hidden {
-            display: none;
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.3s ease;
         }
-        .score-text {
-            font-size: 20px;
-            color: #2c3e50;
-            margin-bottom: 20px;
+
+        .score-badge {
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 20px 0;
         }
     </style>
 </head>
 <body>
 
-<div class="quiz-card">
-    <div id="quiz-box">
-        <h1 id="question">Загрузка вопроса...</h1>
-        <div id="options-container" class="options"></div>
+<div class="app-container">
+    <!-- ГЛАВНЫЙ ЭКРАН -->
+    <div id="home-screen">
+        <h1>Викторины для друзей 🎯</h1>
+        <p>Выбери готовую викторину или создай свою собственную за пару минут.</p>
+        
+        <div class="quiz-list" id="quiz-list"></div>
+        
+        <button class="btn" onclick="showScreen('creator-screen')">
+            ✨ Создать новую викторину
+        </button>
     </div>
 
-    <div id="result-box" class="hidden">
-        <h1>Викторина завершена! 🎉</h1>
-        <p class="score-text" id="score-text"></p>
-        <button class="btn" onclick="restartQuiz()">Пройти еще раз</button>
+    <!-- АДМИНКА / СОЗДАНИЕ -->
+    <div id="creator-screen" class="hidden">
+        <h2>Конструктор викторины</h2>
+        <p style="margin-bottom: 20px;">Заполни название и добавь вопросы.</p>
+        
+        <label>Название викторины</label>
+        <input type="text" id="quiz-title-input" placeholder="Например: Кто лучше знает меня?">
+        
+        <div id="questions-container" style="max-height: 320px; overflow-y: auto; padding-right: 4px; margin-top: 15px;">
+            <div class="question-block">
+                <label>Вопрос 1</label>
+                <input type="text" class="q-text" placeholder="Текст вопроса">
+                <input type="text" class="opt-0" placeholder="Вариант 1">
+                <input type="text" class="opt-1" placeholder="Вариант 2">
+                <input type="text" class="opt-2" placeholder="Вариант 3">
+                <input type="text" class="opt-3" placeholder="Вариант 4">
+                <label>Правильный вариант (1 - 4):</label>
+                <input type="number" class="q-correct" min="1" max="4" value="1">
+            </div>
+        </div>
+
+        <button class="btn btn-secondary" onclick="addQuestionField()">➕ Добавить вопрос</button>
+        <button class="btn" onclick="saveQuiz()">💾 Сохранить викторину</button>
+        <button class="btn btn-secondary" onclick="showScreen('home-screen')">← Назад к списку</button>
+    </div>
+
+    <!-- ЭКРАН ПРОХОЖДЕНИЯ -->
+    <div id="play-screen" class="hidden">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <h2 id="question-title" style="font-size: 20px; margin-bottom: 20px;">Загрузка вопроса...</h2>
+        <div id="play-options" class="options-container"></div>
+        <button class="btn btn-secondary" onclick="showScreen('home-screen')" style="margin-top: 24px;">Прервать и выйти</button>
+    </div>
+
+    <!-- ЭКРАН РЕЗУЛЬТАТОВ -->
+    <div id="result-screen" class="hidden" style="text-align: center;">
+        <h2>Викторина пройдена! 🎉</h2>
+        <p>Твой результат:</p>
+        <div class="score-badge" id="final-score-text">0/0</div>
+        <p id="result-message" style="margin-bottom: 24px;"></p>
+        <button class="btn" onclick="showScreen('home-screen')">На главную</button>
     </div>
 </div>
 
 <script>
-    // 💡 ЗДЕСЬ ТЫ МОЖЕШЬ РЕДАКТИРОВАТЬ И ДОБАВЛЯТЬ СВОИ ВОПРОСЫ
-    const questions = [
+    let quizzes = JSON.parse(localStorage.getItem('my_quizzes')) || [
         {
-            question: "Какое любимое блюдо нашей компании?",
-            options: ["Пицца", "Суши", "Шаурма", "Бургеры"],
-            correct: 2 // Индекс правильного ответа (начиная с 0: 0=Пицца, 1=Суши, 2=Шаурма...)
-        },
-        {
-            question: "В каком году мы познакомились?",
-            options: ["2018", "2020", "2021", "2022"],
-            correct: 1
-        },
-        {
-            question: "Кто из нас чаще всего опаздывает?",
-            options: ["Алексей", "Мария", "Дмитрий", "Елена"],
-            correct: 0
+            title: "Обо мне и друзьях 😎",
+            questions: [
+                {
+                    question: "Какое мое любимое увлечение?",
+                    options: ["Видеоигры", "Спорт", "Путешествия", "Музыка"],
+                    correct: 0
+                }
+            ]
         }
     ];
 
+    let currentQuizIndex = null;
     let currentQuestionIndex = 0;
     let score = 0;
 
-    const questionElement = document.getElementById("question");
-    const optionsContainer = document.getElementById("options-container");
-    const quizBox = document.getElementById("quiz-box");
-    const resultBox = document.getElementById("result-box");
-    const scoreText = document.getElementById("score-text");
+    function showScreen(screenId) {
+        ['home-screen', 'creator-screen', 'play-screen', 'result-screen'].forEach(id => {
+            document.getElementById(id).classList.add('hidden');
+        });
+        document.getElementById(screenId).classList.remove('hidden');
+        if (screenId === 'home-screen') renderQuizList();
+    }
 
-    function loadQuestion() {
-        const currentQuiz = questions[currentQuestionIndex];
-        questionElement.innerText = currentQuiz.question;
-        optionsContainer.innerHTML = "";
+    function renderQuizList() {
+        const container = document.getElementById('quiz-list');
+        container.innerHTML = '';
 
-        currentQuiz.options.forEach((option, index) => {
-            const button = document.createElement("button");
-            button.innerText = option;
-            button.classList.add("btn");
-            button.onclick = () => selectOption(index);
-            optionsContainer.appendChild(button);
+        if (quizzes.length === 0) {
+            container.innerHTML = '<p style="text-align:center; padding: 20px;">Пока нет викторин. Создай первую!</p>';
+            return;
+        }
+
+        quizzes.forEach((quiz, index) => {
+            const div = document.createElement('div');
+            div.className = 'quiz-item';
+            div.innerHTML = `
+                <div class="quiz-info">
+                    <h3>${quiz.title}</h3>
+                    <span>Вопросов: ${quiz.questions.length}</span>
+                </div>
+                <div class="quiz-actions">
+                    <button class="btn" style="width: auto; padding: 8px 16px; margin:0; font-size: 14px;" onclick="startQuiz(${index})">Пройти</button>
+                    <button class="btn btn-danger" onclick="deleteQuiz(${index})">Удалить</button>
+                </div>
+            `;
+            container.appendChild(div);
         });
     }
 
-    function selectOption(selectedIndex) {
-        if (selectedIndex === questions[currentQuestionIndex].correct) {
+    function addQuestionField() {
+        const container = document.getElementById('questions-container');
+        const count = container.getElementsByClassName('question-block').length + 1;
+        
+        const block = document.createElement('div');
+        block.className = 'question-block';
+        block.innerHTML = `
+            <label>Вопрос ${count}</label>
+            <input type="text" class="q-text" placeholder="Текст вопроса">
+            <input type="text" class="opt-0" placeholder="Вариант 1">
+            <input type="text" class="opt-1" placeholder="Вариант 2">
+            <input type="text" class="opt-2" placeholder="Вариант 3">
+            <input type="text" class="opt-3" placeholder="Вариант 4">
+            <label>Правильный вариант (1 - 4):</label>
+            <input type="number" class="q-correct" min="1" max="4" value="1">
+        `;
+        container.appendChild(block);
+    }
+
+    function saveQuiz() {
+        const title = document.getElementById('quiz-title-input').value.trim();
+        if (!title) {
+            alert('Пожалуйста, введите название викторины!');
+            return;
+        }
+
+        const blocks = document.getElementsByClassName('question-block');
+        const questions = [];
+
+        for (let block of blocks) {
+            const qText = block.getElementsByClassName('q-text')[0].value.trim();
+            const opts = [
+                block.getElementsByClassName('opt-0')[0].value.trim(),
+                block.getElementsByClassName('opt-1')[0].value.trim(),
+                block.getElementsByClassName('opt-2')[0].value.trim(),
+                block.getElementsByClassName('opt-3')[0].value.trim()
+            ];
+            const correct = parseInt(block.getElementsByClassName('q-correct')[0].value) - 1;
+
+            if (!qText || opts.some(o => !o)) {
+                alert('Пожалуйста, заполни все поля во всех вопросах!');
+                return;
+            }
+
+            questions.push({ question: qText, options: opts, correct: correct });
+        }
+
+        quizzes.push({ title, questions });
+        localStorage.setItem('my_quizzes', JSON.stringify(quizzes));
+
+        // Сброс формы
+        document.getElementById('quiz-title-input').value = '';
+        document.getElementById('questions-container').innerHTML = `
+            <div class="question-block">
+                <label>Вопрос 1</label>
+                <input type="text" class="q-text" placeholder="Текст вопроса">
+                <input type="text" class="opt-0" placeholder="Вариант 1">
+                <input type="text" class="opt-1" placeholder="Вариант 2">
+                <input type="text" class="opt-2" placeholder="Вариант 3">
+                <input type="text" class="opt-3" placeholder="Вариант 4">
+                <label>Правильный вариант (1 - 4):</label>
+                <input type="number" class="q-correct" min="1" max="4" value="1">
+            </div>
+        `;
+
+        showScreen('home-screen');
+    }
+
+    function deleteQuiz(index) {
+        if (confirm('Точно удалить эту викторину?')) {
+            quizzes.splice(index, 1);
+            localStorage.setItem('my_quizzes', JSON.stringify(quizzes));
+            renderQuizList();
+        }
+    }
+
+    function startQuiz(index) {
+        currentQuizIndex = index;
+        currentQuestionIndex = 0;
+        score = 0;
+        showScreen('play-screen');
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        const quiz = quizzes[currentQuizIndex];
+        const q = quiz.questions[currentQuestionIndex];
+        
+        document.getElementById('question-title').innerText = q.question;
+        
+        // Прогресс-бар
+        const progress = ((currentQuestionIndex) / quiz.questions.length) * 100;
+        document.getElementById('progress-fill').style.width = `${progress}%`;
+
+        const container = document.getElementById('play-options');
+        container.innerHTML = '';
+
+        q.options.forEach((opt, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = opt;
+            btn.onclick = () => selectAnswer(idx);
+            container.appendChild(btn);
+        });
+    }
+
+    function selectAnswer(idx) {
+        const quiz = quizzes[currentQuizIndex];
+        if (idx === quiz.questions[currentQuestionIndex].correct) {
             score++;
         }
         currentQuestionIndex++;
 
-        if (currentQuestionIndex < questions.length) {
+        if (currentQuestionIndex < quiz.questions.length) {
             loadQuestion();
         } else {
             showResult();
@@ -136,21 +479,17 @@
     }
 
     function showResult() {
-        quizBox.classList.add("hidden");
-        resultBox.classList.remove("hidden");
-        scoreText.innerText = `Ты ответил правильно на ${score} из ${questions.length} вопросов!`;
+        showScreen('result-screen');
+        const quiz = quizzes[currentQuizIndex];
+        document.getElementById('final-score-text').innerText = `${score} / ${quiz.questions.length}`;
+        
+        let msg = "Отличный результат!";
+        if (score === quiz.questions.length) msg = "Идеально! Ты знаешь всё на 100% 🔥";
+        else if (score === 0) msg = "Совсем не угадал, бывает 😅";
+        document.getElementById('result-message').innerText = msg;
     }
 
-    function restartQuiz() {
-        currentQuestionIndex = 0;
-        score = 0;
-        resultBox.classList.add("hidden");
-        quizBox.classList.remove("hidden");
-        loadQuestion();
-    }
-
-    // Старт викторины
-    loadQuestion();
+    renderQuizList();
 </script>
 
 </body>
