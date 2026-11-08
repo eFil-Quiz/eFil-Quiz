@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Викторина для друзей</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .quiz-card {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            max-width: 500px;
+            width: 100%;
+            padding: 30px;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .btn {
+            background-color: #4A90E2;
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.1s ease;
+        }
+        .btn:hover {
+            background-color: #357ABD;
+        }
+        .btn:active {
+            transform: scale(0.98);
+        }
+        .hidden {
+            display: none;
+        }
+        .score-text {
+            font-size: 20px;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-card">
+    <div id="quiz-box">
+        <h1 id="question">Загрузка вопроса...</h1>
+        <div id="options-container" class="options"></div>
+    </div>
+
+    <div id="result-box" class="hidden">
+        <h1>Викторина завершена! 🎉</h1>
+        <p class="score-text" id="score-text"></p>
+        <button class="btn" onclick="restartQuiz()">Пройти еще раз</button>
+    </div>
+</div>
+
+<script>
+    // 💡 ЗДЕСЬ ТЫ МОЖЕШЬ РЕДАКТИРОВАТЬ И ДОБАВЛЯТЬ СВОИ ВОПРОСЫ
+    const questions = [
+        {
+            question: "Какое любимое блюдо нашей компании?",
+            options: ["Пицца", "Суши", "Шаурма", "Бургеры"],
+            correct: 2 // Индекс правильного ответа (начиная с 0: 0=Пицца, 1=Суши, 2=Шаурма...)
+        },
+        {
+            question: "В каком году мы познакомились?",
+            options: ["2018", "2020", "2021", "2022"],
+            correct: 1
+        },
+        {
+            question: "Кто из нас чаще всего опаздывает?",
+            options: ["Алексей", "Мария", "Дмитрий", "Елена"],
+            correct: 0
+        }
+    ];
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+
+    const questionElement = document.getElementById("question");
+    const optionsContainer = document.getElementById("options-container");
+    const quizBox = document.getElementById("quiz-box");
+    const resultBox = document.getElementById("result-box");
+    const scoreText = document.getElementById("score-text");
+
+    function loadQuestion() {
+        const currentQuiz = questions[currentQuestionIndex];
+        questionElement.innerText = currentQuiz.question;
+        optionsContainer.innerHTML = "";
+
+        currentQuiz.options.forEach((option, index) => {
+            const button = document.createElement("button");
+            button.innerText = option;
+            button.classList.add("btn");
+            button.onclick = () => selectOption(index);
+            optionsContainer.appendChild(button);
+        });
+    }
+
+    function selectOption(selectedIndex) {
+        if (selectedIndex === questions[currentQuestionIndex].correct) {
+            score++;
+        }
+        currentQuestionIndex++;
+
+        if (currentQuestionIndex < questions.length) {
+            loadQuestion();
+        } else {
+            showResult();
+        }
+    }
+
+    function showResult() {
+        quizBox.classList.add("hidden");
+        resultBox.classList.remove("hidden");
+        scoreText.innerText = `Ты ответил правильно на ${score} из ${questions.length} вопросов!`;
+    }
+
+    function restartQuiz() {
+        currentQuestionIndex = 0;
+        score = 0;
+        resultBox.classList.add("hidden");
+        quizBox.classList.remove("hidden");
+        loadQuestion();
+    }
+
+    // Старт викторины
+    loadQuestion();
+</script>
+
+</body>
+</html>
