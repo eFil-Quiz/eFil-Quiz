@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quizify — Викторины для друзей</title>
+    <title>Quizify — Викторины с аналитикой</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -39,15 +39,14 @@
             background: var(--card-bg);
             border: 1px solid var(--border);
             border-radius: 24px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
-            max-width: 600px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+            max-width: 650px;
             width: 100%;
-            padding: 40px;
+            padding: 30px;
             position: relative;
-            overflow: hidden;
         }
 
-        h1, h2 {
+        h1, h2, h3 {
             font-weight: 700;
             margin-bottom: 12px;
             letter-spacing: -0.5px;
@@ -78,55 +77,22 @@
             box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
         }
 
-        .btn:hover {
-            background-color: var(--primary-hover);
-            transform: translateY(-1px);
-        }
+        .btn:hover { background-color: var(--primary-hover); transform: translateY(-1px); }
+        .btn-secondary { background-color: transparent; color: var(--text-main); border: 1px solid var(--border); box-shadow: none; }
+        .btn-secondary:hover { background-color: rgba(255, 255, 255, 0.05); }
+        .btn-danger { background-color: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); width: auto; padding: 8px 16px; font-size: 14px; margin: 0; box-shadow: none; }
+        .btn-danger:hover { background-color: var(--danger); color: white; }
 
-        .btn:active {
-            transform: translateY(0);
-        }
+        .hidden { display: none !important; }
 
-        .btn-secondary {
-            background-color: transparent;
-            color: var(--text-main);
-            border: 1px solid var(--border);
-            box-shadow: none;
-        }
-
-        .btn-secondary:hover {
-            background-color: rgba(255, 255, 255, 0.05);
-        }
-
-        .btn-danger {
-            background-color: rgba(239, 68, 68, 0.1);
-            color: var(--danger);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            width: auto;
-            padding: 8px 16px;
-            font-size: 14px;
-            margin: 0;
-            box-shadow: none;
-        }
-
-        .btn-danger:hover {
-            background-color: var(--danger);
-            color: white;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        /* Список викторин */
+        /* Списки и карточки */
         .quiz-list {
             display: flex;
             flex-direction: column;
             gap: 12px;
-            margin: 24px 0;
-            max-height: 350px;
+            margin: 20px 0;
+            max-height: 300px;
             overflow-y: auto;
-            padding-right: 4px;
         }
 
         .quiz-item {
@@ -137,31 +103,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: border-color 0.2s;
         }
 
-        .quiz-item:hover {
-            border-color: var(--primary);
-        }
-
-        .quiz-info h3 {
-            font-size: 16px;
-            color: var(--text-main);
-            margin-bottom: 4px;
-        }
-
-        .quiz-info span {
-            font-size: 13px;
-            color: var(--text-muted);
-        }
-
-        .quiz-actions {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        /* Формы и поля ввода */
         input {
             width: 100%;
             padding: 14px 16px;
@@ -172,21 +115,10 @@
             font-size: 15px;
             margin-bottom: 12px;
             outline: none;
-            transition: border-color 0.2s;
         }
+        input:focus { border-color: var(--primary); }
 
-        input:focus {
-            border-color: var(--primary);
-        }
-
-        label {
-            display: block;
-            font-size: 13px;
-            color: var(--text-muted);
-            margin-bottom: 6px;
-            font-weight: 500;
-        }
-
+        label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500; }
         .question-block {
             background: rgba(15, 23, 42, 0.4);
             border: 1px solid var(--border);
@@ -195,12 +127,12 @@
             margin-bottom: 16px;
         }
 
-        /* Экран прохождения */
+        /* Прохождение */
         .options-container {
             display: flex;
             flex-direction: column;
             gap: 12px;
-            margin-top: 24px;
+            margin-top: 20px;
         }
 
         .option-btn {
@@ -215,34 +147,33 @@
             transition: all 0.2s;
             font-weight: 500;
         }
+        .option-btn:hover:not(:disabled) { border-color: var(--primary); background: rgba(99, 102, 241, 0.05); }
+        .option-btn.correct { background: rgba(34, 197, 94, 0.2); border-color: var(--success); color: #4ade80; }
+        .option-btn.incorrect { background: rgba(239, 68, 68, 0.2); border-color: var(--danger); color: #f87171; }
 
-        .option-btn:hover {
-            border-color: var(--primary);
-            background: rgba(99, 102, 241, 0.05);
+        .timer-box {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 15px;
         }
 
-        .progress-bar {
+        /* Таблица результатов */
+        .results-table {
             width: 100%;
-            height: 6px;
-            background: var(--border);
-            border-radius: 3px;
-            margin-bottom: 24px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: var(--primary);
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
-        .score-badge {
-            font-size: 48px;
-            font-weight: 700;
-            color: var(--primary);
+            border-collapse: collapse;
             margin: 20px 0;
+            font-size: 14px;
         }
+        .results-table th, .results-table td {
+            border: 1px solid var(--border);
+            padding: 10px;
+            text-align: center;
+        }
+        .results-table th { background: rgba(15, 23, 42, 0.8); }
+        .badge-green { color: var(--success); font-weight: bold; }
+        .badge-red { color: var(--danger); font-weight: bold; }
     </style>
 </head>
 <body>
@@ -251,24 +182,27 @@
     <!-- ГЛАВНЫЙ ЭКРАН -->
     <div id="home-screen">
         <h1>Викторины для друзей 🎯</h1>
-        <p>Выбери готовую викторину или создай свою собственную за пару минут.</p>
-        
+        <p>Пройди тест, узнай свои результаты и время прохождения!</p>
         <div class="quiz-list" id="quiz-list"></div>
-        
-        <button class="btn" onclick="showScreen('creator-screen')">
-            ✨ Создать новую викторину
-        </button>
+        <button class="btn" onclick="showScreen('creator-screen')">✨ Создать свою викторину</button>
     </div>
 
-    <!-- АДМИНКА / СОЗДАНИЕ -->
+    <!-- ВВОД ИМЕНИ ПЕРЕД СТАРТОМ -->
+    <div id="name-screen" class="hidden">
+        <h2>Представься, участник 👋</h2>
+        <p>Введите ваше Имя и Фамилию, чтобы организатор видел ваши результаты.</p>
+        <input type="text" id="participant-name" placeholder="Например: Иван Иванов">
+        <button class="btn" onclick="startQuizProcess()">Начать викторину 🚀</button>
+        <button class="btn btn-secondary" onclick="showScreen('home-screen')">Назад</button>
+    </div>
+
+    <!-- КОНСТРУКТОР -->
     <div id="creator-screen" class="hidden">
         <h2>Конструктор викторины</h2>
-        <p style="margin-bottom: 20px;">Заполни название и добавь вопросы.</p>
-        
         <label>Название викторины</label>
-        <input type="text" id="quiz-title-input" placeholder="Например: Кто лучше знает меня?">
+        <input type="text" id="quiz-title-input" placeholder="Например: Насколько хорошо ты меня знаешь?">
         
-        <div id="questions-container" style="max-height: 320px; overflow-y: auto; padding-right: 4px; margin-top: 15px;">
+        <div id="questions-container" style="max-height: 280px; overflow-y: auto; padding-right: 4px;">
             <div class="question-block">
                 <label>Вопрос 1</label>
                 <input type="text" class="q-text" placeholder="Текст вопроса">
@@ -282,50 +216,67 @@
         </div>
 
         <button class="btn btn-secondary" onclick="addQuestionField()">➕ Добавить вопрос</button>
-        <button class="btn" onclick="saveQuiz()">💾 Сохранить викторину</button>
-        <button class="btn btn-secondary" onclick="showScreen('home-screen')">← Назад к списку</button>
+        <button class="btn" onclick="saveQuiz()">💾 Сохранить</button>
+        <button class="btn btn-secondary" onclick="showScreen('home-screen')">← Назад</button>
     </div>
 
-    <!-- ЭКРАН ПРОХОЖДЕНИЯ -->
+    <!-- ПРОХОЖДЕНИЕ -->
     <div id="play-screen" class="hidden">
-        <div class="progress-bar">
-            <div class="progress-fill" id="progress-fill"></div>
+        <div class="timer-box">
+            <span id="question-counter">Вопрос 1/1</span>
+            <span id="question-timer">⏱️ Время на вопрос: 0с</span>
         </div>
-        <h2 id="question-title" style="font-size: 20px; margin-bottom: 20px;">Загрузка вопроса...</h2>
+        <h2 id="question-title" style="font-size: 20px; margin-bottom: 15px;">Загрузка...</h2>
         <div id="play-options" class="options-container"></div>
-        <button class="btn btn-secondary" onclick="showScreen('home-screen')" style="margin-top: 24px;">Прервать и выйти</button>
+        <button id="next-btn" class="btn hidden" onclick="nextQuestion()">Следующий вопрос ➡️</button>
     </div>
 
-    <!-- ЭКРАН РЕЗУЛЬТАТОВ -->
-    <div id="result-screen" class="hidden" style="text-align: center;">
-        <h2>Викторина пройдена! 🎉</h2>
-        <p>Твой результат:</p>
-        <div class="score-badge" id="final-score-text">0/0</div>
-        <p id="result-message" style="margin-bottom: 24px;"></p>
-        <button class="btn" onclick="showScreen('home-screen')">На главную</button>
+    <!-- РЕЗУЛЬТАТЫ И СВОДНАЯ ТАБЛИЦА -->
+    <div id="result-screen" class="hidden">
+        <h2>Итоги прохождения 🎉</h2>
+        <p id="participant-greeting" style="font-weight: 600; color: #f8fafc; margin-bottom: 10px;"></p>
+        <p id="total-time-text" style="margin-bottom: 15px;"></p>
+        
+        <div style="max-height: 250px; overflow-y: auto;">
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>№</th>
+                        <th>Вопрос</th>
+                        <th>Ответ</th>
+                        <th>Время</th>
+                    </tr>
+                </thead>
+                <tbody id="results-table-body"></tbody>
+            </table>
+        </div>
+
+        <button class="btn" onclick="showScreen('home-screen')" style="margin-top: 20px;">На главную</button>
     </div>
 </div>
 
 <script>
     let quizzes = JSON.parse(localStorage.getItem('my_quizzes')) || [
         {
-            title: "Обо мне и друзьях 😎",
+            title: "Тестовая викторина 🧠",
             questions: [
-                {
-                    question: "Какое мое любимое увлечение?",
-                    options: ["Видеоигры", "Спорт", "Путешествия", "Музыка"],
-                    correct: 0
-                }
+                { question: "Сколько будет 2 + 2 * 2?", options: ["6", "8", "4", "2"], correct: 0 }
             ]
         }
     ];
 
     let currentQuizIndex = null;
     let currentQuestionIndex = 0;
-    let score = 0;
+    let participantName = "";
+    let questionStartTime = 0;
+    let totalStartTime = 0;
+    let timerInterval = null;
+    
+    // Сбор статистики текущего прохождения
+    let sessionResults = [];
 
     function showScreen(screenId) {
-        ['home-screen', 'creator-screen', 'play-screen', 'result-screen'].forEach(id => {
+        ['home-screen', 'name-screen', 'creator-screen', 'play-screen', 'result-screen'].forEach(id => {
             document.getElementById(id).classList.add('hidden');
         });
         document.getElementById(screenId).classList.remove('hidden');
@@ -335,22 +286,17 @@
     function renderQuizList() {
         const container = document.getElementById('quiz-list');
         container.innerHTML = '';
-
         if (quizzes.length === 0) {
-            container.innerHTML = '<p style="text-align:center; padding: 20px;">Пока нет викторин. Создай первую!</p>';
+            container.innerHTML = '<p style="text-align:center;">Пока нет викторин.</p>';
             return;
         }
-
         quizzes.forEach((quiz, index) => {
             const div = document.createElement('div');
             div.className = 'quiz-item';
             div.innerHTML = `
-                <div class="quiz-info">
-                    <h3>${quiz.title}</h3>
-                    <span>Вопросов: ${quiz.questions.length}</span>
-                </div>
-                <div class="quiz-actions">
-                    <button class="btn" style="width: auto; padding: 8px 16px; margin:0; font-size: 14px;" onclick="startQuiz(${index})">Пройти</button>
+                <div><h3>${quiz.title}</h3><span>Вопросов: ${quiz.questions.length}</span></div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn" style="width:auto; padding:8px 16px; margin:0; font-size:14px;" onclick="prepareQuiz(${index})">Пройти</button>
                     <button class="btn btn-danger" onclick="deleteQuiz(${index})">Удалить</button>
                 </div>
             `;
@@ -358,10 +304,28 @@
         });
     }
 
+    function prepareQuiz(index) {
+        currentQuizIndex = index;
+        showScreen('name-screen');
+    }
+
+    function startQuizProcess() {
+        const nameInput = document.getElementById('participant-name').value.trim();
+        if (!nameInput) {
+            alert('Пожалуйста, введите ваше имя!');
+            return;
+        }
+        participantName = nameInput;
+        currentQuestionIndex = 0;
+        sessionResults = [];
+        totalStartTime = Date.now();
+        showScreen('play-screen');
+        loadQuestion();
+    }
+
     function addQuestionField() {
         const container = document.getElementById('questions-container');
         const count = container.getElementsByClassName('question-block').length + 1;
-        
         const block = document.createElement('div');
         block.className = 'question-block';
         block.innerHTML = `
@@ -379,14 +343,9 @@
 
     function saveQuiz() {
         const title = document.getElementById('quiz-title-input').value.trim();
-        if (!title) {
-            alert('Пожалуйста, введите название викторины!');
-            return;
-        }
-
+        if (!title) { alert('Введите название!'); return; }
         const blocks = document.getElementsByClassName('question-block');
         const questions = [];
-
         for (let block of blocks) {
             const qText = block.getElementsByClassName('q-text')[0].value.trim();
             const opts = [
@@ -396,61 +355,37 @@
                 block.getElementsByClassName('opt-3')[0].value.trim()
             ];
             const correct = parseInt(block.getElementsByClassName('q-correct')[0].value) - 1;
-
-            if (!qText || opts.some(o => !o)) {
-                alert('Пожалуйста, заполни все поля во всех вопросах!');
-                return;
-            }
-
+            if (!qText || opts.some(o => !o)) { alert('Заполните все поля!'); return; }
             questions.push({ question: qText, options: opts, correct: correct });
         }
-
         quizzes.push({ title, questions });
         localStorage.setItem('my_quizzes', JSON.stringify(quizzes));
-
-        // Сброс формы
-        document.getElementById('quiz-title-input').value = '';
-        document.getElementById('questions-container').innerHTML = `
-            <div class="question-block">
-                <label>Вопрос 1</label>
-                <input type="text" class="q-text" placeholder="Текст вопроса">
-                <input type="text" class="opt-0" placeholder="Вариант 1">
-                <input type="text" class="opt-1" placeholder="Вариант 2">
-                <input type="text" class="opt-2" placeholder="Вариант 3">
-                <input type="text" class="opt-3" placeholder="Вариант 4">
-                <label>Правильный вариант (1 - 4):</label>
-                <input type="number" class="q-correct" min="1" max="4" value="1">
-            </div>
-        `;
-
         showScreen('home-screen');
     }
 
     function deleteQuiz(index) {
-        if (confirm('Точно удалить эту викторину?')) {
+        if (confirm('Удалить викторину?')) {
             quizzes.splice(index, 1);
             localStorage.setItem('my_quizzes', JSON.stringify(quizzes));
             renderQuizList();
         }
     }
 
-    function startQuiz(index) {
-        currentQuizIndex = index;
-        currentQuestionIndex = 0;
-        score = 0;
-        showScreen('play-screen');
-        loadQuestion();
-    }
-
     function loadQuestion() {
         const quiz = quizzes[currentQuizIndex];
         const q = quiz.questions[currentQuestionIndex];
         
+        document.getElementById('question-counter').innerText = `Вопрос ${currentQuestionIndex + 1} из ${quiz.questions.length}`;
         document.getElementById('question-title').innerText = q.question;
-        
-        // Прогресс-бар
-        const progress = ((currentQuestionIndex) / quiz.questions.length) * 100;
-        document.getElementById('progress-fill').style.width = `${progress}%`;
+        document.getElementById('next-btn').classList.add('hidden');
+
+        let seconds = 0;
+        questionStartTime = Date.now();
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            seconds++;
+            document.getElementById('question-timer').innerText = `⏱️ Время: ${seconds}с`;
+        }, 1000);
 
         const container = document.getElementById('play-options');
         container.innerHTML = '';
@@ -459,18 +394,40 @@
             const btn = document.createElement('button');
             btn.className = 'option-btn';
             btn.innerText = opt;
-            btn.onclick = () => selectAnswer(idx);
+            btn.onclick = () => selectAnswer(idx, btn);
             container.appendChild(btn);
         });
     }
 
-    function selectAnswer(idx) {
+    function selectAnswer(selectedIndex, selectedBtn) {
+        clearInterval(timerInterval);
+        const timeSpent = ((Date.now() - questionStartTime) / 1000).toFixed(1);
         const quiz = quizzes[currentQuizIndex];
-        if (idx === quiz.questions[currentQuestionIndex].correct) {
-            score++;
-        }
-        currentQuestionIndex++;
+        const correctIndex = quiz.questions[currentQuestionIndex].correct;
+        const isCorrect = (selectedIndex === correctIndex);
 
+        // Подсветка правильного и неправильного
+        const buttons = document.getElementsByClassName('option-btn');
+        for (let i = 0; i < buttons.length; i++) {
+            buttons[i].disabled = true;
+            if (i === correctIndex) buttons[i].classList.add('correct');
+            if (i === selectedIndex && !isCorrect) buttons[i].classList.add('incorrect');
+        }
+
+        // Записываем результат вопроса
+        sessionResults.push({
+            question: quiz.questions[currentQuestionIndex].question,
+            isCorrect: isCorrect,
+            time: timeSpent
+        });
+
+        // Показываем кнопку далее
+        document.getElementById('next-btn').classList.remove('hidden');
+    }
+
+    function nextQuestion() {
+        currentQuestionIndex++;
+        const quiz = quizzes[currentQuizIndex];
         if (currentQuestionIndex < quiz.questions.length) {
             loadQuestion();
         } else {
@@ -480,13 +437,37 @@
 
     function showResult() {
         showScreen('result-screen');
-        const quiz = quizzes[currentQuizIndex];
-        document.getElementById('final-score-text').innerText = `${score} / ${quiz.questions.length}`;
+        const totalTimeSec = ((Date.now() - totalStartTime) / 1000).toFixed(1);
+        const correctCount = sessionResults.filter(r => r.isCorrect).length;
         
-        let msg = "Отличный результат!";
-        if (score === quiz.questions.length) msg = "Идеально! Ты знаешь всё на 100% 🔥";
-        else if (score === 0) msg = "Совсем не угадал, бывает 😅";
-        document.getElementById('result-message').innerText = msg;
+        document.getElementById('participant-greeting').innerText = `${participantName}, ваш результат: ${correctCount} из ${sessionResults.length} верно`;
+        document.getElementById('total-time-text').innerText = `Общее время прохождения: ${totalTimeSec} сек.`;
+
+        const tbody = document.getElementById('results-table-body');
+        tbody.innerHTML = '';
+
+        sessionResults.forEach((res, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>Q${index + 1}</td>
+                <td style="text-align:left;">${res.question}</td>
+                <td>${res.isCorrect ? '<span class="badge-green">✓ Верно</span>' : '<span class="badge-red">✕ Неверно</span>'}</td>
+                <td>${res.time}с</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // Опционально: сохраняем отчет в общую историю браузера для организатора
+        let allReports = JSON.parse(localStorage.getItem('quiz_reports')) || [];
+        allReports.push({
+            name: participantName,
+            quizTitle: quizzes[currentQuizIndex].title,
+            score: `${correctCount}/${sessionResults.length}`,
+            totalTime: `${totalTimeSec}с`,
+            date: new Date().toLocaleString(),
+            details: sessionResults
+        });
+        localStorage.setItem('quiz_reports', JSON.stringify(allReports));
     }
 
     renderQuizList();
