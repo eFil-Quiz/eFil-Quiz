@@ -156,16 +156,22 @@
     <div id="play-screen" class="hidden animate-fade-in">
         <div class="flex justify-between items-center text-xs text-slate-400 mb-4 font-medium">
             <span id="q-counter" class="bg-slate-800 px-2.5 py-1 rounded-md">Вопрос 1/1</span>
-            <span id="q-timer" class="bg-slate-800 px-2.5 py-1 rounded-md">⏱️ 0с</span>
+            <button onclick="exitQuizWithProgress()" class="text-red-400 hover:text-red-300 transition-all font-semibold">🚪 Выйти (сохранить)</button>
         </div>
         
         <div id="media-container" class="mb-4 flex justify-center"></div>
         <h2 id="q-title" class="text-lg font-bold mb-4 text-slate-100">Загрузка...</h2>
         
         <div id="q-options" class="space-y-3"></div>
-        <button id="next-q-btn" class="hidden w-full mt-5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-indigo-600/20 animate-fade-in" onclick="nextQuestion()">
-            Следующий вопрос ➡️
-        </button>
+        
+        <div class="flex gap-2 mt-5">
+            <button id="skip-q-btn" onclick="skipQuestion()" class="hidden w-1/3 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold py-3 rounded-xl transition-all text-sm">
+                ⏭️ Пропустить
+            </button>
+            <button id="next-q-btn" class="hidden w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-indigo-600/20 animate-fade-in" onclick="nextQuestion()">
+                Следующий вопрос ➡️
+            </button>
+        </div>
     </div>
 
     <!-- ПРОСМОТР ВОПРОСОВ -->
@@ -191,19 +197,11 @@
             <div id="winner-name-display" class="text-lg font-bold text-emerald-300"></div>
         </div>
 
-        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Ваши ответы:</h3>
-        <div class="max-h-32 overflow-y-auto mb-4 border border-slate-800 rounded-xl bg-slate-950/40 p-2">
+        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Ваши результаты по вопросам:</h3>
+        <div class="max-h-48 overflow-y-auto mb-4 border border-slate-800 rounded-xl bg-slate-950/40 p-2">
             <table class="w-full text-xs text-left">
-                <thead><tr class="border-b border-slate-800 text-slate-400"><th class="p-2">№</th><th class="p-2">Вопрос</th><th class="p-2 text-center">Ответ</th><th class="p-2 text-center">Время</th></tr></thead>
+                <thead><tr class="border-b border-slate-800 text-slate-400"><th class="p-2">№</th><th class="p-2">Вопрос</th><th class="p-2 text-center">Статус</th></tr></thead>
                 <tbody id="res-tbody" class="divide-y divide-slate-800/50"></tbody>
-            </table>
-        </div>
-
-        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Результаты всех участников:</h3>
-        <div class="max-h-32 overflow-y-auto mb-5 border border-slate-800 rounded-xl bg-slate-950/40 p-2">
-            <table class="w-full text-xs text-left">
-                <thead><tr class="border-b border-slate-800 text-slate-400"><th class="p-2">Ник</th><th class="p-2 text-center">Баллы</th><th class="p-2 text-center">Время</th></tr></thead>
-                <tbody id="all-users-tbody" class="divide-y divide-slate-800/50"></tbody>
             </table>
         </div>
 
@@ -215,7 +213,7 @@
     <!-- ПАНЕЛЬ ОРГАНИЗАТОРА -->
     <div id="organizer-screen" class="hidden animate-fade-in">
         <h2 class="text-xl font-bold mb-1">Панель организатора 📊</h2>
-        <p class="text-slate-400 text-xs mb-3">Нажмите на ник игрока, чтобы открыть его подробную статистику:</p>
+        <p class="text-slate-400 text-xs mb-3">Нажмите на ник игрока для детальной статистики:</p>
         
         <div class="max-h-80 overflow-y-auto border border-slate-800 rounded-xl bg-slate-950/40 p-2 mb-4">
             <table class="w-full text-xs text-left">
@@ -224,8 +222,7 @@
                         <th class="p-2">Ник</th>
                         <th class="p-2">Викторина</th>
                         <th class="p-2 text-center">Баллы</th>
-                        <th class="p-2">Категории</th>
-                        <th class="p-2 text-center">Время</th>
+                        <th class="p-2 text-center">Общ. время</th>
                     </tr>
                 </thead>
                 <tbody id="org-tbody" class="divide-y divide-slate-800/50"></tbody>
@@ -238,9 +235,9 @@
 
     <!-- МОДАЛЬНОЕ ОКНО ДЕТАЛЬНОЙ СТАТИСТИКИ ИГРОКА -->
     <div id="player-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center p-4 z-50">
-        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full animate-fade-in shadow-2xl">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-lg w-full animate-fade-in shadow-2xl">
             <h3 id="modal-player-title" class="text-lg font-bold text-indigo-400 mb-2">Статистика игрока</h3>
-            <div id="modal-player-content" class="space-y-3 max-h-72 overflow-y-auto text-xs text-slate-300 mb-4 pr-1"></div>
+            <div id="modal-player-content" class="space-y-3 max-h-80 overflow-y-auto text-xs text-slate-300 mb-4 pr-1"></div>
             <button onclick="closePlayerModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 py-2.5 rounded-xl font-semibold transition-all text-sm border border-slate-700">
                 Закрыть
             </button>
@@ -261,7 +258,11 @@
     let currentQuiz = null;
     let currentQIndex = 0;
     let sessionResults = [];
-    let qStartTime = 0, totalStartTime = 0, timerInterval = null;
+    
+    // Переменные для точного трекинга времени
+    let questionStartTime = 0;
+    let totalQuizStartTime = 0;
+    let skippedQuestionIndices = [];
 
     async function initAuth() {
         const { data: { session } } = await supabaseClient.auth.getSession();
@@ -427,13 +428,13 @@
             }
 
             let deleteBtn = '';
-if (isAdmin) {
-    deleteBtn = `
-        <button class="delete-quiz-btn bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs px-2.5 py-2 rounded-xl border border-red-500/20 transition-all" data-id="${q.id}" data-title="${q.title.replace(/"/g, '&quot;')}" title="Удалить викторину">
-            🗑️
-        </button>
-    `;
-}
+            if (isAdmin) {
+                deleteBtn = `
+                    <button class="delete-quiz-btn bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs px-2.5 py-2 rounded-xl border border-red-500/20 transition-all" data-id="${q.id}" data-title="${q.title.replace(/"/g, '&quot;')}" title="Удалить викторину">
+                        🗑️
+                    </button>
+                `;
+            }
 
             let winnerBadge = q.winner_name ? `<span class="text-[11px] text-emerald-400 block mt-0.5">🏆 Победитель: ${q.winner_name}</span>` : '';
 
@@ -453,21 +454,27 @@ if (isAdmin) {
         });
     }
 
+    // Делегирование клика для удаления викторины
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('.delete-quiz-btn');
+        if (btn) {
+            const quizId = btn.getAttribute('data-id');
+            const quizTitle = btn.getAttribute('data-title');
+            deleteQuiz(quizId, quizTitle);
+        }
+    });
+
     async function deleteQuiz(quizId, quizTitle) {
         const firstConfirm = confirm(`⚠️ Вы уверены, что хотите полностью удалить викторину "${quizTitle}"?`);
         if (!firstConfirm) return;
-
-        const secondConfirm = confirm(`❗ ВНИМАНИЕ: Это действие удалит викторину и все результаты участников без возможности восстановления!\n\nПодтверждаете удаление?`);
+        const secondConfirm = confirm(`❗ ВНИМАНИЕ: Это действие удалит викторину и все результаты участников без возможности восстановления!`);
         if (!secondConfirm) return;
 
-        await supabaseClient.from('questions').delete().eq('quiz_id', quizId);
-        await supabaseClient.from('quiz_attempts').delete().eq('quiz_id', quizId);
         const { error } = await supabaseClient.from('quizzes').delete().eq('id', quizId);
-
         if (error) {
             alert('Ошибка при удалении: ' + error.message);
         } else {
-            // Мгновенно обновляем список без всплывающих окон
+            alert('Викторина успешно удалена!');
             await loadQuizzes();
         }
     }
@@ -544,340 +551,307 @@ if (isAdmin) {
         }
 
         const { data: quizData, error: quizError } = await supabaseClient.from('quizzes').insert([{ title, winner_name: winnerName }]).select();
-        if (quizError) { alert('Ошибка: ' + quizError.message); return; }
-        
+        if (quizError) { alert('Ошибка создания: ' + quizError.message); return; }
+
         const quizId = quizData[0].id;
-        for (let q of questionsToSave) { q.quiz_id = quizId; }
+        const formattedQuestions = questionsToSave.map(q => ({ ...q, quiz_id: quizId }));
+        const { error: qError } = await supabaseClient.from('questions').insert(formattedQuestions);
+        if (qError) { alert('Ошибка сохранения вопросов: ' + qError.message); return; }
 
-        const { error: qError } = await supabaseClient.from('questions').insert(questionsToSave);
-        if (qError) { alert('Ошибка вопросов: ' + qError.message); return; }
-
-        alert('Викторина создана!');
+        alert('Викторина успешно создана!');
         showScreen('home-screen');
     }
 
-    async function startQuiz(index) {
-        currentQuiz = quizzes[index];
-
-        const { data } = await supabaseClient.from('quiz_attempts').select('*').eq('quiz_id', currentQuiz.id).eq('user_email', currentNickname);
-        if (data && data.length > 0) {
-            alert('⚠️ Вы уже проходили эту викторину!');
-            return;
-        }
-
-        if (currentQuiz.questions.length === 0) { alert('Нет вопросов!'); return; }
-
+    // ЛОГИКА ПРОХОЖДЕНИЯ ВИКТОРИНЫ С УЧЕТОМ ВРЕМЕНИ И ПРОПУСКОВ
+    function startQuiz(quizIdx) {
+        currentQuiz = quizzes[quizIdx];
         currentQIndex = 0;
         sessionResults = [];
-        totalStartTime = Date.now();
+        skippedQuestionIndices = [];
+        totalQuizStartTime = Date.now();
         showScreen('play-screen');
-        loadQuestion();
+        renderQuestion();
     }
 
-    function loadQuestion() {
+    function renderQuestion() {
+        // Если дошли до конца обычного списка, но есть пропущенные вопросы — переходим к ним
+        if (currentQIndex >= currentQuiz.questions.length) {
+            if (skippedQuestionIndices.length > 0) {
+                currentQIndex = skippedQuestionIndices.shift(); // берем первый пропущенный
+            } else {
+                finishQuiz();
+                return;
+            }
+        }
+
         const q = currentQuiz.questions[currentQIndex];
-        document.getElementById('q-counter').innerText = `[${q.category}] Вопрос ${currentQIndex + 1} из ${currentQuiz.questions.length}`;
+        document.getElementById('q-counter').innerText = `Вопрос ${currentQIndex + 1}/${currentQuiz.questions.length}`;
         document.getElementById('q-title').innerText = q.question_text;
-        document.getElementById('next-q-btn').classList.add('hidden');
+
+        // Фиксируем момент начала отсчета времени на данный вопрос
+        questionStartTime = Date.now();
 
         const mediaContainer = document.getElementById('media-container');
         mediaContainer.innerHTML = '';
         if (q.media_url) {
-            if (q.media_url.endsWith('.mp3') || q.media_url.endsWith('.wav')) {
-                mediaContainer.innerHTML = `<audio controls class="w-full rounded-xl"><source src="${q.media_url}"></audio>`;
-            } else if (q.media_url.includes('youtube') || q.media_url.endsWith('.mp4')) {
-                mediaContainer.innerHTML = `<video controls class="max-h-48 rounded-xl"><source src="${q.media_url}"></video>`;
+            if (q.media_url.match(/\.(mp4|webm|ogg)$/i)) {
+                mediaContainer.innerHTML = `<video src="${q.media_url}" controls class="max-h-48 rounded-xl"></video>`;
+            } else if (q.media_url.match(/\.(mp3|wav|ogg)$/i)) {
+                mediaContainer.innerHTML = `<audio src="${q.media_url}" controls class="w-full"></audio>`;
             } else {
-                mediaContainer.innerHTML = `<img src="${q.media_url}" class="max-h-48 rounded-xl object-contain">`;
+                mediaContainer.innerHTML = `<img src="${q.media_url}" class="max-h-48 rounded-xl object-cover" />`;
             }
         }
 
-        let sec = 0;
-        qStartTime = Date.now();
-        clearInterval(timerInterval);
-        timerInterval = setInterval(() => {
-            sec++;
-            document.getElementById('q-timer').innerText = `⏱️ ${sec}с`;
-        }, 1000);
-
-        const container = document.getElementById('q-options');
-        container.innerHTML = '';
-        q.options.forEach((opt, idx) => {
-            const btn = document.createElement('button');
-            btn.className = 'w-full bg-slate-950/60 border border-slate-800 text-slate-100 p-4 rounded-xl text-sm font-medium text-left transition-all hover:border-indigo-500 hover:bg-slate-950';
-            btn.innerText = opt;
-            btn.onclick = () => selectOpt(idx, btn);
-            container.appendChild(btn);
+        const optionsContainer = document.getElementById('q-options');
+        optionsContainer.innerHTML = '';
+        q.options.forEach((opt, oIdx) => {
+            optionsContainer.innerHTML += `
+                <button onclick="selectAnswer(${oIdx})" class="w-full text-left px-4 py-3 bg-slate-950 border border-slate-800 hover:border-indigo-500 rounded-xl transition-all text-sm text-slate-200">
+                    ${opt}
+                </button>
+            `;
         });
+
+        // Показываем кнопку "Пропустить", если это первый круг и остались вопросы для пропуска
+        const skipBtn = document.getElementById('skip-q-btn');
+        if (!skippedQuestionIndices.includes(currentQIndex) && currentQuiz.questions.length > 1) {
+            skipBtn.classList.remove('hidden');
+        } else {
+            skipBtn.classList.add('hidden');
+        }
+
+        document.getElementById('next-q-btn').classList.add('hidden');
     }
 
-    function selectOpt(idx, btn) {
-        clearInterval(timerInterval);
-        const timeSpent = ((Date.now() - qStartTime) / 1000).toFixed(1);
+    function skipQuestion() {
+        if (!skippedQuestionIndices.includes(currentQIndex)) {
+            skippedQuestionIndices.push(currentQIndex);
+        }
+        currentQIndex++;
+        renderQuestion();
+    }
+
+    function selectAnswer(selectedIdx) {
         const q = currentQuiz.questions[currentQIndex];
-        const isCorrect = (idx === q.correct_index);
+        const timeSpentSec = Math.round((Date.now() - questionStartTime) / 1000);
+        const isCorrect = (selectedIdx === q.correct_index);
+
+        sessionResults.push({
+            question_id: q.id,
+            question_text: q.question_text,
+            category: q.category || 'Общие',
+            selected_option: selectedIdx,
+            correct_option: q.correct_index,
+            is_correct: isCorrect,
+            time_spent: timeSpentSec
+        });
 
         const buttons = document.getElementById('q-options').children;
         for (let i = 0; i < buttons.length; i++) {
             buttons[i].disabled = true;
             if (i === q.correct_index) {
-                buttons[i].className = 'w-full bg-emerald-500/20 border border-emerald-500 text-emerald-400 p-4 rounded-xl text-sm font-medium text-left';
-            }
-            if (i === idx && !isCorrect) {
-                buttons[i].className = 'w-full bg-red-500/20 border border-red-500 text-red-400 p-4 rounded-xl text-sm font-medium text-left';
+                buttons[i].classList.add('bg-emerald-600/20', 'border-emerald-500', 'text-emerald-200');
+            } else if (i === selectedIdx && !isCorrect) {
+                buttons[i].classList.add('bg-red-600/20', 'border-red-500', 'text-red-200');
             }
         }
 
-        sessionResults.push({
-            question: q.question_text,
-            category: q.category || 'Общие',
-            isCorrect: isCorrect,
-            time: timeSpent
-        });
-
+        document.getElementById('skip-q-btn').classList.add('hidden');
         document.getElementById('next-q-btn').classList.remove('hidden');
     }
 
     function nextQuestion() {
         currentQIndex++;
-        if (currentQIndex < currentQuiz.questions.length) {
-            loadQuestion();
-        } else {
-            finishQuiz();
-        }
+        renderQuestion();
     }
 
     async function finishQuiz() {
-        showScreen('result-screen');
-        const totalTime = ((Date.now() - totalStartTime) / 1000).toFixed(1);
-        const correctCount = sessionResults.filter(r => r.isCorrect).length;
+        const totalTimeSec = Math.round((Date.now() - totalQuizStartTime) / 1000);
+        const correctCount = sessionResults.filter(r => r.is_correct).length;
+        const categoriesSet = [...new Set(sessionResults.map(r => r.category))].join(', ');
 
-        document.getElementById('res-summary').innerText = `Правильных: ${correctCount} из ${sessionResults.length} | Время: ${totalTime}с`;
-        
-        renderWinnerBadge(currentQuiz);
-
-        const tbody = document.getElementById('res-tbody');
-        tbody.innerHTML = '';
-        sessionResults.forEach((r, idx) => {
-            tbody.innerHTML += `<tr class="border-b border-slate-800/40"><td class="p-2">Q${idx+1}</td><td class="p-2">${r.question}</td><td class="p-2 text-center">${r.isCorrect ? '<span class="text-emerald-400 font-bold">✓</span>' : '<span class="text-red-400 font-bold">✕</span>'}</td><td class="p-2 text-center">${r.time}с</td></tr>`;
-        });
-
+        // Сохраняем попытку в Supabase
         await supabaseClient.from('quiz_attempts').insert([{
             quiz_id: currentQuiz.id,
-            user_email: currentNickname, 
+            user_email: currentNickname,
             score: correctCount,
-            total: sessionResults.length,
-            time_spent: `${totalTime}с`,
-            details: sessionResults
+            total_time: totalTimeSec,
+            categories: categoriesSet,
+            detailed_results: sessionResults
         }]);
 
-        loadAllUsersResults(currentQuiz.id);
-    }
-
-    function renderWinnerBadge(quiz) {
-        const container = document.getElementById('winner-badge-container');
-        if (quiz.winner_name) {
-            document.getElementById('winner-name-display').innerText = quiz.winner_name;
-            container.classList.remove('hidden');
-        } else {
-            container.classList.add('hidden');
-        }
-    }
-
-    async function loadAllUsersResults(quizId) {
-        const { data } = await supabaseClient.from('quiz_attempts').select('*').eq('quiz_id', quizId).order('score', { ascending: false });
-        const tbody = document.getElementById('all-users-tbody');
+        // Отображение экрана результатов для участника
+        document.getElementById('res-summary').innerText = `Правильных ответов: ${correctCount} из ${currentQuiz.questions.length} (Общее время: ${totalTimeSec}с)`;
+        
+        const tbody = document.getElementById('res-tbody');
         tbody.innerHTML = '';
-        if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" class="p-2 text-slate-500">Нет данных</td></tr>';
-            return;
-        }
-        data.forEach(row => {
-            tbody.innerHTML += `<tr class="border-b border-slate-800/40"><td class="p-2 font-medium">${row.user_email}</td><td class="p-2 text-center font-bold">${row.score}/${row.total}</td><td class="p-2 text-center">${row.time_spent}</td></tr>`;
-        });
-    }
-
-    async function openResultsForQuiz(index) {
-        currentQuiz = quizzes[index];
-        showScreen('result-screen');
-        document.getElementById('res-summary').innerText = `Результаты викторины: "${currentQuiz.title}"`;
-        renderWinnerBadge(currentQuiz);
-        document.getElementById('res-tbody').innerHTML = `<tr><td colspan="4" class="p-2 text-slate-400">Попытка уже завершена. Общая таблица участников ниже:</td></tr>`;
-        loadAllUsersResults(currentQuiz.id);
-    }
-
-    function reviewQuiz(index) {
-        currentQuiz = quizzes[index];
-        document.getElementById('review-quiz-title').innerText = `Вопросы: ${currentQuiz.title}`;
-        const container = document.getElementById('review-questions-list');
-        container.innerHTML = '';
-
-        if (!currentQuiz.questions || currentQuiz.questions.length === 0) {
-            container.innerHTML = '<p class="text-slate-500 text-sm">Нет вопросов.</p>';
-            showScreen('review-screen');
-            return;
-        }
-
-        currentQuiz.questions.forEach((q, qIdx) => {
-            let optionsHtml = '';
-            q.options.forEach((opt, optIdx) => {
-                const isCorrectOpt = (optIdx === q.correct_index);
-                const optClass = isCorrectOpt 
-                    ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 font-bold' 
-                    : 'bg-slate-900 border-slate-800 text-slate-300';
-                optionsHtml += `<div class="p-2.5 rounded-lg border text-xs ${optClass}">${optIdx + 1}. ${opt} ${isCorrectOpt ? ' ✓ (Правильный)' : ''}</div>`;
-            });
-
-            container.innerHTML += `
-                <div class="bg-slate-950/50 border border-slate-800 p-4 rounded-xl space-y-2">
-                    <span class="text-[11px] text-indigo-400 font-semibold">[${q.category || 'Общие'}] Вопрос ${qIdx + 1}</span>
-                    <p class="text-sm font-bold text-slate-100">${q.question_text}</p>
-                    <div class="space-y-1 mt-2">${optionsHtml}</div>
-                </div>
+        sessionResults.forEach((res, idx) => {
+            const statusBadge = res.is_correct ? '<span class="text-emerald-400 font-semibold">Верно ✅</span>' : '<span class="text-red-400 font-semibold">Ошибка ❌</span>';
+            tbody.innerHTML += `
+                <tr class="border-b border-slate-800/50">
+                    <td class="p-2">${idx + 1}</td>
+                    <td class="p-2">${res.question_text}</td>
+                    <td class="p-2 text-center">${statusBadge}</td>
+                </tr>
             `;
         });
 
-        showScreen('review-screen');
+        // Показываем победителя викторины, если он задан организатором
+        const winnerContainer = document.getElementById('winner-badge-container');
+        if (currentQuiz.winner_name) {
+            document.getElementById('winner-name-display').innerText = currentQuiz.winner_name;
+            winnerContainer.classList.remove('hidden');
+        } else {
+            winnerContainer.classList.add('hidden');
+        }
+
+        showScreen('result-screen');
     }
 
-    async function openOrganizerDashboard() {
-        if (!currentUser || currentUser.email !== ADMIN_EMAIL) {
-            alert('⛔ Доступ запрещен!');
+    async function exitQuizWithProgress() {
+        if (sessionResults.length === 0) {
+            showScreen('home-screen');
+            return;
+        }
+        const confirmExit = confirm('Выйти с сохранением текущего прогресса?');
+        if (confirmExit) {
+            await finishQuiz();
+        }
+    }
+
+    // Просмотр результатов уже пройденной викторины участником
+    async function openResultsForQuiz(quizIdx) {
+        currentQuiz = quizzes[quizIdx];
+        const { data } = await supabaseClient
+            .from('quiz_attempts')
+            .select('*')
+            .eq('quiz_id', currentQuiz.id)
+            .eq('user_email', currentNickname)
+            .single();
+
+        if (!data) {
+            alert('Результаты не найдены.');
             return;
         }
 
-        showScreen('organizer-screen');
-        const { data } = await supabaseClient.from('quiz_attempts').select('*, quizzes(title)').order('created_at', { ascending: false });
+        document.getElementById('res-summary').innerText = `Ваш прошлый результат: ${data.score} из ${currentQuiz.questions.length} (Общее время: ${data.total_time}с)`;
+        
+        const tbody = document.getElementById('res-tbody');
+        tbody.innerHTML = '';
+        if (data.detailed_results) {
+            data.detailed_results.forEach((res, idx) => {
+                const statusBadge = res.is_correct ? '<span class="text-emerald-400 font-semibold">Верно ✅</span>' : '<span class="text-red-400 font-semibold">Ошибка ❌</span>';
+                tbody.innerHTML += `
+                    <tr class="border-b border-slate-800/50">
+                        <td class="p-2">${idx + 1}</td>
+                        <td class="p-2">${res.question_text}</td>
+                        <td class="p-2 text-center">${statusBadge}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        const winnerContainer = document.getElementById('winner-badge-container');
+        if (currentQuiz.winner_name) {
+            document.getElementById('winner-name-display').innerText = currentQuiz.winner_name;
+            winnerContainer.classList.remove('hidden');
+        } else {
+            winnerContainer.classList.add('hidden');
+        }
+
+        showScreen('result-screen');
+    }
+
+    async function reviewQuiz(quizIdx) {
+        const q = quizzes[quizIdx];
+        document.getElementById('review-quiz-title').innerText = `Вопросы: ${q.title}`;
+        const container = document.getElementById('review-questions-list');
+        container.innerHTML = '';
+
+        q.questions.forEach((question, idx) => {
+            let optsHtml = question.options.map((opt, oIdx) => {
+                const isCorrect = (oIdx === question.correct_index);
+                const colorClass = isCorrect ? 'text-emerald-300 font-bold bg-emerald-500/10 border-emerald-500/30' : 'text-slate-300 border-slate-800';
+                return `<div class="p-2 rounded-lg border ${colorClass} text-xs mb-1">${oIdx + 1}. ${opt}</div>`;
+            }).join('');
+
+            container.innerHTML += `
+                <div class="bg-slate-950/50 border border-slate-800 p-4 rounded-2xl space-y-2">
+                    <span class="text-xs font-bold text-indigo-400">Вопрос ${idx + 1} (${question.category})</span>
+                    <h4 class="text-sm font-bold text-slate-100">${question.question_text}</h4>
+                    <div>${optsHtml}</div>
+                </div>
+            `;
+        });
+        showScreen('review-screen');
+    }
+
+    // ПАНЕЛЬ ОРГАНИЗАТОРА (Мониторинг всех учеников и времени)
+    async function openOrganizerDashboard() {
+        const { data, error } = await supabaseClient
+            .from('quiz_attempts')
+            .select('*, quizzes(title)')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            alert('Ошибка загрузки статистики');
+            return;
+        }
+
         const tbody = document.getElementById('org-tbody');
         tbody.innerHTML = '';
 
         if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="p-2 text-slate-500">Результатов нет.</td></tr>';
-            return;
+            tbody.innerHTML = '<tr><td colspan="4" class="p-3 text-slate-500 text-center">Пока нет результатов участников.</td></tr>';
+        } else {
+            data.forEach((att) => {
+                const quizTitle = att.quizzes ? att.quizzes.title : 'Удаленная викторина';
+                tbody.innerHTML += `
+                    <tr class="border-b border-slate-800/50 hover:bg-slate-800/20 cursor-pointer" onclick='openPlayerDetails(${JSON.stringify(att).replace(/'/g, "&apos;")})'>
+                        <td class="p-2 font-medium text-indigo-300">👤 ${att.user_email}</td>
+                        <td class="p-2 text-slate-300">${quizTitle}</td>
+                        <td class="p-2 text-center font-bold text-emerald-400">${att.score}</td>
+                        <td class="p-2 text-center text-slate-400">⏱️ ${att.total_time}с</td>
+                    </tr>
+                `;
+            });
         }
-
-        data.forEach(row => {
-            let catStats = {};
-            if (row.details && Array.isArray(row.details)) {
-                row.details.forEach(d => {
-                    if (!catStats[d.category]) catStats[d.category] = { correct: 0, total: 0 };
-                    catStats[d.category].total++;
-                    if (d.isCorrect) catStats[d.category].correct++;
-                });
-            }
-            let catStr = Object.entries(catStats).map(([cat, st]) => `${cat}: ${st.correct}/${st.total}`).join('<br>');
-
-            tbody.innerHTML += `
-                <tr class="border-b border-slate-800/40">
-                    <td class="p-2 font-medium">
-                        <button onclick="openPlayerStats('${row.user_email.replace(/'/g, "\\'")}')" class="text-indigo-400 hover:underline text-left font-semibold">
-                            ${row.user_email}
-                        </button>
-                    </td>
-                    <td class="p-2">${row.quizzes ? row.quizzes.title : 'Удалена'}</td>
-                    <td class="p-2 text-center font-bold">${row.score}/${row.total}</td>
-                    <td class="p-2 text-[11px] text-slate-300">${catStr || 'Нет данных'}</td>
-                    <td class="p-2 text-center">${row.time_spent}</td>
-                </tr>
-            `;
-        });
+        showScreen('organizer-screen');
     }
 
-    async function openPlayerStats(nickname) {
-        document.getElementById('modal-player-title').innerText = `Статистика игрока: ${nickname}`;
-        const contentDiv = document.getElementById('modal-player-content');
-        contentDiv.innerHTML = '<p class="text-slate-400">Загрузка данных...</p>';
-        document.getElementById('player-modal').classList.remove('hidden');
-
-        const { data, error } = await supabaseClient
-            .from('quiz_attempts')
-            .select('*, quizzes(title)')
-            .eq('user_email', nickname)
-            .order('created_at', { ascending: false });
-
-        if (error || !data || data.length === 0) {
-            contentDiv.innerHTML = '<p class="text-slate-500">Нет данных о попытках этого игрока.</p>';
-            return;
-        }
-
-        let html = '';
-        let totalQuizzes = data.length;
-        let totalScoreSum = 0;
-        let totalQuestionsSum = 0;
-        let globalCatStats = {};
-
-        data.forEach(attempt => {
-            totalScoreSum += attempt.score;
-            totalQuestionsSum += attempt.total;
-
-            if (attempt.details && Array.isArray(attempt.details)) {
-                attempt.details.forEach(d => {
-                    if (!globalCatStats[d.category]) globalCatStats[d.category] = { correct: 0, total: 0 };
-                    globalCatStats[d.category].total++;
-                    if (d.isCorrect) globalCatStats[d.category].correct++;
-                });
-            }
-
-            html += `
-                <div class="bg-slate-950/60 border border-slate-800 p-3 rounded-xl mb-2">
-                    <div class="font-bold text-slate-200 text-xs mb-1">🎯 ${attempt.quizzes ? attempt.quizzes.title : 'Викторена удалена'}</div>
-                    <div class="text-[11px] text-slate-400">Баллы: <b class="text-emerald-400">${attempt.score}/${attempt.total}</b> | Время: ${attempt.time_spent}</div>
-                </div>
-            `;
-        });
-
-        let globalCatStr = Object.entries(globalCatStats)
-            .map(([cat, st]) => `<div class="flex justify-between border-b border-slate-800/50 py-1 text-[11px]"><span>${cat}:</span><b class="text-indigo-400">${st.correct}/${st.total}</b></div>`)
-            .join('');
-
-        let summaryHeader = `
-            <div class="bg-indigo-600/10 border border-indigo-500/20 p-3 rounded-xl mb-3">
-                <div class="text-xs font-bold text-indigo-300 mb-1">📊 Общие показатели:</div>
-                <div class="text-[11px] text-slate-300">Пройдено викторин: <b>${totalQuizzes}</b></div>
-                <div class="text-[11px] text-slate-300">Всего правильных ответов: <b class="text-emerald-400">${totalScoreSum}/${totalQuestionsSum}</b></div>
-            </div>
-            <div class="text-xs font-bold text-slate-400 mb-1">Успехи по категориям (всего):</div>
-            <div class="bg-slate-950/60 border border-slate-800 p-2 rounded-xl mb-3">${globalCatStr || 'Нет данных'}</div>
-            <div class="text-xs font-bold text-slate-400 mb-1">История попыток:</div>
+    function openPlayerDetails(att) {
+        document.getElementById('modal-player-title').innerText = `Статистика игрока: ${att.user_email}`;
+        const content = document.getElementById('modal-player-content');
+        content.innerHTML = `
+            <p class="text-slate-400 mb-2">Общее время прохождения: <b class="text-slate-200">${att.total_time} сек.</b> | Баллы: <b class="text-emerald-400">${att.score}</b></p>
         `;
 
-        contentDiv.innerHTML = summaryHeader + html;
+        if (att.detailed_results && att.detailed_results.length > 0) {
+            att.detailed_results.forEach((res, i) => {
+                const badge = res.is_correct ? '<span class="text-emerald-400 font-semibold">Верно ✅</span>' : '<span class="text-red-400 font-semibold">Ошибка ❌</span>';
+                content.innerHTML += `
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1">
+                        <div class="flex justify-between text-[11px] text-slate-400">
+                            <span>Вопрос ${i + 1} (${res.category})</span>
+                            <span>⏱️ ${res.time_spent}с на вопрос</span>
+                        </div>
+                        <p class="font-semibold text-slate-200">${res.question_text}</p>
+                        <div>${badge}</div>
+                    </div>
+                `;
+            });
+        } else {
+            content.innerHTML += '<p class="text-slate-500">Детальные ответы не найдены.</p>';
+        }
+
+        document.getElementById('player-modal').classList.remove('hidden');
     }
 
     function closePlayerModal() {
         document.getElementById('player-modal').classList.add('hidden');
     }
-// Надежный перехватчик кликов по кнопке удаления
-document.addEventListener('click', function(e) {
-    const btn = e.target.closest('.delete-quiz-btn');
-    if (btn) {
-        const quizId = btn.getAttribute('data-id');
-        const quizTitle = btn.getAttribute('data-title');
-        deleteQuiz(quizId, quizTitle);
-    }
-});
 
-async function deleteQuiz(quizId, quizTitle) {
-    const firstConfirm = confirm(`⚠️ Вы уверены, что хотите полностью удалить викторину "${quizTitle}"?`);
-    if (!firstConfirm) return;
-
-    const secondConfirm = confirm(`❗ ВНИМАНИЕ: Это действие удалит викторину и все результаты участников без возможности восстановления!\n\nПодтверждаете удаление?`);
-    if (!secondConfirm) return;
-
-    // Запрос в Supabase (благодаря ON DELETE CASCADE связанные вопросы и попытки удалятся автоматически)
-    const { error } = await supabaseClient
-        .from('quizzes')
-        .delete()
-        .eq('id', quizId);
-
-    if (error) {
-        alert('Ошибка при удалении: ' + error.message);
-        console.error(error);
-    } else {
-        alert('Викторина успешно удалена!');
-        await loadQuizzes();
-    }
-}
     initAuth();
 </script>
 
