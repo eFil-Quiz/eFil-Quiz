@@ -936,13 +936,19 @@
 
     // ПАНЕЛЬ ОРГАНИЗАТОРА
     async function openOrganizerDashboard() {
+        // Загружаем викторины, если список еще пуст
+        if (!quizzes || quizzes.length === 0) {
+            const { data: qData } = await supabaseClient.from('quizzes').select('*, questions(*)');
+            quizzes = qData || [];
+        }
+
         const { data, error } = await supabaseClient
             .from('quiz_attempts')
-            .select('*, quizzes(title)')
-            .order('created_at', { ascending: false });
+            .select('*');
 
         if (error) {
             alert('Ошибка загрузки статистики: ' + error.message);
+            console.error(error);
             return;
         }
 
@@ -950,17 +956,22 @@
         tbody.innerHTML = '';
 
         if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="p-3 text-slate-500 text-center">Пока нет результатов участников.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="p-3 text-slate-500 text-center">Пока нет результатов участников в базе данных.</td></tr>';
         } else {
+            // Сортируем от новых к старым
+            data.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+
             data.forEach((att) => {
-                const quizTitle = att.quizzes ? att.quizzes.title : 'Удаленная викторина';
+                const matchedQuiz = quizzes.find(q => q.id === att.quiz_id);
+                const quizTitle = matchedQuiz ? matchedQuiz.title : 'Удаленная викторина';
                 const statusMark = att.is_completed === false ? ' <span class="text-[10px] text-amber-400">(в процессе)</span>' : '';
+                
                 tbody.innerHTML += `
                     <tr class="border-b border-slate-800/50 hover:bg-slate-800/20 cursor-pointer" onclick='openPlayerDetails(${JSON.stringify(att).replace(/'/g, "&apos;")})'>
                         <td class="p-2 font-medium text-indigo-300">👤 ${att.user_email}${statusMark}</td>
                         <td class="p-2 text-slate-300">${quizTitle}</td>
                         <td class="p-2 text-center font-bold text-emerald-400">${att.score}</td>
-                        <td class="p-2 text-center text-slate-400">⏱️ ${att.total_time}с</td>
+                        <td class="p-2 text-center text-slate-400">⏱️ ${att.total_time || 0}с</td>
                     </tr>
                 `;
             });
