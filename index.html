@@ -303,12 +303,28 @@
         const password = document.getElementById('auth-password').value.trim();
         if (!email || !password) { alert('Введите почту и пароль!'); return; }
 
+        // 1. Пробуем войти
         let { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        
+        // 2. Если аккаунта нет (ошибка входа), регистрируем его
         if (error) {
             let { error: regError } = await supabaseClient.auth.signUp({ email, password });
-            if (regError) { alert('Ошибка: ' + regError.message); return; }
+            if (regError) { 
+                alert('Ошибка: ' + regError.message); 
+                return; 
+            }
+            
+            // 3. ВАЖНО: Сразу после регистрации выполняем вход, чтобы получить сессию
+            let { error: loginAfterRegError } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (loginAfterRegError) {
+                alert('Ошибка входа после регистрации: ' + loginAfterRegError.message);
+                return;
+            }
+            
             alert('Регистрация успешна! Вы вошли в систему.');
         }
+        
+        // 4. Запускаем инициализацию (она перекинет на экран ввода ника или главную)
         initAuth();
     }
 
