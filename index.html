@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quizify Pro — Викторины для друзей</title>
-    <!-- Подключаем Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -156,6 +155,7 @@
     <div id="play-screen" class="hidden animate-fade-in">
         <div class="flex justify-between items-center text-xs text-slate-400 mb-4 font-medium">
             <span id="q-counter" class="bg-slate-800 px-2.5 py-1 rounded-md">Вопрос 1/1</span>
+            <span id="q-progress-badge" class="text-indigo-400">Отвечено: 0/0</span>
         </div>
         
         <div id="media-container" class="mb-4 flex justify-center"></div>
@@ -163,17 +163,19 @@
         
         <div id="q-options" class="space-y-3"></div>
         
-        <!-- Кнопки управления внизу вопроса -->
-        <div class="flex gap-2 mt-5">
-            <button id="skip-q-btn" onclick="skipQuestion()" class="w-1/2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold py-3 rounded-xl transition-all text-sm">
-                ⏭️ Пропустить
-            </button>
-            <button id="save-exit-btn" onclick="exitQuizWithProgress()" class="w-1/2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 font-semibold py-3 rounded-xl transition-all text-sm">
-                💾 Сохранить и выйти
-            </button>
+        <!-- Нижняя панель кнопок управления -->
+        <div class="mt-5 space-y-2">
             <button id="next-q-btn" class="hidden w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-indigo-600/20 animate-fade-in" onclick="nextQuestion()">
                 Следующий вопрос ➡️
             </button>
+            <div class="flex gap-2">
+                <button id="skip-q-btn" onclick="skipQuestion()" class="w-1/2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold py-3 rounded-xl transition-all text-sm">
+                    ⏭️ Пропустить
+                </button>
+                <button id="save-exit-btn" onclick="saveAndExitQuiz()" class="w-1/2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 font-semibold py-3 rounded-xl transition-all text-sm">
+                    💾 Сохранить и выйти
+                </button>
+            </div>
         </div>
     </div>
 
@@ -194,7 +196,6 @@
         <h2 class="text-2xl font-bold mb-1">Итоги викторины! 🎉</h2>
         <p id="res-summary" class="text-sm font-semibold text-indigo-400 mb-4"></p>
         
-        <!-- Блок отображения победителя для участников -->
         <div id="winner-badge-container" class="hidden mb-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-center">
             <span class="text-xs text-emerald-400 font-semibold uppercase tracking-wider">🏆 Победитель викторины:</span>
             <div id="winner-name-display" class="text-lg font-bold text-emerald-300"></div>
@@ -208,9 +209,14 @@
             </table>
         </div>
 
-        <button onclick="showScreen('home-screen')" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-indigo-600/20">
-            На главную
-        </button>
+        <div class="flex gap-2">
+            <button id="res-review-btn" class="w-1/2 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 font-semibold py-3 rounded-xl transition-all border border-indigo-500/30 text-sm">
+                👁️ Посмотреть вопросы
+            </button>
+            <button onclick="showScreen('home-screen')" class="w-1/2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-indigo-600/20 text-sm">
+                На главную
+            </button>
+        </div>
     </div>
 
     <!-- ПАНЕЛЬ ОРГАНИЗАТОРА -->
@@ -225,7 +231,7 @@
                         <th class="p-2">Ник</th>
                         <th class="p-2">Викторина</th>
                         <th class="p-2 text-center">Баллы</th>
-                        <th class="p-2 text-center">Общ. время</th>
+                        <th class="p-2 text-center">Время</th>
                     </tr>
                 </thead>
                 <tbody id="org-tbody" class="divide-y divide-slate-800/50"></tbody>
@@ -259,11 +265,14 @@
     let currentNickname = '';
     let quizzes = [];
     let currentQuiz = null;
+    let currentQuizIdx = 0;
     let currentQIndex = 0;
-    let sessionResults = [];
+    let sessionResults = []; // массив ответов текущей сессии
+    let existingAttemptId = null; // ID незавершенной попытки в БД
+    let accumulatedTimeSec = 0; // время из прошлых сессий
     
     let questionStartTime = 0;
-    let totalQuizStartTime = 0;
+    let sessionStartTime = 0;
     let skippedQuestionIndices = [];
 
     async function initAuth() {
@@ -303,28 +312,18 @@
         const password = document.getElementById('auth-password').value.trim();
         if (!email || !password) { alert('Введите почту и пароль!'); return; }
 
-        // 1. Пробуем войти
         let { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-        
-        // 2. Если аккаунта нет (ошибка входа), регистрируем его
         if (error) {
             let { error: regError } = await supabaseClient.auth.signUp({ email, password });
-            if (regError) { 
-                alert('Ошибка: ' + regError.message); 
-                return; 
-            }
+            if (regError) { alert('Ошибка: ' + regError.message); return; }
             
-            // 3. ВАЖНО: Сразу после регистрации выполняем вход, чтобы получить сессию
             let { error: loginAfterRegError } = await supabaseClient.auth.signInWithPassword({ email, password });
             if (loginAfterRegError) {
                 alert('Ошибка входа после регистрации: ' + loginAfterRegError.message);
                 return;
             }
-            
             alert('Регистрация успешна! Вы вошли в систему.');
         }
-        
-        // 4. Запускаем инициализацию (она перекинет на экран ввода ника или главную)
         initAuth();
     }
 
@@ -367,7 +366,6 @@
             <div class="question-block bg-slate-950/50 border border-slate-800 p-4 rounded-2xl space-y-3">
                 <div class="flex justify-between items-center"><span class="text-xs font-bold text-slate-400">Вопрос 1</span></div>
                 <input type="text" class="q-text w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Текст вопроса">
-                
                 <div>
                     <label class="block text-xs text-slate-400 mb-1">Категория</label>
                     <select class="q-cat w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
@@ -386,19 +384,16 @@
                         <option value="Общие" selected>Общие</option>
                     </select>
                 </div>
-
                 <div>
                     <label class="block text-xs text-slate-400 mb-1">Ссылка на медиа (картинка, видео, аудио)</label>
                     <input type="text" class="q-media w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="https://example.com/audio.mp3">
                 </div>
-
                 <div class="grid grid-cols-2 gap-2">
                     <input type="text" class="opt-0 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Вариант 1">
                     <input type="text" class="opt-1 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Вариант 2">
                     <input type="text" class="opt-2 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Вариант 3">
                     <input type="text" class="opt-3 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Вариант 4">
                 </div>
-
                 <div class="flex items-center gap-2">
                     <label class="text-xs text-slate-400">Правильный вариант (1-4):</label>
                     <input type="number" class="q-correct w-16 px-2 py-1 bg-slate-900 border border-slate-800 rounded-lg text-sm text-center text-slate-100" min="1" max="4" value="1">
@@ -408,13 +403,56 @@
         showScreen('creator-screen');
     }
 
+    // Вспомогательная функция для получения локального прогресса на случай сбоя колонок БД
+    function getLocalAttemptsMap() {
+        try {
+            return JSON.parse(localStorage.getItem(`quiz_progress_${currentNickname}`) || '{}');
+        } catch (e) {
+            return {};
+        }
+    }
+
+    function saveLocalAttempt(quizId, attemptData) {
+        const map = getLocalAttemptsMap();
+        map[quizId] = attemptData;
+        localStorage.setItem(`quiz_progress_${currentNickname}`, JSON.stringify(map));
+    }
+
     async function loadQuizzes() {
         const { data, error } = await supabaseClient.from('quizzes').select('*, questions(*)');
         if (error) return;
         quizzes = data || [];
         
-        const { data: attempts } = await supabaseClient.from('quiz_attempts').select('quiz_id').eq('user_email', currentNickname);
-        const passedQuizIds = new Set(attempts ? attempts.map(a => a.quiz_id) : []);
+        // Сортируем вопросы внутри каждой викторины по ID, чтобы порядок всегда был одинаковым
+        quizzes.forEach(q => {
+            if (q.questions) {
+                q.questions.sort((a, b) => (a.id > b.id ? 1 : -1));
+            }
+        });
+
+        // Загружаем попытки пользователя из Supabase
+        const { data: attempts } = await supabaseClient
+            .from('quiz_attempts')
+            .select('*')
+            .eq('user_email', currentNickname);
+
+        const localMap = getLocalAttemptsMap();
+        const attemptsByQuizId = {};
+
+        if (attempts) {
+            attempts.forEach(a => {
+                attemptsByQuizId[a.quiz_id] = a;
+            });
+        }
+        // Дополняем из локального хранилища, если в БД еще не добавлены колонки
+        Object.keys(localMap).forEach(qId => {
+            if (!attemptsByQuizId[qId]) {
+                attemptsByQuizId[qId] = localMap[qId];
+            } else if (!attemptsByQuizId[qId].detailed_results && localMap[qId].detailed_results) {
+                attemptsByQuizId[qId].detailed_results = localMap[qId].detailed_results;
+                attemptsByQuizId[qId].is_completed = localMap[qId].is_completed;
+            }
+        });
 
         const container = document.getElementById('quiz-list');
         container.innerHTML = '';
@@ -424,18 +462,29 @@
         }
 
         quizzes.forEach((q, idx) => {
-            const hasPassed = passedQuizIds.has(q.id);
+            const attempt = attemptsByQuizId[q.id];
+            const totalQ = q.questions.length;
+            const answeredCount = attempt?.detailed_results ? attempt.detailed_results.length : (attempt ? totalQ : 0);
+            const isCompleted = attempt ? (attempt.is_completed !== false && answeredCount >= totalQ) : false;
+            const isInProgress = attempt && !isCompleted && answeredCount > 0;
             const isAdmin = (currentUser.email === ADMIN_EMAIL);
 
             let actionButtons = '';
-            if (hasPassed) {
-                // Если викторина уже пройдена — кнопка "Пройти" недоступна, доступны только Результаты и просмотр Вопросов
+            if (isCompleted) {
+                // Викторина полностью пройдена: повторное прохождение запрещено, доступны Результаты и Вопросы
                 actionButtons = `
                     <button onclick="openResultsForQuiz(${idx})" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3 py-2 rounded-xl transition-all border border-slate-700">
                         📊 Результаты
                     </button>
                     <button onclick="reviewQuiz(${idx})" class="bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 text-xs font-semibold px-3 py-2 rounded-xl transition-all border border-indigo-500/30">
                         👁️ Вопросы
+                    </button>
+                `;
+            } else if (isInProgress) {
+                // Есть сохраненный прогресс: можно только продолжить с оставшихся вопросов
+                actionButtons = `
+                    <button onclick="startQuiz(${idx})" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold px-3.5 py-2 rounded-xl transition-all shadow-md shadow-amber-600/20">
+                        ▶️ Продолжить (${answeredCount}/${totalQ})
                     </button>
                 `;
             } else {
@@ -461,7 +510,7 @@
                 <div class="bg-slate-950/60 border border-slate-800 p-4 rounded-2xl flex justify-between items-center transition-all hover:border-indigo-500/50">
                     <div>
                         <h3 class="font-bold text-slate-100 text-sm mb-0.5">${q.title}</h3>
-                        <span class="text-xs text-slate-400">Вопросов: ${q.questions.length}</span>
+                        <span class="text-xs text-slate-400">Вопросов: ${totalQ}</span>
                         ${winnerBadge}
                     </div>
                     <div class="flex items-center gap-2">
@@ -473,7 +522,6 @@
         });
     }
 
-    // Делегирование клика для удаления викторины
     document.addEventListener('click', function(e) {
         const btn = e.target.closest('.delete-quiz-btn');
         if (btn) {
@@ -506,7 +554,6 @@
         block.innerHTML = `
             <div class="flex justify-between items-center"><span class="text-xs font-bold text-slate-400">Вопрос ${count}</span></div>
             <input type="text" class="q-text w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Текст вопроса">
-            
             <div>
                 <label class="block text-xs text-slate-400 mb-1">Категория</label>
                 <select class="q-cat w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
@@ -525,19 +572,16 @@
                     <option value="Общие" selected>Общие</option>
                 </select>
             </div>
-
             <div>
                 <label class="block text-xs text-slate-400 mb-1">Ссылка на медиа (картинка, видео, аудио)</label>
                 <input type="text" class="q-media w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="https://example.com/audio.mp3">
             </div>
-
             <div class="grid grid-cols-2 gap-2">
                 <input type="text" class="opt-0 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Вариант 1">
                 <input type="text" class="opt-1 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Вариант 2">
                 <input type="text" class="opt-2 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Вариант 3">
                 <input type="text" class="opt-3 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Вариант 4">
             </div>
-
             <div class="flex items-center gap-2">
                 <label class="text-xs text-slate-400">Правильный вариант (1-4):</label>
                 <input type="number" class="q-correct w-16 px-2 py-1 bg-slate-900 border border-slate-800 rounded-lg text-sm text-center text-slate-100" min="1" max="4" value="1">
@@ -581,43 +625,80 @@
         showScreen('home-screen');
     }
 
-    // ЛОГИКА ПРОХОЖДЕНИЯ ВИКТОРИНЫ
+    // ЗАПУСК ИЛИ ПРОДОЛЖЕНИЕ ВИКТОРИНЫ
     async function startQuiz(quizIdx) {
+        currentQuizIdx = quizIdx;
         currentQuiz = quizzes[quizIdx];
+        existingAttemptId = null;
+        sessionResults = [];
+        accumulatedTimeSec = 0;
+        skippedQuestionIndices = [];
 
-        // Проверяем, проходил ли пользователь уже эту викторину
-        const { data: existingAttempts } = await supabaseClient
+        // Проверяем в БД и локально, есть ли уже попытка
+        const { data: dbAttempts } = await supabaseClient
             .from('quiz_attempts')
-            .select('id')
+            .select('*')
             .eq('quiz_id', currentQuiz.id)
             .eq('user_email', currentNickname);
 
-        if (existingAttempts && existingAttempts.length > 0) {
-            alert('Вы уже проходили эту викторину! Повторное прохождение недоступно.');
-            loadQuizzes();
+        const localAttempt = getLocalAttemptsMap()[currentQuiz.id];
+        const savedAttempt = (dbAttempts && dbAttempts.length > 0) ? dbAttempts[0] : localAttempt;
+
+        if (savedAttempt) {
+            if (savedAttempt.id) existingAttemptId = savedAttempt.id;
+            const savedAnswers = savedAttempt.detailed_results || localAttempt?.detailed_results || [];
+            const isDone = savedAttempt.is_completed !== false && savedAnswers.length >= currentQuiz.questions.length;
+
+            if (isDone) {
+                alert('Вы уже полностью прошли эту викторину! Повторное прохождение недоступно.');
+                loadQuizzes();
+                return;
+            }
+
+            // Восстанавливаем уже данные ответы — повторно ответить на них нельзя
+            sessionResults = [...savedAnswers];
+            accumulatedTimeSec = savedAttempt.total_time || 0;
+        }
+
+        // Находим индекс первого вопроса, на который ещё не дан ответ
+        const answeredQuestionIds = new Set(sessionResults.map(r => r.question_id));
+        const firstUnansweredIdx = currentQuiz.questions.findIndex(q => !answeredQuestionIds.has(q.id));
+
+        if (firstUnansweredIdx === -1) {
+            await persistAttempt(true);
             return;
         }
 
-        currentQIndex = 0;
-        sessionResults = [];
-        skippedQuestionIndices = [];
-        totalQuizStartTime = Date.now();
+        currentQIndex = firstUnansweredIdx;
+        sessionStartTime = Date.now();
         showScreen('play-screen');
         renderQuestion();
     }
 
     function renderQuestion() {
+        const answeredIds = new Set(sessionResults.map(r => r.question_id));
+
+        // Ищем следующий неотвеченный вопрос, начиная с currentQIndex
+        while (currentQIndex < currentQuiz.questions.length && answeredIds.has(currentQuiz.questions[currentQIndex].id)) {
+            currentQIndex++;
+        }
+
         if (currentQIndex >= currentQuiz.questions.length) {
-            if (skippedQuestionIndices.length > 0) {
+            // Проверяем, остались ли пропущенные неотвеченные вопросы
+            const remainingSkipped = skippedQuestionIndices.filter(idx => !answeredIds.has(currentQuiz.questions[idx].id));
+            if (remainingSkipped.length > 0) {
+                skippedQuestionIndices = remainingSkipped;
                 currentQIndex = skippedQuestionIndices.shift();
             } else {
-                finishQuiz();
+                // Все вопросы отвечены — завершаем викторину
+                persistAttempt(true);
                 return;
             }
         }
 
         const q = currentQuiz.questions[currentQIndex];
         document.getElementById('q-counter').innerText = `Вопрос ${currentQIndex + 1}/${currentQuiz.questions.length}`;
+        document.getElementById('q-progress-badge').innerText = `Отвечено: ${sessionResults.length}/${currentQuiz.questions.length}`;
         document.getElementById('q-title').innerText = q.question_text;
 
         questionStartTime = Date.now();
@@ -644,19 +725,18 @@
             `;
         });
 
-        // Управляем видимостью кнопок пропуска / сохранения / следующего вопроса
         const skipBtn = document.getElementById('skip-q-btn');
-        const saveExitBtn = document.getElementById('save-exit-btn');
-        const nextBtn = document.getElementById('next-q-btn');
-
-        if (!skippedQuestionIndices.includes(currentQIndex) && currentQuiz.questions.length > 1) {
+        const unansweredTotal = currentQuiz.questions.length - sessionResults.length;
+        if (unansweredTotal > 1 && !skippedQuestionIndices.includes(currentQIndex)) {
             skipBtn.classList.remove('hidden');
-            saveExitBtn.classList.remove('hidden');
+            skipBtn.classList.replace('w-full', 'w-1/2');
+            document.getElementById('save-exit-btn').classList.replace('w-full', 'w-1/2');
         } else {
             skipBtn.classList.add('hidden');
-            saveExitBtn.classList.remove('hidden');
+            document.getElementById('save-exit-btn').classList.replace('w-1/2', 'w-full');
         }
-        nextBtn.classList.add('hidden');
+
+        document.getElementById('next-q-btn').classList.add('hidden');
     }
 
     function skipQuestion() {
@@ -669,7 +749,11 @@
 
     function selectAnswer(selectedIdx) {
         const q = currentQuiz.questions[currentQIndex];
-        const timeSpentSec = Math.round((Date.now() - questionStartTime) / 1000);
+        
+        // Защита от повторного ответа на тот же вопрос
+        if (sessionResults.some(r => r.question_id === q.id)) return;
+
+        const timeSpentSec = Math.max(1, Math.round((Date.now() - questionStartTime) / 1000));
         const isCorrect = (selectedIdx === q.correct_index);
 
         sessionResults.push({
@@ -682,6 +766,8 @@
             time_spent: timeSpentSec
         });
 
+        document.getElementById('q-progress-badge').innerText = `Отвечено: ${sessionResults.length}/${currentQuiz.questions.length}`;
+
         const buttons = document.getElementById('q-options').children;
         for (let i = 0; i < buttons.length; i++) {
             buttons[i].disabled = true;
@@ -693,7 +779,7 @@
         }
 
         document.getElementById('skip-q-btn').classList.add('hidden');
-        document.getElementById('save-exit-btn').classList.add('hidden');
+        document.getElementById('save-exit-btn').classList.replace('w-1/2', 'w-full');
         document.getElementById('next-q-btn').classList.remove('hidden');
     }
 
@@ -702,30 +788,81 @@
         renderQuestion();
     }
 
-    async function finishQuiz() {
-        const totalTimeSec = Math.round((Date.now() - totalQuizStartTime) / 1000);
-        const correctCount = sessionResults.filter(r => r.is_correct).length;
-        const categoriesSet = [...new Set(sessionResults.map(r => r.category))].join(', ');
+    // СОХРАНЕНИЕ ПРОГРЕССА И ВЫХОД В ГЛАВНОЕ МЕНЮ
+    async function saveAndExitQuiz() {
+        if (sessionResults.length === 0) {
+            showScreen('home-screen');
+            return;
+        }
+        const isAllAnswered = sessionResults.length >= currentQuiz.questions.length;
+        await persistAttempt(isAllAnswered, true);
+    }
 
-        // Сохраняем попытку в Supabase
-        await supabaseClient.from('quiz_attempts').insert([{
+    // Единая функция сохранения попытки (как промежуточной, так и финальной)
+    async function persistAttempt(isCompleted, returnToHome = false) {
+        const sessionElapsedSec = Math.round((Date.now() - sessionStartTime) / 1000);
+        const totalTimeSec = accumulatedTimeSec + sessionElapsedSec;
+        const correctCount = sessionResults.filter(r => r.is_correct).length;
+
+        const payload = {
             quiz_id: currentQuiz.id,
             user_email: currentNickname,
             score: correctCount,
             total_time: totalTimeSec,
-            categories: categoriesSet,
-            detailed_results: sessionResults
-        }]);
+            detailed_results: sessionResults,
+            is_completed: isCompleted
+        };
 
-        displayResultsScreen(correctCount, totalTimeSec);
+        // Сохраняем локально сразу для мгновенной синхронизации интерфейса
+        saveLocalAttempt(currentQuiz.id, payload);
+
+        let dbError = null;
+        if (existingAttemptId) {
+            const { error } = await supabaseClient
+                .from('quiz_attempts')
+                .update(payload)
+                .eq('id', existingAttemptId);
+            dbError = error;
+        } else {
+            const { data, error } = await supabaseClient
+                .from('quiz_attempts')
+                .insert([payload])
+                .select();
+            dbError = error;
+            if (data && data[0]) existingAttemptId = data[0].id;
+        }
+
+        // Если в Supabase ещё не добавлены колонки detailed_results / is_completed — сохраняем базовый набор полей
+        if (dbError) {
+            console.warn('Сохраняем базовые поля в Supabase:', dbError.message);
+            const fallbackPayload = {
+                quiz_id: currentQuiz.id,
+                user_email: currentNickname,
+                score: correctCount,
+                total_time: totalTimeSec
+            };
+            if (existingAttemptId) {
+                await supabaseClient.from('quiz_attempts').update(fallbackPayload).eq('id', existingAttemptId);
+            } else {
+                const { data } = await supabaseClient.from('quiz_attempts').insert([fallbackPayload]).select();
+                if (data && data[0]) existingAttemptId = data[0].id;
+            }
+        }
+
+        if (returnToHome) {
+            showScreen('home-screen');
+            return;
+        }
+
+        displayResultsScreen(correctCount, totalTimeSec, sessionResults);
     }
 
-    function displayResultsScreen(correctCount, totalTimeSec) {
-        document.getElementById('res-summary').innerText = `Правильных ответов: ${correctCount} из ${currentQuiz.questions.length} (Общее время: ${totalTimeSec}с)`;
+    function displayResultsScreen(correctCount, totalTimeSec, resultsList) {
+        document.getElementById('res-summary').innerText = `Правильных ответов: ${correctCount} из ${currentQuiz.questions.length}`;
         
         const tbody = document.getElementById('res-tbody');
         tbody.innerHTML = '';
-        sessionResults.forEach((res, idx) => {
+        resultsList.forEach((res, idx) => {
             const statusBadge = res.is_correct ? '<span class="text-emerald-400 font-semibold">Верно ✅</span>' : '<span class="text-red-400 font-semibold">Ошибка ❌</span>';
             tbody.innerHTML += `
                 <tr class="border-b border-slate-800/50">
@@ -744,61 +881,33 @@
             winnerContainer.classList.add('hidden');
         }
 
+        // Привязываем кнопку "Посмотреть вопросы" на экране результатов
+        document.getElementById('res-review-btn').onclick = () => reviewQuiz(currentQuizIdx);
+
         showScreen('result-screen');
     }
 
-    async function exitQuizWithProgress() {
-        if (sessionResults.length === 0) {
-            showScreen('home-screen');
-            return;
-        }
-        const confirmExit = confirm('Выйти с сохранением текущего прогресса? Викторина будет засчитана.');
-        if (confirmExit) {
-            await finishQuiz();
-        }
-    }
-
-    // Просмотр результатов уже пройденной викторины участником
     async function openResultsForQuiz(quizIdx) {
+        currentQuizIdx = quizIdx;
         currentQuiz = quizzes[quizIdx];
+        
         const { data } = await supabaseClient
             .from('quiz_attempts')
             .select('*')
             .eq('quiz_id', currentQuiz.id)
             .eq('user_email', currentNickname)
-            .single();
+            .maybeSingle();
 
-        if (!data) {
+        const localAttempt = getLocalAttemptsMap()[currentQuiz.id];
+        const attempt = data || localAttempt;
+
+        if (!attempt) {
             alert('Результаты не найдены.');
             return;
         }
 
-        document.getElementById('res-summary').innerText = `Ваш результат: ${data.score} из ${currentQuiz.questions.length} (Общее время: ${data.total_time}с)`;
-        
-        const tbody = document.getElementById('res-tbody');
-        tbody.innerHTML = '';
-        if (data.detailed_results) {
-            data.detailed_results.forEach((res, idx) => {
-                const statusBadge = res.is_correct ? '<span class="text-emerald-400 font-semibold">Верно ✅</span>' : '<span class="text-red-400 font-semibold">Ошибка ❌</span>';
-                tbody.innerHTML += `
-                    <tr class="border-b border-slate-800/50">
-                        <td class="p-2">${idx + 1}</td>
-                        <td class="p-2">${res.question_text}</td>
-                        <td class="p-2 text-center">${statusBadge}</td>
-                    </tr>
-                `;
-            });
-        }
-
-        const winnerContainer = document.getElementById('winner-badge-container');
-        if (currentQuiz.winner_name) {
-            document.getElementById('winner-name-display').innerText = currentQuiz.winner_name;
-            winnerContainer.classList.remove('hidden');
-        } else {
-            winnerContainer.classList.add('hidden');
-        }
-
-        showScreen('result-screen');
+        const details = attempt.detailed_results || localAttempt?.detailed_results || [];
+        displayResultsScreen(attempt.score, attempt.total_time, details);
     }
 
     async function reviewQuiz(quizIdx) {
@@ -833,7 +942,7 @@
             .order('created_at', { ascending: false });
 
         if (error) {
-            alert('Ошибка загрузки статистики');
+            alert('Ошибка загрузки статистики: ' + error.message);
             return;
         }
 
@@ -845,9 +954,10 @@
         } else {
             data.forEach((att) => {
                 const quizTitle = att.quizzes ? att.quizzes.title : 'Удаленная викторина';
+                const statusMark = att.is_completed === false ? ' <span class="text-[10px] text-amber-400">(в процессе)</span>' : '';
                 tbody.innerHTML += `
                     <tr class="border-b border-slate-800/50 hover:bg-slate-800/20 cursor-pointer" onclick='openPlayerDetails(${JSON.stringify(att).replace(/'/g, "&apos;")})'>
-                        <td class="p-2 font-medium text-indigo-300">👤 ${att.user_email}</td>
+                        <td class="p-2 font-medium text-indigo-300">👤 ${att.user_email}${statusMark}</td>
                         <td class="p-2 text-slate-300">${quizTitle}</td>
                         <td class="p-2 text-center font-bold text-emerald-400">${att.score}</td>
                         <td class="p-2 text-center text-slate-400">⏱️ ${att.total_time}с</td>
@@ -880,7 +990,7 @@
                 `;
             });
         } else {
-            content.innerHTML += '<p class="text-slate-500">Детальные ответы не найдены.</p>';
+            content.innerHTML += '<p class="text-slate-500">Детальные ответы по вопросам отсутствуют.</p>';
         }
 
         document.getElementById('player-modal').classList.remove('hidden');
