@@ -96,7 +96,7 @@
                 <input type="text" id="quiz-title-input" placeholder="Например: Исторический квиз" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-indigo-500">
             </div>
             <div id="winner-input-wrapper">
-                <label class="block text-xs font-semibold text-emerald-400 mb-1">🏆 Победитель викторины (может менять только организатор)</label>
+                <label class="block text-xs font-semibold text-emerald-400 mb-1">🏆 Победитель викторины (вписывает только организатор)</label>
                 <input type="text" id="quiz-winner-input" placeholder="Ник победителя этой викторины" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-emerald-500">
             </div>
         </div>
@@ -164,18 +164,18 @@
         </div>
 
         <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Ваши результаты по вопросам:</h3>
-        <div class="max-h-40 overflow-y-auto mb-4 border border-slate-800 rounded-xl bg-slate-950/40 p-2">
+        <div class="max-h-36 overflow-y-auto mb-4 border border-slate-800 rounded-xl bg-slate-950/40 p-2">
             <table class="w-full text-xs text-left">
                 <thead><tr class="border-b border-slate-800 text-slate-400"><th class="p-2">№</th><th class="p-2">Вопрос</th><th class="p-2 text-center">Статус</th></tr></thead>
                 <tbody id="res-tbody" class="divide-y divide-slate-800/50"></tbody>
             </table>
         </div>
 
-        <!-- ТАБЛИЦА ЛИДЕРОВ ЭТОЙ ВИКТОРИНЫ (ПОКАЗЫВАЕТСЯ ТОЛЬКО ПОСЛЕ ЗАВЕРШЕНИЯ) -->
-        <h3 class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">📊 Таблица участников этой викторины:</h3>
-        <div class="max-h-40 overflow-y-auto mb-4 border border-indigo-500/30 rounded-xl bg-slate-950/60 p-2">
+        <!-- ТАБЛИЦА ЛИДЕРОВ ЭТОЙ ВИКТОРИНЫ -->
+        <h3 class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">📊 Участники этой викторины:</h3>
+        <div class="max-h-36 overflow-y-auto mb-4 border border-indigo-500/30 rounded-xl bg-slate-950/60 p-2">
             <table class="w-full text-xs text-left">
-                <thead><tr class="border-b border-slate-800 text-slate-400"><th class="p-2">Участник</th><th class="p-2 text-center">Баллы</th><th class="p-2 text-center">Время</th></tr></thead>
+                <thead><tr class="border-b border-slate-800 text-slate-400"><th class="p-2">Участник</th><th class="p-2 text-center">Баллы</th><th id="th-time-header" class="p-2 text-center hidden">Время</th></tr></thead>
                 <tbody id="quiz-leaderboard-tbody" class="divide-y divide-slate-800/50"></tbody>
             </table>
         </div>
@@ -190,12 +190,12 @@
         </div>
     </div>
 
-    <!-- ПАНЕЛЬ ОРГАНИЗАТОРА -->
+    <!-- ПАНЕЛЬ ОРГАНИЗАТОРА (ГРУППИРОВКА ПО ВИКТОРИНАМ) -->
     <div id="organizer-screen" class="hidden animate-fade-in">
         <h2 class="text-xl font-bold mb-1">Панель организатора 📊</h2>
-        <p class="text-slate-400 text-xs mb-3">Нажмите на карточку игрока для просмотра статистики по категориям:</p>
+        <p class="text-slate-400 text-xs mb-3">Результаты участников, сгруппированные по викторинам:</p>
         
-        <div id="org-list-container" class="space-y-3 max-h-80 overflow-y-auto pr-1 mb-4"></div>
+        <div id="org-list-container" class="space-y-4 max-h-80 overflow-y-auto pr-1 mb-4"></div>
         
         <button onclick="showScreen('home-screen')" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold py-2.5 rounded-xl transition-all text-sm">
             ← Назад
@@ -224,7 +224,7 @@
         </button>
     </div>
 
-    <!-- МОДАЛЬНОЕ ОКНО ДЕТАЛЬНОЙ СТАТИСТИКИ ИГРОКА (ПО КАТЕГОРИЯМ) -->
+    <!-- МОДАЛЬНОЕ ОКНО СТАТИСТИКИ ПО ВСЕМ КАТЕГОРИЯМ (ЦВЕТОВАЯ ИНДИКАЦИЯ) -->
     <div id="player-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center p-4 z-50">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-lg w-full animate-fade-in shadow-2xl">
             <h3 id="modal-player-title" class="text-lg font-bold text-indigo-400 mb-2">Статистика игрока</h3>
@@ -252,7 +252,7 @@
     let sessionResults = [];
     let existingAttemptId = null;
     let accumulatedTimeSec = 0;
-    let editingQuizId = null; // ID викторины, если открыта на редактирование
+    let editingQuizId = null;
     
     let questionStartTime = 0;
     let sessionStartTime = 0;
@@ -349,7 +349,6 @@
         const winnerInput = document.getElementById('quiz-winner-input');
         winnerInput.value = quizToEdit ? (quizToEdit.winner_name || '') : '';
 
-        // Поле победителя доступно для изменения ТОЛЬКО организатору
         const winnerWrapper = document.getElementById('winner-input-wrapper');
         if (currentUser.email === ADMIN_EMAIL) {
             winnerWrapper.classList.remove('hidden');
@@ -582,7 +581,6 @@
         }
 
         if (editingQuizId) {
-            // Обновляем существующую викторину
             const { error: updateErr } = await supabaseClient
                 .from('quizzes')
                 .update({ title, winner_name: winnerName })
@@ -590,7 +588,6 @@
 
             if (updateErr) { alert('Ошибка обновления: ' + updateErr.message); return; }
 
-            // Удаляем старые вопросы и записываем новые
             await supabaseClient.from('questions').delete().eq('quiz_id', editingQuizId);
             const formattedQuestions = questionsToSave.map(q => ({ ...q, quiz_id: editingQuizId }));
             const { error: qError } = await supabaseClient.from('questions').insert(formattedQuestions);
@@ -598,7 +595,6 @@
             if (qError) { alert('Ошибка сохранения вопросов: ' + qError.message); return; }
             alert('Викторина успешно обновлена!');
         } else {
-            // Создаем новую викторину
             const { data: quizData, error: quizError } = await supabaseClient
                 .from('quizzes')
                 .insert([{ title, winner_name: winnerName }])
@@ -719,7 +715,7 @@
             document.getElementById('save-exit-btn').classList.replace('w-full', 'w-1/2');
         } else {
             skipBtn.classList.add('hidden');
-            document.getElementById('save-exit-btn').classList.replace('1/2', 'w-full');
+            document.getElementById('save-exit-btn').classList.replace('w-1/2', 'w-full');
         }
 
         document.getElementById('next-q-btn').classList.add('hidden');
@@ -861,7 +857,6 @@
             winnerContainer.classList.add('hidden');
         }
 
-        // Загружаем таблицу участников данной викторины
         await loadQuizLeaderboard(currentQuiz.id);
 
         document.getElementById('res-review-btn').onclick = () => reviewQuiz(currentQuizIdx);
@@ -877,20 +872,32 @@
             .order('total_time', { ascending: true });
 
         const tbody = document.getElementById('quiz-leaderboard-tbody');
+        const timeHeader = document.getElementById('th-time-header');
+        const isAdmin = (currentUser.email === ADMIN_EMAIL);
+
         tbody.innerHTML = '';
 
+        if (isAdmin) {
+            timeHeader.classList.remove('hidden');
+        } else {
+            timeHeader.classList.add('hidden');
+        }
+
         if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" class="p-2 text-slate-500 text-center">Пока нет результатов.</td></tr>';
+            const colSpan = isAdmin ? 3 : 2;
+            tbody.innerHTML = `<tr><td colspan="${colSpan}" class="p-2 text-slate-500 text-center">Пока нет результатов.</td></tr>`;
             return;
         }
 
         data.forEach(att => {
             const isMe = (att.user_email === currentNickname) ? ' text-indigo-300 font-bold' : ' text-slate-300';
+            let timeTd = isAdmin ? `<td class="p-2 text-center text-slate-400">${att.total_time || 0}с</td>` : '';
+            
             tbody.innerHTML += `
                 <tr class="border-b border-slate-800/50">
                     <td class="p-2${isMe}">👤 ${att.user_email}</td>
                     <td class="p-2 text-center font-bold text-emerald-400">${att.score}</td>
-                    <td class="p-2 text-center text-slate-400">${att.total_time || 0}с</td>
+                    ${timeTd}
                 </tr>
             `;
         });
@@ -943,14 +950,15 @@
         showScreen('review-screen');
     }
 
-    // ПАНЕЛЬ ОРГАНИЗАТОРА (С РАЗДЕЛЬНЫМИ КАРТОЧКАМИ И СТАТИСТИКОЙ ПО КАТЕГОРИЯМ)
+    // ПАНЕЛЬ ОРГАНИЗАТОРА (ГРУППИРОВКА ПО ВИКТОРИНАМ)
     async function openOrganizerDashboard() {
         if (!quizzes || quizzes.length === 0) {
             const { data: qData } = await supabaseClient.from('quizzes').select('*, questions(*)');
             quizzes = qData || [];
         }
 
-        const { data, error } = await supabaseClient
+        // Загружаем все попытки и всех пользователей со всеми detailed_results для глобальной статистики категорий
+        const { data: attempts, error } = await supabaseClient
             .from('quiz_attempts')
             .select('*');
 
@@ -962,88 +970,121 @@
         const container = document.getElementById('org-list-container');
         container.innerHTML = '';
 
-        if (!data || data.length === 0) {
+        if (!attempts || attempts.length === 0) {
             container.innerHTML = '<p class="text-slate-500 text-center text-sm p-4">Пока нет результатов участников в базе данных.</p>';
-        } else {
-            data.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+            showScreen('organizer-screen');
+            return;
+        }
 
-            data.forEach((att) => {
-                const matchedQuiz = quizzes.find(q => q.id === att.quiz_id);
-                const quizTitle = matchedQuiz ? matchedQuiz.title : 'Удаленная викторина';
-                const statusMark = att.is_completed === false ? '<span class="text-xs text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md">В процессе</span>' : '<span class="text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md">Завершено</span>';
-                
-                container.innerHTML += `
-                    <div class="bg-slate-950/70 border border-slate-800 hover:border-indigo-500/50 p-4 rounded-2xl cursor-pointer transition-all space-y-2 shadow-md" onclick='openPlayerDetails(${JSON.stringify(att).replace(/'/g, "&apos;")})'>
-                        <div class="flex justify-between items-center">
-                            <span class="font-bold text-indigo-300 text-sm">👤 ${att.user_email}</span>
-                            ${statusMark}
-                        </div>
-                        <div class="text-xs text-slate-300 flex justify-between items-center border-t border-slate-800/60 pt-2">
-                            <span>Викторина: <b class="text-slate-100">${quizTitle}</b></span>
-                            <div class="flex gap-3">
-                                <span>Баллы: <b class="text-emerald-400 font-bold">${att.score}</b></span>
-                                <span>⏱️ ${att.total_time || 0}с</span>
+        // Группируем попытки по викторинам
+        const groupedByQuiz = {};
+        attempts.forEach(att => {
+            if (!groupedByQuiz[att.quiz_id]) {
+                groupedByQuiz[att.quiz_id] = [];
+            }
+            groupedByQuiz[att.quiz_id].push(att);
+        });
+
+        quizzes.forEach(quiz => {
+            const quizAttempts = groupedByQuiz[quiz.id] || [];
+            
+            let attemptsHtml = '';
+            if (quizAttempts.length === 0) {
+                attemptsHtml = '<p class="text-slate-500 text-xs py-2">Никто еще не проходил эту викторину.</p>';
+            } else {
+                quizAttempts.sort((a, b) => b.score - a.score || a.total_time - b.total_time);
+                quizAttempts.forEach(att => {
+                    const statusMark = att.is_completed === false ? '<span class="text-[10px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md">В процессе</span>' : '<span class="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md">Завершено</span>';
+                    
+                    attemptsHtml += `
+                        <div class="bg-slate-950/80 border border-slate-800 hover:border-indigo-500/50 p-3 rounded-xl cursor-pointer transition-all flex justify-between items-center" onclick='openPlayerDetails("${att.user_email}", ${JSON.stringify(attempts).replace(/'/g, "&apos;")})'>
+                            <div class="space-y-0.5">
+                                <span class="font-bold text-indigo-300 text-sm">👤 ${att.user_email}</span>
+                                <div class="text-[11px] text-slate-400">⏱️ ${att.total_time || 0}с</div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="text-xs">Баллы: <b class="text-emerald-400 font-bold">${att.score}</b></span>
+                                ${statusMark}
                             </div>
                         </div>
+                    `;
+                });
+            }
+
+            container.innerHTML += `
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-3 shadow-md">
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                        <h3 class="font-bold text-slate-100 text-sm">🎯 ${quiz.title}</h3>
+                        <span class="text-xs text-slate-400">Попыток: ${quizAttempts.length}</span>
                     </div>
-                `;
-            });
-        }
+                    <div class="space-y-2">
+                        ${attemptsHtml}
+                    </div>
+                </div>
+            `;
+        });
+
         showScreen('organizer-screen');
     }
 
-    // СТАТИСТИКА ПО КАТЕГОРИЯМ В МОДАЛЬНОМ ОКНЕ
-    function openPlayerDetails(att) {
-        document.getElementById('modal-player-title').innerText = `Статистика игрока: ${att.user_email}`;
+    // СТАТИСТИКА ПО ВСЕМ КАТЕГОРИЯМ СО ВСЕХ ВИКТОРИН (С ЦВЕТОВОЙ ИНДИКАЦИЕЙ)
+    function openPlayerDetails(userEmail, allAttempts) {
+        document.getElementById('modal-player-title').innerText = `Статистика игрока: ${userEmail}`;
         const content = document.getElementById('modal-player-content');
         
+        // Собираем ВСЕ ответы конкретного участника по всем викторинам для глобальной статистики категорий
+        const userAttempts = allAttempts.filter(a => a.user_email === userEmail);
+        const globalStats = {};
+        let totalScoreAll = 0;
+        let totalTimeAll = 0;
+
+        userAttempts.forEach(att => {
+            totalScoreAll += (att.score || 0);
+            totalTimeAll += (att.total_time || 0);
+            if (att.detailed_results && Array.isArray(att.detailed_results)) {
+                att.detailed_results.forEach(res => {
+                    const cat = res.category || 'Общие';
+                    if (!globalStats[cat]) globalStats[cat] = { correct: 0, total: 0 };
+                    globalStats[cat].total++;
+                    if (res.is_correct) globalStats[cat].correct++;
+                });
+            }
+        });
+
         let html = `
             <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 mb-3 space-y-1">
-                <p class="text-slate-300">Общее время: <b class="text-slate-100">${att.total_time} сек.</b></p>
-                <p class="text-slate-300">Общий результат: <b class="text-emerald-400">${att.score} правильных ответов</b></p>
+                <p class="text-slate-300">Суммарное время: <b class="text-slate-100">${totalTimeAll} сек.</b></p>
+                <p class="text-slate-300">Всего правильных ответов: <b class="text-emerald-400">${totalScoreAll}</b></p>
             </div>
-            <h4 class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">📊 Статистика по категориям:</h4>
+            <h4 class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">📊 Суммарная статистика по категориям (все викторины):</h4>
         `;
 
-        if (att.detailed_results && att.detailed_results.length > 0) {
-            // Считаем статистику по каждой категории
-            const stats = {};
-            att.detailed_results.forEach(res => {
-                const cat = res.category || 'Общие';
-                if (!stats[cat]) stats[cat] = { correct: 0, total: 0 };
-                stats[cat].total++;
-                if (res.is_correct) stats[cat].correct++;
-            });
-
+        if (Object.keys(globalStats).length > 0) {
             html += `<div class="space-y-2 mb-4">`;
-            for (const [cat, data] of Object.entries(stats)) {
+            for (const [cat, data] of Object.entries(globalStats)) {
                 const percent = Math.round((data.correct / data.total) * 100);
+                
+                // Цветовая индикация в зависимости от процента:
+                // <= 33% -> красный
+                // > 33% и <= 66% -> желтый
+                // > 66% -> зеленый
+                let colorClass = 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400';
+                if (percent <= 33) {
+                    colorClass = 'bg-red-500/10 border-red-500/30 text-red-400';
+                } else if (percent <= 66) {
+                    colorClass = 'bg-amber-500/10 border-amber-500/30 text-amber-400';
+                }
+
                 html += `
-                    <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
-                        <span class="font-medium text-slate-200">${cat}</span>
-                        <span class="text-emerald-400 font-bold">${data.correct} / ${data.total} (${percent}%)</span>
+                    <div class="p-2.5 rounded-xl border ${colorClass} flex justify-between items-center text-xs font-medium">
+                        <span>${cat}</span>
+                        <span>${data.correct} / ${data.total} верных (${percent}%)</span>
                     </div>
                 `;
             }
             html += `</div>`;
-
-            html += `<h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Детали по вопросам:</h4><div class="space-y-2">`;
-            att.detailed_results.forEach((res, i) => {
-                const badge = res.is_correct ? '<span class="text-emerald-400 font-semibold">Верно ✅</span>' : '<span class="text-red-400 font-semibold">Ошибка ❌</span>';
-                html += `
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1">
-                        <div class="flex justify-between text-[11px] text-slate-400">
-                            <span>Вопрос ${i + 1} • <strong class="text-indigo-300">${res.category}</strong></span>
-                            <span>⏱️ ${res.time_spent}с</span>
-                        </div>
-                        <p class="font-semibold text-slate-200">${res.question_text}</p>
-                        <div>${badge}</div>
-                    </div>
-                `;
-            });
-            html += `</div>`;
         } else {
-            html += '<p class="text-slate-500">Детальные ответы по вопросам отсутствуют.</p>';
+            html += '<p class="text-slate-500 mb-4">Нет данных по категориям.</p>';
         }
 
         content.innerHTML = html;
@@ -1061,7 +1102,6 @@
             quizzes = qData || [];
         }
 
-        // Подсчитываем победы из поля winner_name у каждой викторины
         const winCounts = {};
         quizzes.forEach(q => {
             if (q.winner_name) {
@@ -1070,7 +1110,6 @@
             }
         });
 
-        // Сортируем по убыванию побед
         const sortedWinners = Object.keys(winCounts).map(name => ({
             name,
             wins: winCounts[name]
