@@ -64,8 +64,12 @@
 
     <!-- ГЛАВНЫЙ ЭКРАН -->
     <div id="home-screen" class="hidden animate-fade-in">
-        <h1 class="text-2xl font-bold mb-1">Доступные викторины 🎯</h1>
-        <p class="text-slate-400 text-sm mb-6">Выберите интересную викторину из списка и проверьте свои силы!</p>
+        <div class="flex justify-between items-center mb-4">
+            <h1 class="text-2xl font-bold">Доступные викторины 🎯</h1>
+            <button onclick="openMonthlyLeaderboard()" class="bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 text-xs font-semibold px-3 py-2 rounded-xl transition-all flex items-center gap-1.5">
+                🏆 Топ месяца
+            </button>
+        </div>
         
         <div id="quiz-list" class="space-y-3 max-h-72 overflow-y-auto pr-1"></div>
         
@@ -83,62 +87,21 @@
         </div>
     </div>
 
-    <!-- КОНСТРУКТОР ВИКТОРИН -->
+    <!-- КОНСТРУКТОР И РЕДАКТОР ВИКТОРИН -->
     <div id="creator-screen" class="hidden animate-fade-in">
-        <h2 class="text-xl font-bold mb-4">Конструктор викторины</h2>
+        <h2 id="creator-screen-title" class="text-xl font-bold mb-4">Конструктор викторины</h2>
         <div class="mb-4 space-y-3">
             <div>
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Название викторины</label>
                 <input type="text" id="quiz-title-input" placeholder="Например: Исторический квиз" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-indigo-500">
             </div>
-            <div>
-                <label class="block text-xs font-semibold text-emerald-400 mb-1">🏆 Победитель викторины (вписать после подсчета)</label>
-                <input type="text" id="quiz-winner-input" placeholder="Имя или ник победителя" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-emerald-500">
+            <div id="winner-input-wrapper">
+                <label class="block text-xs font-semibold text-emerald-400 mb-1">🏆 Победитель викторины (может менять только организатор)</label>
+                <input type="text" id="quiz-winner-input" placeholder="Ник победителя этой викторины" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-emerald-500">
             </div>
         </div>
         
-        <div id="questions-container" class="space-y-4 max-h-56 overflow-y-auto pr-1 mb-4">
-            <div class="question-block bg-slate-950/50 border border-slate-800 p-4 rounded-2xl space-y-3">
-                <div class="flex justify-between items-center"><span class="text-xs font-bold text-slate-400">Вопрос 1</span></div>
-                <input type="text" class="q-text w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Текст вопроса">
-                
-                <div>
-                    <label class="block text-xs text-slate-400 mb-1">Категория</label>
-                    <select class="q-cat w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
-                        <option value="История">История</option>
-                        <option value="Кино/Сериалы">Кино/Сериалы</option>
-                        <option value="Музыка">Музыка</option>
-                        <option value="Литература">Литература</option>
-                        <option value="Спорт">Спорт</option>
-                        <option value="Мода и стиль">Мода и стиль</option>
-                        <option value="Автомобили">Автомобили</option>
-                        <option value="Астрономия">Астрономия</option>
-                        <option value="Русский язык">Русский язык</option>
-                        <option value="Анатомия">Анатомия</option>
-                        <option value="Пословицы/Поговорки">Пословицы/Поговорки</option>
-                        <option value="СССР">СССР</option>
-                        <option value="Общие" selected>Общие</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-xs text-slate-400 mb-1">Ссылка на медиа (картинка, видео, аудио)</label>
-                    <input type="text" class="q-media w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="https://example.com/audio.mp3">
-                </div>
-
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="text" class="opt-0 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Вариант 1">
-                    <input type="text" class="opt-1 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Вариант 2">
-                    <input type="text" class="opt-2 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Вариант 3">
-                    <input type="text" class="opt-3 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Вариант 4">
-                </div>
-
-                <div class="flex items-center gap-2">
-                    <label class="text-xs text-slate-400">Правильный вариант (1-4):</label>
-                    <input type="number" class="q-correct w-16 px-2 py-1 bg-slate-900 border border-slate-800 rounded-lg text-sm text-center text-slate-100" min="1" max="4" value="1">
-                </div>
-            </div>
-        </div>
+        <div id="questions-container" class="space-y-4 max-h-56 overflow-y-auto pr-1 mb-4"></div>
 
         <button onclick="addQuestionField()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold py-2.5 rounded-xl transition-all text-sm mb-2">
             ➕ Добавить вопрос
@@ -163,7 +126,6 @@
         
         <div id="q-options" class="space-y-3"></div>
         
-        <!-- Нижняя панель кнопок управления -->
         <div class="mt-5 space-y-2">
             <button id="next-q-btn" class="hidden w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-indigo-600/20 animate-fade-in" onclick="nextQuestion()">
                 Следующий вопрос ➡️
@@ -182,7 +144,7 @@
     <!-- ПРОСМОТР ВОПРОСОВ -->
     <div id="review-screen" class="hidden animate-fade-in">
         <h2 id="review-quiz-title" class="text-xl font-bold mb-1">Просмотр вопросов</h2>
-        <p class="text-slate-400 text-xs mb-4">Вы уже прошли эту викторину. Здесь вы можете изучить все вопросы и правильные ответы:</p>
+        <p class="text-slate-400 text-xs mb-4">Вы уже прошли эту викторину. Изучите все вопросы и правильные ответы:</p>
         
         <div id="review-questions-list" class="space-y-4 max-h-96 overflow-y-auto pr-1 mb-4"></div>
         
@@ -202,16 +164,25 @@
         </div>
 
         <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Ваши результаты по вопросам:</h3>
-        <div class="max-h-48 overflow-y-auto mb-4 border border-slate-800 rounded-xl bg-slate-950/40 p-2">
+        <div class="max-h-40 overflow-y-auto mb-4 border border-slate-800 rounded-xl bg-slate-950/40 p-2">
             <table class="w-full text-xs text-left">
                 <thead><tr class="border-b border-slate-800 text-slate-400"><th class="p-2">№</th><th class="p-2">Вопрос</th><th class="p-2 text-center">Статус</th></tr></thead>
                 <tbody id="res-tbody" class="divide-y divide-slate-800/50"></tbody>
             </table>
         </div>
 
+        <!-- ТАБЛИЦА ЛИДЕРОВ ЭТОЙ ВИКТОРИНЫ (ПОКАЗЫВАЕТСЯ ТОЛЬКО ПОСЛЕ ЗАВЕРШЕНИЯ) -->
+        <h3 class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">📊 Таблица участников этой викторины:</h3>
+        <div class="max-h-40 overflow-y-auto mb-4 border border-indigo-500/30 rounded-xl bg-slate-950/60 p-2">
+            <table class="w-full text-xs text-left">
+                <thead><tr class="border-b border-slate-800 text-slate-400"><th class="p-2">Участник</th><th class="p-2 text-center">Баллы</th><th class="p-2 text-center">Время</th></tr></thead>
+                <tbody id="quiz-leaderboard-tbody" class="divide-y divide-slate-800/50"></tbody>
+            </table>
+        </div>
+
         <div class="flex gap-2">
             <button id="res-review-btn" class="w-1/2 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 font-semibold py-3 rounded-xl transition-all border border-indigo-500/30 text-sm">
-                👁️ Посмотреть вопросы
+                👁️ Вопросы
             </button>
             <button onclick="showScreen('home-screen')" class="w-1/2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-indigo-600/20 text-sm">
                 На главную
@@ -222,27 +193,38 @@
     <!-- ПАНЕЛЬ ОРГАНИЗАТОРА -->
     <div id="organizer-screen" class="hidden animate-fade-in">
         <h2 class="text-xl font-bold mb-1">Панель организатора 📊</h2>
-        <p class="text-slate-400 text-xs mb-3">Нажмите на ник игрока для детальной статистики:</p>
+        <p class="text-slate-400 text-xs mb-3">Нажмите на карточку игрока для просмотра статистики по категориям:</p>
         
-        <div class="max-h-80 overflow-y-auto border border-slate-800 rounded-xl bg-slate-950/40 p-2 mb-4">
-            <table class="w-full text-xs text-left">
-                <thead>
-                    <tr class="border-b border-slate-800 text-slate-400">
-                        <th class="p-2">Ник</th>
-                        <th class="p-2">Викторина</th>
-                        <th class="p-2 text-center">Баллы</th>
-                        <th class="p-2 text-center">Время</th>
-                    </tr>
-                </thead>
-                <tbody id="org-tbody" class="divide-y divide-slate-800/50"></tbody>
-            </table>
-        </div>
+        <div id="org-list-container" class="space-y-3 max-h-80 overflow-y-auto pr-1 mb-4"></div>
+        
         <button onclick="showScreen('home-screen')" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold py-2.5 rounded-xl transition-all text-sm">
             ← Назад
         </button>
     </div>
 
-    <!-- МОДАЛЬНОЕ ОКНО ДЕТАЛЬНОЙ СТАТИСТИКИ ИГРОКА -->
+    <!-- ОБЩИЙ ЛИДЕРБОРД МЕСЯЦА -->
+    <div id="monthly-screen" class="hidden animate-fade-in">
+        <h2 class="text-xl font-bold mb-1">🏆 Топ месяца (Победы)</h2>
+        <p class="text-slate-400 text-xs mb-4">Рейтинг участников по количеству побед в викторинах текущего месяца:</p>
+        
+        <div class="max-h-80 overflow-y-auto border border-slate-800 rounded-xl bg-slate-950/40 p-2 mb-4">
+            <table class="w-full text-xs text-left">
+                <thead>
+                    <tr class="border-b border-slate-800 text-slate-400">
+                        <th class="p-2">Место</th>
+                        <th class="p-2">Участник</th>
+                        <th class="p-2 text-center">Побед в месяце 🏆</th>
+                    </tr>
+                </thead>
+                <tbody id="monthly-tbody" class="divide-y divide-slate-800/50"></tbody>
+            </table>
+        </div>
+        <button onclick="showScreen('home-screen')" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold py-2.5 rounded-xl transition-all text-sm">
+            ← На главную
+        </button>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО ДЕТАЛЬНОЙ СТАТИСТИКИ ИГРОКА (ПО КАТЕГОРИЯМ) -->
     <div id="player-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center p-4 z-50">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-lg w-full animate-fade-in shadow-2xl">
             <h3 id="modal-player-title" class="text-lg font-bold text-indigo-400 mb-2">Статистика игрока</h3>
@@ -267,9 +249,10 @@
     let currentQuiz = null;
     let currentQuizIdx = 0;
     let currentQIndex = 0;
-    let sessionResults = []; // массив ответов текущей сессии
-    let existingAttemptId = null; // ID незавершенной попытки в БД
-    let accumulatedTimeSec = 0; // время из прошлых сессий
+    let sessionResults = [];
+    let existingAttemptId = null;
+    let accumulatedTimeSec = 0;
+    let editingQuizId = null; // ID викторины, если открыта на редактирование
     
     let questionStartTime = 0;
     let sessionStartTime = 0;
@@ -351,59 +334,43 @@
     }
 
     function showScreen(id) {
-        ['auth-screen', 'nickname-screen', 'home-screen', 'creator-screen', 'play-screen', 'review-screen', 'result-screen', 'organizer-screen'].forEach(s => {
+        ['auth-screen', 'nickname-screen', 'home-screen', 'creator-screen', 'play-screen', 'review-screen', 'result-screen', 'organizer-screen', 'monthly-screen'].forEach(s => {
             document.getElementById(s).classList.add('hidden');
         });
         document.getElementById(id).classList.remove('hidden');
         if (id === 'home-screen') loadQuizzes();
     }
 
-    function openCreator() {
-        document.getElementById('quiz-title-input').value = '';
-        document.getElementById('quiz-winner-input').value = '';
+    function openCreator(quizToEdit = null) {
+        editingQuizId = quizToEdit ? quizToEdit.id : null;
+        document.getElementById('creator-screen-title').innerText = quizToEdit ? 'Редактирование викторины ✍️' : 'Конструктор викторины ✨';
+        document.getElementById('quiz-title-input').value = quizToEdit ? quizToEdit.title : '';
+        
+        const winnerInput = document.getElementById('quiz-winner-input');
+        winnerInput.value = quizToEdit ? (quizToEdit.winner_name || '') : '';
+
+        // Поле победителя доступно для изменения ТОЛЬКО организатору
+        const winnerWrapper = document.getElementById('winner-input-wrapper');
+        if (currentUser.email === ADMIN_EMAIL) {
+            winnerWrapper.classList.remove('hidden');
+        } else {
+            winnerWrapper.classList.add('hidden');
+        }
+
         const container = document.getElementById('questions-container');
-        container.innerHTML = `
-            <div class="question-block bg-slate-950/50 border border-slate-800 p-4 rounded-2xl space-y-3">
-                <div class="flex justify-between items-center"><span class="text-xs font-bold text-slate-400">Вопрос 1</span></div>
-                <input type="text" class="q-text w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Текст вопроса">
-                <div>
-                    <label class="block text-xs text-slate-400 mb-1">Категория</label>
-                    <select class="q-cat w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
-                        <option value="История">История</option>
-                        <option value="Кино/Сериалы">Кино/Сериалы</option>
-                        <option value="Музыка">Музыка</option>
-                        <option value="Литература">Литература</option>
-                        <option value="Спорт">Спорт</option>
-                        <option value="Мода и стиль">Мода и стиль</option>
-                        <option value="Автомобили">Автомобили</option>
-                        <option value="Астрономия">Астрономия</option>
-                        <option value="Русский язык">Русский язык</option>
-                        <option value="Анатомия">Анатомия</option>
-                        <option value="Пословицы/Поговорки">Пословицы/Поговорки</option>
-                        <option value="СССР">СССР</option>
-                        <option value="Общие" selected>Общие</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs text-slate-400 mb-1">Ссылка на медиа (картинка, видео, аудио)</label>
-                    <input type="text" class="q-media w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="https://example.com/audio.mp3">
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="text" class="opt-0 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Вариант 1">
-                    <input type="text" class="opt-1 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Вариант 2">
-                    <input type="text" class="opt-2 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Вариант 3">
-                    <input type="text" class="opt-3 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Вариант 4">
-                </div>
-                <div class="flex items-center gap-2">
-                    <label class="text-xs text-slate-400">Правильный вариант (1-4):</label>
-                    <input type="number" class="q-correct w-16 px-2 py-1 bg-slate-900 border border-slate-800 rounded-lg text-sm text-center text-slate-100" min="1" max="4" value="1">
-                </div>
-            </div>
-        `;
+        container.innerHTML = '';
+
+        if (quizToEdit && quizToEdit.questions && quizToEdit.questions.length > 0) {
+            quizToEdit.questions.forEach((q, idx) => {
+                addQuestionField(q, idx + 1);
+            });
+        } else {
+            addQuestionField();
+        }
+
         showScreen('creator-screen');
     }
 
-    // Вспомогательная функция для получения локального прогресса на случай сбоя колонок БД
     function getLocalAttemptsMap() {
         try {
             return JSON.parse(localStorage.getItem(`quiz_progress_${currentNickname}`) || '{}');
@@ -423,14 +390,12 @@
         if (error) return;
         quizzes = data || [];
         
-        // Сортируем вопросы внутри каждой викторины по ID, чтобы порядок всегда был одинаковым
         quizzes.forEach(q => {
             if (q.questions) {
                 q.questions.sort((a, b) => (a.id > b.id ? 1 : -1));
             }
         });
 
-        // Загружаем попытки пользователя из Supabase
         const { data: attempts } = await supabaseClient
             .from('quiz_attempts')
             .select('*')
@@ -444,7 +409,6 @@
                 attemptsByQuizId[a.quiz_id] = a;
             });
         }
-        // Дополняем из локального хранилища, если в БД еще не добавлены колонки
         Object.keys(localMap).forEach(qId => {
             if (!attemptsByQuizId[qId]) {
                 attemptsByQuizId[qId] = localMap[qId];
@@ -471,7 +435,6 @@
 
             let actionButtons = '';
             if (isCompleted) {
-                // Викторина полностью пройдена: повторное прохождение запрещено, доступны Результаты и Вопросы
                 actionButtons = `
                     <button onclick="openResultsForQuiz(${idx})" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3 py-2 rounded-xl transition-all border border-slate-700">
                         📊 Результаты
@@ -481,7 +444,6 @@
                     </button>
                 `;
             } else if (isInProgress) {
-                // Есть сохраненный прогресс: можно только продолжить с оставшихся вопросов
                 actionButtons = `
                     <button onclick="startQuiz(${idx})" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold px-3.5 py-2 rounded-xl transition-all shadow-md shadow-amber-600/20">
                         ▶️ Продолжить (${answeredCount}/${totalQ})
@@ -495,9 +457,12 @@
                 `;
             }
 
-            let deleteBtn = '';
+            let adminButtons = '';
             if (isAdmin) {
-                deleteBtn = `
+                adminButtons = `
+                    <button onclick='openCreator(${JSON.stringify(q).replace(/'/g, "&apos;")})' class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-2.5 py-2 rounded-xl border border-slate-700 transition-all" title="Редактировать">
+                        ✏️
+                    </button>
                     <button class="delete-quiz-btn bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs px-2.5 py-2 rounded-xl border border-red-500/20 transition-all" data-id="${q.id}" data-title="${q.title.replace(/"/g, '&quot;')}" title="Удалить викторину">
                         🗑️
                     </button>
@@ -515,7 +480,7 @@
                     </div>
                     <div class="flex items-center gap-2">
                         ${actionButtons}
-                        ${deleteBtn}
+                        ${adminButtons}
                     </div>
                 </div>
             `;
@@ -546,45 +511,48 @@
         }
     }
 
-    function addQuestionField() {
+    function addQuestionField(existingData = null, customNum = null) {
         const container = document.getElementById('questions-container');
-        const count = container.getElementsByClassName('question-block').length + 1;
+        const count = customNum || (container.getElementsByClassName('question-block').length + 1);
+        
+        const qText = existingData ? existingData.question_text : '';
+        const qCat = existingData ? (existingData.category || 'Общие') : 'Общие';
+        const qMedia = existingData ? (existingData.media_url || '') : '';
+        const opts = existingData && existingData.options ? existingData.options : ['', '', '', ''];
+        const correctVal = existingData && typeof existingData.correct_index === 'number' ? (existingData.correct_index + 1) : 1;
+
+        const categoriesList = [
+            "История", "Кино/Сериалы", "Музыка", "Литература", "Спорт", 
+            "Мода и стиль", "Автомобили", "Астрономия", "Русский язык", 
+            "Анатомия", "Пословицы/Поговорки", "СССР", "Общие"
+        ];
+
+        let optionsHtml = categoriesList.map(cat => `<option value="${cat}" ${cat === qCat ? 'selected' : ''}>${cat}</option>`).join('');
+
         const block = document.createElement('div');
         block.className = 'question-block bg-slate-950/50 border border-slate-800 p-4 rounded-2xl space-y-3 animate-fade-in';
         block.innerHTML = `
             <div class="flex justify-between items-center"><span class="text-xs font-bold text-slate-400">Вопрос ${count}</span></div>
-            <input type="text" class="q-text w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Текст вопроса">
+            <input type="text" class="q-text w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Текст вопроса" value="${qText}">
             <div>
                 <label class="block text-xs text-slate-400 mb-1">Категория</label>
                 <select class="q-cat w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
-                    <option value="История">История</option>
-                    <option value="Кино/Сериалы">Кино/Сериалы</option>
-                    <option value="Музыка">Музыка</option>
-                    <option value="Литература">Литература</option>
-                    <option value="Спорт">Спорт</option>
-                    <option value="Мода и стиль">Мода и стиль</option>
-                    <option value="Автомобили">Автомобили</option>
-                    <option value="Астрономия">Астрономия</option>
-                    <option value="Русский язык">Русский язык</option>
-                    <option value="Анатомия">Анатомия</option>
-                    <option value="Пословицы/Поговорки">Пословицы/Поговорки</option>
-                    <option value="СССР">СССР</option>
-                    <option value="Общие" selected>Общие</option>
+                    ${optionsHtml}
                 </select>
             </div>
             <div>
                 <label class="block text-xs text-slate-400 mb-1">Ссылка на медиа (картинка, видео, аудио)</label>
-                <input type="text" class="q-media w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="https://example.com/audio.mp3">
+                <input type="text" class="q-media w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="https://example.com/audio.mp3" value="${qMedia}">
             </div>
             <div class="grid grid-cols-2 gap-2">
-                <input type="text" class="opt-0 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Вариант 1">
-                <input type="text" class="opt-1 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Вариант 2">
-                <input type="text" class="opt-2 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Вариант 3">
-                <input type="text" class="opt-3 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Вариант 4">
+                <input type="text" class="opt-0 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Вариант 1" value="${opts[0]}">
+                <input type="text" class="opt-1 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Вариант 2" value="${opts[1]}">
+                <input type="text" class="opt-2 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Вариант 3" value="${opts[2]}">
+                <input type="text" class="opt-3 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Вариант 4" value="${opts[3]}">
             </div>
             <div class="flex items-center gap-2">
                 <label class="text-xs text-slate-400">Правильный вариант (1-4):</label>
-                <input type="number" class="q-correct w-16 px-2 py-1 bg-slate-900 border border-slate-800 rounded-lg text-sm text-center text-slate-100" min="1" max="4" value="1">
+                <input type="number" class="q-correct w-16 px-2 py-1 bg-slate-900 border border-slate-800 rounded-lg text-sm text-center text-slate-100" min="1" max="4" value="${correctVal}">
             </div>
         `;
         container.appendChild(block);
@@ -613,19 +581,43 @@
             questionsToSave.push({ question_text: text, category, media_url: mediaUrl, options: opts, correct_index: correct });
         }
 
-        const { data: quizData, error: quizError } = await supabaseClient.from('quizzes').insert([{ title, winner_name: winnerName }]).select();
-        if (quizError) { alert('Ошибка создания: ' + quizError.message); return; }
+        if (editingQuizId) {
+            // Обновляем существующую викторину
+            const { error: updateErr } = await supabaseClient
+                .from('quizzes')
+                .update({ title, winner_name: winnerName })
+                .eq('id', editingQuizId);
 
-        const quizId = quizData[0].id;
-        const formattedQuestions = questionsToSave.map(q => ({ ...q, quiz_id: quizId }));
-        const { error: qError } = await supabaseClient.from('questions').insert(formattedQuestions);
-        if (qError) { alert('Ошибка сохранения вопросов: ' + qError.message); return; }
+            if (updateErr) { alert('Ошибка обновления: ' + updateErr.message); return; }
 
-        alert('Викторина успешно создана!');
+            // Удаляем старые вопросы и записываем новые
+            await supabaseClient.from('questions').delete().eq('quiz_id', editingQuizId);
+            const formattedQuestions = questionsToSave.map(q => ({ ...q, quiz_id: editingQuizId }));
+            const { error: qError } = await supabaseClient.from('questions').insert(formattedQuestions);
+            
+            if (qError) { alert('Ошибка сохранения вопросов: ' + qError.message); return; }
+            alert('Викторина успешно обновлена!');
+        } else {
+            // Создаем новую викторину
+            const { data: quizData, error: quizError } = await supabaseClient
+                .from('quizzes')
+                .insert([{ title, winner_name: winnerName }])
+                .select();
+
+            if (quizError) { alert('Ошибка создания: ' + quizError.message); return; }
+
+            const quizId = quizData[0].id;
+            const formattedQuestions = questionsToSave.map(q => ({ ...q, quiz_id: quizId }));
+            const { error: qError } = await supabaseClient.from('questions').insert(formattedQuestions);
+            if (qError) { alert('Ошибка сохранения вопросов: ' + qError.message); return; }
+
+            alert('Викторина успешно создана!');
+        }
+
+        editingQuizId = null;
         showScreen('home-screen');
     }
 
-    // ЗАПУСК ИЛИ ПРОДОЛЖЕНИЕ ВИКТОРИНЫ
     async function startQuiz(quizIdx) {
         currentQuizIdx = quizIdx;
         currentQuiz = quizzes[quizIdx];
@@ -634,7 +626,6 @@
         accumulatedTimeSec = 0;
         skippedQuestionIndices = [];
 
-        // Проверяем в БД и локально, есть ли уже попытка
         const { data: dbAttempts } = await supabaseClient
             .from('quiz_attempts')
             .select('*')
@@ -655,12 +646,10 @@
                 return;
             }
 
-            // Восстанавливаем уже данные ответы — повторно ответить на них нельзя
             sessionResults = [...savedAnswers];
             accumulatedTimeSec = savedAttempt.total_time || 0;
         }
 
-        // Находим индекс первого вопроса, на который ещё не дан ответ
         const answeredQuestionIds = new Set(sessionResults.map(r => r.question_id));
         const firstUnansweredIdx = currentQuiz.questions.findIndex(q => !answeredQuestionIds.has(q.id));
 
@@ -678,19 +667,16 @@
     function renderQuestion() {
         const answeredIds = new Set(sessionResults.map(r => r.question_id));
 
-        // Ищем следующий неотвеченный вопрос, начиная с currentQIndex
         while (currentQIndex < currentQuiz.questions.length && answeredIds.has(currentQuiz.questions[currentQIndex].id)) {
             currentQIndex++;
         }
 
         if (currentQIndex >= currentQuiz.questions.length) {
-            // Проверяем, остались ли пропущенные неотвеченные вопросы
             const remainingSkipped = skippedQuestionIndices.filter(idx => !answeredIds.has(currentQuiz.questions[idx].id));
             if (remainingSkipped.length > 0) {
                 skippedQuestionIndices = remainingSkipped;
                 currentQIndex = skippedQuestionIndices.shift();
             } else {
-                // Все вопросы отвечены — завершаем викторину
                 persistAttempt(true);
                 return;
             }
@@ -733,7 +719,7 @@
             document.getElementById('save-exit-btn').classList.replace('w-full', 'w-1/2');
         } else {
             skipBtn.classList.add('hidden');
-            document.getElementById('save-exit-btn').classList.replace('w-1/2', 'w-full');
+            document.getElementById('save-exit-btn').classList.replace('1/2', 'w-full');
         }
 
         document.getElementById('next-q-btn').classList.add('hidden');
@@ -750,7 +736,6 @@
     function selectAnswer(selectedIdx) {
         const q = currentQuiz.questions[currentQIndex];
         
-        // Защита от повторного ответа на тот же вопрос
         if (sessionResults.some(r => r.question_id === q.id)) return;
 
         const timeSpentSec = Math.max(1, Math.round((Date.now() - questionStartTime) / 1000));
@@ -788,7 +773,6 @@
         renderQuestion();
     }
 
-    // СОХРАНЕНИЕ ПРОГРЕССА И ВЫХОД В ГЛАВНОЕ МЕНЮ
     async function saveAndExitQuiz() {
         if (sessionResults.length === 0) {
             showScreen('home-screen');
@@ -798,7 +782,6 @@
         await persistAttempt(isAllAnswered, true);
     }
 
-    // Единая функция сохранения попытки (как промежуточной, так и финальной)
     async function persistAttempt(isCompleted, returnToHome = false) {
         const sessionElapsedSec = Math.round((Date.now() - sessionStartTime) / 1000);
         const totalTimeSec = accumulatedTimeSec + sessionElapsedSec;
@@ -813,7 +796,6 @@
             is_completed: isCompleted
         };
 
-        // Сохраняем локально сразу для мгновенной синхронизации интерфейса
         saveLocalAttempt(currentQuiz.id, payload);
 
         let dbError = null;
@@ -832,9 +814,7 @@
             if (data && data[0]) existingAttemptId = data[0].id;
         }
 
-        // Если в Supabase ещё не добавлены колонки detailed_results / is_completed — сохраняем базовый набор полей
         if (dbError) {
-            console.warn('Сохраняем базовые поля в Supabase:', dbError.message);
             const fallbackPayload = {
                 quiz_id: currentQuiz.id,
                 user_email: currentNickname,
@@ -854,10 +834,10 @@
             return;
         }
 
-        displayResultsScreen(correctCount, totalTimeSec, sessionResults);
+        await displayResultsScreen(correctCount, totalTimeSec, sessionResults);
     }
 
-    function displayResultsScreen(correctCount, totalTimeSec, resultsList) {
+    async function displayResultsScreen(correctCount, totalTimeSec, resultsList) {
         document.getElementById('res-summary').innerText = `Правильных ответов: ${correctCount} из ${currentQuiz.questions.length}`;
         
         const tbody = document.getElementById('res-tbody');
@@ -881,10 +861,39 @@
             winnerContainer.classList.add('hidden');
         }
 
-        // Привязываем кнопку "Посмотреть вопросы" на экране результатов
-        document.getElementById('res-review-btn').onclick = () => reviewQuiz(currentQuizIdx);
+        // Загружаем таблицу участников данной викторины
+        await loadQuizLeaderboard(currentQuiz.id);
 
+        document.getElementById('res-review-btn').onclick = () => reviewQuiz(currentQuizIdx);
         showScreen('result-screen');
+    }
+
+    async function loadQuizLeaderboard(quizId) {
+        const { data } = await supabaseClient
+            .from('quiz_attempts')
+            .select('*')
+            .eq('quiz_id', quizId)
+            .order('score', { ascending: false })
+            .order('total_time', { ascending: true });
+
+        const tbody = document.getElementById('quiz-leaderboard-tbody');
+        tbody.innerHTML = '';
+
+        if (!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" class="p-2 text-slate-500 text-center">Пока нет результатов.</td></tr>';
+            return;
+        }
+
+        data.forEach(att => {
+            const isMe = (att.user_email === currentNickname) ? ' text-indigo-300 font-bold' : ' text-slate-300';
+            tbody.innerHTML += `
+                <tr class="border-b border-slate-800/50">
+                    <td class="p-2${isMe}">👤 ${att.user_email}</td>
+                    <td class="p-2 text-center font-bold text-emerald-400">${att.score}</td>
+                    <td class="p-2 text-center text-slate-400">${att.total_time || 0}с</td>
+                </tr>
+            `;
+        });
     }
 
     async function openResultsForQuiz(quizIdx) {
@@ -907,7 +916,7 @@
         }
 
         const details = attempt.detailed_results || localAttempt?.detailed_results || [];
-        displayResultsScreen(attempt.score, attempt.total_time, details);
+        await displayResultsScreen(attempt.score, attempt.total_time, details);
     }
 
     async function reviewQuiz(quizIdx) {
@@ -934,9 +943,8 @@
         showScreen('review-screen');
     }
 
-    // ПАНЕЛЬ ОРГАНИЗАТОРА
+    // ПАНЕЛЬ ОРГАНИЗАТОРА (С РАЗДЕЛЬНЫМИ КАРТОЧКАМИ И СТАТИСТИКОЙ ПО КАТЕГОРИЯМ)
     async function openOrganizerDashboard() {
-        // Загружаем викторины, если список еще пуст
         if (!quizzes || quizzes.length === 0) {
             const { data: qData } = await supabaseClient.from('quizzes').select('*, questions(*)');
             quizzes = qData || [];
@@ -948,67 +956,149 @@
 
         if (error) {
             alert('Ошибка загрузки статистики: ' + error.message);
-            console.error(error);
             return;
         }
 
-        const tbody = document.getElementById('org-tbody');
-        tbody.innerHTML = '';
+        const container = document.getElementById('org-list-container');
+        container.innerHTML = '';
 
         if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="p-3 text-slate-500 text-center">Пока нет результатов участников в базе данных.</td></tr>';
+            container.innerHTML = '<p class="text-slate-500 text-center text-sm p-4">Пока нет результатов участников в базе данных.</p>';
         } else {
-            // Сортируем от новых к старым
             data.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
 
             data.forEach((att) => {
                 const matchedQuiz = quizzes.find(q => q.id === att.quiz_id);
                 const quizTitle = matchedQuiz ? matchedQuiz.title : 'Удаленная викторина';
-                const statusMark = att.is_completed === false ? ' <span class="text-[10px] text-amber-400">(в процессе)</span>' : '';
+                const statusMark = att.is_completed === false ? '<span class="text-xs text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md">В процессе</span>' : '<span class="text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md">Завершено</span>';
                 
-                tbody.innerHTML += `
-                    <tr class="border-b border-slate-800/50 hover:bg-slate-800/20 cursor-pointer" onclick='openPlayerDetails(${JSON.stringify(att).replace(/'/g, "&apos;")})'>
-                        <td class="p-2 font-medium text-indigo-300">👤 ${att.user_email}${statusMark}</td>
-                        <td class="p-2 text-slate-300">${quizTitle}</td>
-                        <td class="p-2 text-center font-bold text-emerald-400">${att.score}</td>
-                        <td class="p-2 text-center text-slate-400">⏱️ ${att.total_time || 0}с</td>
-                    </tr>
+                container.innerHTML += `
+                    <div class="bg-slate-950/70 border border-slate-800 hover:border-indigo-500/50 p-4 rounded-2xl cursor-pointer transition-all space-y-2 shadow-md" onclick='openPlayerDetails(${JSON.stringify(att).replace(/'/g, "&apos;")})'>
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-indigo-300 text-sm">👤 ${att.user_email}</span>
+                            ${statusMark}
+                        </div>
+                        <div class="text-xs text-slate-300 flex justify-between items-center border-t border-slate-800/60 pt-2">
+                            <span>Викторина: <b class="text-slate-100">${quizTitle}</b></span>
+                            <div class="flex gap-3">
+                                <span>Баллы: <b class="text-emerald-400 font-bold">${att.score}</b></span>
+                                <span>⏱️ ${att.total_time || 0}с</span>
+                            </div>
+                        </div>
+                    </div>
                 `;
             });
         }
         showScreen('organizer-screen');
     }
 
+    // СТАТИСТИКА ПО КАТЕГОРИЯМ В МОДАЛЬНОМ ОКНЕ
     function openPlayerDetails(att) {
         document.getElementById('modal-player-title').innerText = `Статистика игрока: ${att.user_email}`;
         const content = document.getElementById('modal-player-content');
-        content.innerHTML = `
-            <p class="text-slate-400 mb-2">Общее время прохождения: <b class="text-slate-200">${att.total_time} сек.</b> | Баллы: <b class="text-emerald-400">${att.score}</b></p>
+        
+        let html = `
+            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 mb-3 space-y-1">
+                <p class="text-slate-300">Общее время: <b class="text-slate-100">${att.total_time} сек.</b></p>
+                <p class="text-slate-300">Общий результат: <b class="text-emerald-400">${att.score} правильных ответов</b></p>
+            </div>
+            <h4 class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">📊 Статистика по категориям:</h4>
         `;
 
         if (att.detailed_results && att.detailed_results.length > 0) {
+            // Считаем статистику по каждой категории
+            const stats = {};
+            att.detailed_results.forEach(res => {
+                const cat = res.category || 'Общие';
+                if (!stats[cat]) stats[cat] = { correct: 0, total: 0 };
+                stats[cat].total++;
+                if (res.is_correct) stats[cat].correct++;
+            });
+
+            html += `<div class="space-y-2 mb-4">`;
+            for (const [cat, data] of Object.entries(stats)) {
+                const percent = Math.round((data.correct / data.total) * 100);
+                html += `
+                    <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
+                        <span class="font-medium text-slate-200">${cat}</span>
+                        <span class="text-emerald-400 font-bold">${data.correct} / ${data.total} (${percent}%)</span>
+                    </div>
+                `;
+            }
+            html += `</div>`;
+
+            html += `<h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Детали по вопросам:</h4><div class="space-y-2">`;
             att.detailed_results.forEach((res, i) => {
                 const badge = res.is_correct ? '<span class="text-emerald-400 font-semibold">Верно ✅</span>' : '<span class="text-red-400 font-semibold">Ошибка ❌</span>';
-                content.innerHTML += `
+                html += `
                     <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1">
                         <div class="flex justify-between text-[11px] text-slate-400">
-                            <span>Вопрос ${i + 1} (${res.category})</span>
-                            <span>⏱️ ${res.time_spent}с на вопрос</span>
+                            <span>Вопрос ${i + 1} • <strong class="text-indigo-300">${res.category}</strong></span>
+                            <span>⏱️ ${res.time_spent}с</span>
                         </div>
                         <p class="font-semibold text-slate-200">${res.question_text}</p>
                         <div>${badge}</div>
                     </div>
                 `;
             });
+            html += `</div>`;
         } else {
-            content.innerHTML += '<p class="text-slate-500">Детальные ответы по вопросам отсутствуют.</p>';
+            html += '<p class="text-slate-500">Детальные ответы по вопросам отсутствуют.</p>';
         }
 
+        content.innerHTML = html;
         document.getElementById('player-modal').classList.remove('hidden');
     }
 
     function closePlayerModal() {
         document.getElementById('player-modal').classList.add('hidden');
+    }
+
+    // ОБЩИЙ ЛИДЕРБОРД МЕСЯЦА (ПОБЕДЫ)
+    async function openMonthlyLeaderboard() {
+        if (!quizzes || quizzes.length === 0) {
+            const { data: qData } = await supabaseClient.from('quizzes').select('*');
+            quizzes = qData || [];
+        }
+
+        // Подсчитываем победы из поля winner_name у каждой викторины
+        const winCounts = {};
+        quizzes.forEach(q => {
+            if (q.winner_name) {
+                const winner = q.winner_name.trim();
+                winCounts[winner] = (winCounts[winner] || 0) + 1;
+            }
+        });
+
+        // Сортируем по убыванию побед
+        const sortedWinners = Object.keys(winCounts).map(name => ({
+            name,
+            wins: winCounts[name]
+        })).sort((a, b) => b.wins - a.wins);
+
+        const tbody = document.getElementById('monthly-tbody');
+        tbody.innerHTML = '';
+
+        if (sortedWinners.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" class="p-3 text-slate-500 text-center">В этом месяце победители еще не назначены.</td></tr>';
+        } else {
+            sortedWinners.forEach((item, idx) => {
+                let medal = `${idx + 1}`;
+                if (idx === 0) medal = '🥇 1';
+                else if (idx === 1) medal = '🥈 2';
+                else if (idx === 2) medal = '🥉 3';
+
+                tbody.innerHTML += `
+                    <tr class="border-b border-slate-800/50">
+                        <td class="p-2 font-bold text-slate-400">${medal}</td>
+                        <td class="p-2 font-medium text-slate-200">👤 ${item.name}</td>
+                        <td class="p-2 text-center font-bold text-amber-400 text-sm">${item.wins} 🏆</td>
+                    </tr>
+                `;
+            });
+        }
+
+        showScreen('monthly-screen');
     }
 
     initAuth();
