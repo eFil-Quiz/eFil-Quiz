@@ -1029,100 +1029,98 @@
         showScreen('review-screen');
     }
 
-    async function openOrganizerDashboard() {
-        if (!quizzes || quizzes.length === 0) {
-            const { data: qData } = await supabaseClient.from('quizzes').select('*, questions(*)').order('created_at', { ascending: false });
-            quizzes = qData || [];
-        }
-
-        const { data: attempts, error } = await supabaseClient
-            .from('quiz_attempts')
-            .select('*');
-
-        if (error) {
-            alert('Ошибка загрузки статистики: ' + error.message);
-            return;
-        }
-
-        const container = document.getElementById('org-list-container');
-        container.innerHTML = '';
-
-        if (!attempts || attempts.length === 0) {
-            container.innerHTML = '<p class="text-slate-500 text-center text-sm p-4">Пока нет результатов участников в базе данных.</p>';
-            showScreen('organizer-screen');
-            return;
-        }
-
-        const groupedByQuiz = {};
-        attempts.forEach(att => {
-            if (!groupedByQuiz[att.quiz_id]) {
-                groupedByQuiz[att.quiz_id] = [];
-            }
-            groupedByQuiz[att.quiz_id].push(att);
-        });
-
-        // Сохраняем attempts глобально для обработчика кликов
-        window._allOrganizerAttempts = attempts;
-
-        quizzes.forEach(quiz => {
-            const quizAttempts = groupedByQuiz[quiz.id] || [];
-            const closingAt = quiz.closing_at ? new Date(quiz.closing_at) : null;
-            
-            let attemptsHtml = '';
-            if (quizAttempts.length === 0) {
-                attemptsHtml = '<p class="text-slate-500 text-xs py-2">Никто еще не проходил эту викторину.</p>';
-            } else {
-                quizAttempts.sort((a, b) => b.score - a.score || a.total_time - b.total_time);
-                quizAttempts.forEach(att => {
-                    const statusMark = att.is_completed === false ? '<span class="text-[10px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md">В процессе</span>' : '<span class="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md">Завершено</span>';
-                    
-                    let outOfTimeMark = '';
-                    if (closingAt) {
-                        const attTime = new Date(att.created_at || att.updated_at || Date.now());
-                        if (attTime > closingAt) {
-                            outOfTimeMark = '<span class="text-[10px] text-red-400 bg-red-500/10 px-2 py-0.5 rounded-md ml-1">🔴 Вне зачета</span>';
-                        }
-                    }
-                    
-                    attemptsHtml += `
-                        <div class="org-player-row bg-slate-950/80 border border-slate-800 hover:border-indigo-500/50 p-3 rounded-xl cursor-pointer transition-all flex justify-between items-center" data-email="${att.user_email}">
-                            <div class="space-y-0.5 pointer-events-none">
-                                <span class="font-bold text-indigo-300 text-sm">👤 ${att.user_email}</span>
-                                <div class="text-[11px] text-slate-400">⏱️ ${att.total_time || 0}с</div>
-                            </div>
-                            <div class="flex items-center gap-2 pointer-events-none">
-                                <span class="text-xs">Баллы: <b class="text-emerald-400 font-bold">${att.score}</b></span>
-                                ${statusMark}
-                                ${outOfTimeMark}
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-
-            container.innerHTML += `
-                <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-3 shadow-md">
-                    <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-                        <h3 class="font-bold text-slate-100 text-sm">🎯 ${quiz.title}</h3>
-                        <span class="text-xs text-slate-400">Попыток: ${quizAttempts.length}</span>
-                    </div>
-                    <div class="space-y-2">
-                        ${attemptsHtml}
-                    </div>
-                </div>
-            `;
-        });
-
-        // Навешиваем безопасные обработчики кликов на карточки игроков
-        document.querySelectorAll('.org-player-row').forEach(row => {
-            row.addEventListener('click', function() {
-                const email = this.getAttribute('data-email');
-                openPlayerDetails(email, window._allOrganizerAttempts);
-            });
-        });
-
-        showScreen('organizer-screen');
+   async function openOrganizerDashboard() {
+    if (!quizzes || quizzes.length === 0) {
+        const { data: qData } = await supabaseClient.from('quizzes').select('*, questions(*)').order('created_at', { ascending: false });
+        quizzes = qData || [];
     }
+
+    const { data: attempts, error } = await supabaseClient
+        .from('quiz_attempts')
+        .select('*');
+
+    if (error) {
+        alert('Ошибка загрузки статистики: ' + error.message);
+        return;
+    }
+
+    const container = document.getElementById('org-list-container');
+    container.innerHTML = '';
+
+    if (!attempts || attempts.length === 0) {
+        container.innerHTML = '<p class="text-slate-500 text-center text-sm p-4">Пока нет результатов участников в базе данных.</p>';
+        showScreen('organizer-screen');
+        return;
+    }
+
+    const groupedByQuiz = {};
+    attempts.forEach(att => {
+        if (!groupedByQuiz[att.quiz_id]) {
+            groupedByQuiz[att.quiz_id] = [];
+        }
+        groupedByQuiz[att.quiz_id].push(att);
+    });
+
+    window._allOrganizerAttempts = attempts;
+
+    quizzes.forEach(quiz => {
+        const quizAttempts = groupedByQuiz[quiz.id] || [];
+        const closingAt = quiz.closing_at ? new Date(quiz.closing_at) : null;
+        
+        let attemptsHtml = '';
+        if (quizAttempts.length === 0) {
+            attemptsHtml = '<p class="text-slate-500 text-xs py-2">Никто еще не проходил эту викторину.</p>';
+        } else {
+            quizAttempts.sort((a, b) => b.score - a.score || a.total_time - b.total_time);
+            quizAttempts.forEach(att => {
+                const statusMark = att.is_completed === false ? '<span class="text-[10px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md">В процессе</span>' : '<span class="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md">Завершено</span>';
+                
+                let outOfTimeMark = '';
+                if (closingAt) {
+                    const attTime = new Date(att.created_at || att.updated_at || Date.now());
+                    if (attTime > closingAt) {
+                        outOfTimeMark = '<span class="text-[10px] text-red-400 bg-red-500/10 px-2 py-0.5 rounded-md ml-1">🔴 Вне зачета</span>';
+                    }
+                }
+                
+                attemptsHtml += `
+                    <div class="org-player-row bg-slate-950/80 border border-slate-800 hover:border-indigo-500/50 p-3 rounded-xl cursor-pointer transition-all flex justify-between items-center" data-email="${att.user_email}">
+                        <div class="space-y-0.5 pointer-events-none">
+                            <span class="font-bold text-indigo-300 text-sm">👤 ${att.user_email}</span>
+                            <div class="text-[11px] text-slate-400">⏱️ ${att.total_time || 0}с</div>
+                        </div>
+                        <div class="flex items-center gap-2 pointer-events-none">
+                            <span class="text-xs">Баллы: <b class="text-emerald-400 font-bold">${att.score}</b></span>
+                            ${statusMark}
+                            ${outOfTimeMark}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        container.innerHTML += `
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-3 shadow-md">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                    <h3 class="font-bold text-slate-100 text-sm">🎯 ${quiz.title}</h3>
+                    <span class="text-xs text-slate-400">Попыток: ${quizAttempts.length}</span>
+                </div>
+                <div class="space-y-2">
+                    ${attemptsHtml}
+                </div>
+            </div>
+        `;
+    });
+
+    document.querySelectorAll('.org-player-row').forEach(row => {
+        row.addEventListener('click', function() {
+            const email = this.getAttribute('data-email');
+            openPlayerDetails(email, window._allOrganizerAttempts);
+        });
+    });
+
+    showScreen('organizer-screen');
+}
 
     function openPlayerDetails(userEmail, allAttempts) {
         document.getElementById('modal-player-title').innerText = `Статистика игрока: ${userEmail}`;
