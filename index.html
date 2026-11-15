@@ -95,6 +95,10 @@
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Название викторины</label>
                 <input type="text" id="quiz-title-input" placeholder="Например: Исторический квиз" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-indigo-500">
             </div>
+            <div>
+                <label class="block text-xs font-semibold text-amber-400 mb-1">⏳ Дата и время закрытия викторины (для зачета в рейтинг)</label>
+                <input type="datetime-local" id="quiz-closing-input" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-amber-500">
+            </div>
             <div id="winner-input-wrapper">
                 <label class="block text-xs font-semibold text-emerald-400 mb-1">🏆 Победитель викторины (вписывает только организатор)</label>
                 <input type="text" id="quiz-winner-input" placeholder="Ник победителя этой викторины" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-emerald-500">
@@ -172,7 +176,7 @@
         </div>
 
         <!-- ТАБЛИЦА ЛИДЕРОВ ЭТОЙ ВИКТОРИНЫ -->
-        <h3 class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">📊 Участники этой викторины:</h3>
+        <h3 class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">📊 Участники этой викторины (в зачете):</h3>
         <div class="max-h-36 overflow-y-auto mb-4 border border-indigo-500/30 rounded-xl bg-slate-950/60 p-2">
             <table class="w-full text-xs text-left">
                 <thead><tr class="border-b border-slate-800 text-slate-400"><th class="p-2">Участник</th><th class="p-2 text-center">Баллы</th><th id="th-time-header" class="p-2 text-center hidden">Время</th></tr></thead>
@@ -205,9 +209,15 @@
     <!-- ОБЩИЙ ЛИДЕРБОРД МЕСЯЦА -->
     <div id="monthly-screen" class="hidden animate-fade-in">
         <h2 class="text-xl font-bold mb-1">🏆 Топ месяца (Победы)</h2>
-        <p class="text-slate-400 text-xs mb-4">Рейтинг участников по количеству побед в викторинах текущего месяца:</p>
+        <p class="text-slate-400 text-xs mb-3">Рейтинг участников по количеству побед в выбранном месяце:</p>
         
-        <div class="max-h-80 overflow-y-auto border border-slate-800 rounded-xl bg-slate-950/40 p-2 mb-4">
+        <div class="mb-4">
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Выберите месяц:</label>
+            <select id="monthly-select" onchange="renderMonthlyLeaderboard()" class="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-indigo-500 text-sm">
+            </select>
+        </div>
+
+        <div class="max-h-60 overflow-y-auto border border-slate-800 rounded-xl bg-slate-950/40 p-2 mb-4">
             <table class="w-full text-xs text-left">
                 <thead>
                     <tr class="border-b border-slate-800 text-slate-400">
@@ -246,6 +256,7 @@
     let currentUser = null;
     let currentNickname = '';
     let quizzes = [];
+    let allQuizzesForMonthly = [];
     let currentQuiz = null;
     let currentQuizIdx = 0;
     let currentQIndex = 0;
@@ -278,8 +289,27 @@
     }
 
     function updateUserDisplay() {
-        document.getElementById('user-info-display').innerText = `👤 ${currentNickname} (${currentUser.email})`;
+        document.getElementById('user-info-display').innerHTML = `👤 ${currentNickname} (${currentUser.email}) <button onclick="promptChangeNickname()" class="ml-2 text-xs text-indigo-400 hover:underline">✏️ Сменить ник</button>`;
         document.getElementById('logout-btn').classList.remove('hidden');
+    }
+
+    async function promptChangeNickname() {
+        const newNick = prompt('Введите новый никнейм:', currentNickname);
+        if (!newNick || !newNick.trim()) return;
+        const trimmed = newNick.trim();
+
+        const { error } = await supabaseClient.auth.updateUser({
+            data: { nickname: trimmed }
+        });
+        if (error) {
+            alert('Ошибка изменения никнейма: ' + error.message);
+            return;
+        }
+
+        currentNickname = trimmed;
+        updateUserDisplay();
+        loadQuizzes();
+        alert('Никнейм успешно изменен!');
     }
 
     function checkAdmin() {
@@ -346,6 +376,19 @@
         document.getElementById('creator-screen-title').innerText = quizToEdit ? 'Редактирование викторины ✍️' : 'Конструктор викторины ✨';
         document.getElementById('quiz-title-input').value = quizToEdit ? quizToEdit.title : '';
         
+        const closingInput = document.getElementById('quiz-closing-input');
+        if (quizToEdit && quizToEdit.closing_at) {
+            const d = new Date(quizToEdit.closing_at);
+            const isoLocal = d.getFullYear() + '-' +
+                String(d.getMonth() + 1).padStart(2, '0') + '-' +
+                String(d.getDate()).padStart(2, '0') + 'T' +
+                String(d.getHours()).padStart(2, '0') + ':' +
+                String(d.getMinutes()).padStart(2, '0');
+            closingInput.value = isoLocal;
+        } else {
+            closingInput.value = '';
+        }
+
         const winnerInput = document.getElementById('quiz-winner-input');
         winnerInput.value = quizToEdit ? (quizToEdit.winner_name || '') : '';
 
@@ -385,7 +428,8 @@
     }
 
     async function loadQuizzes() {
-        const { data, error } = await supabaseClient.from('quizzes').select('*, questions(*)');
+        // Новые викторины всегда наверху (.order('created_at', { ascending: false }))
+        const { data, error } = await supabaseClient.from('quizzes').select('*, questions(*)').order('created_at', { ascending: false });
         if (error) return;
         quizzes = data || [];
         
@@ -469,12 +513,25 @@
             }
 
             let winnerBadge = q.winner_name ? `<span class="text-[11px] text-emerald-400 block mt-0.5">🏆 Победитель: ${q.winner_name}</span>` : '';
+            
+            let closingBadge = '';
+            if (q.closing_at) {
+                const closingDate = new Date(q.closing_at);
+                const formattedDate = closingDate.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                const isClosed = new Date() > closingDate;
+                if (isClosed) {
+                    closingBadge = `<span class="text-[11px] text-red-400 block mt-0.5">🔴 Закрыта (${formattedDate} МСК) — вне зачета</span>`;
+                } else {
+                    closingBadge = `<span class="text-[11px] text-amber-400 block mt-0.5">⏳ Доступна до: ${formattedDate} МСК</span>`;
+                }
+            }
 
             container.innerHTML += `
                 <div class="bg-slate-950/60 border border-slate-800 p-4 rounded-2xl flex justify-between items-center transition-all hover:border-indigo-500/50">
                     <div>
                         <h3 class="font-bold text-slate-100 text-sm mb-0.5">${q.title}</h3>
                         <span class="text-xs text-slate-400">Вопросов: ${totalQ}</span>
+                        ${closingBadge}
                         ${winnerBadge}
                     </div>
                     <div class="flex items-center gap-2">
@@ -559,9 +616,12 @@
 
     async function saveQuizToSupabase() {
         const title = document.getElementById('quiz-title-input').value.trim();
+        const closingInputVal = document.getElementById('quiz-closing-input').value;
         const winnerName = document.getElementById('quiz-winner-input').value.trim();
         if (!title) { alert('Введите название!'); return; }
         
+        const closingAt = closingInputVal ? new Date(closingInputVal).toISOString() : null;
+
         const blocks = document.getElementsByClassName('question-block');
         let questionsToSave = [];
 
@@ -583,7 +643,7 @@
         if (editingQuizId) {
             const { error: updateErr } = await supabaseClient
                 .from('quizzes')
-                .update({ title, winner_name: winnerName })
+                .update({ title, closing_at: closingAt, winner_name: winnerName })
                 .eq('id', editingQuizId);
 
             if (updateErr) { alert('Ошибка обновления: ' + updateErr.message); return; }
@@ -597,7 +657,7 @@
         } else {
             const { data: quizData, error: quizError } = await supabaseClient
                 .from('quizzes')
-                .insert([{ title, winner_name: winnerName }])
+                .insert([{ title, closing_at: closingAt, winner_name: winnerName }])
                 .select();
 
             if (quizError) { alert('Ошибка создания: ' + quizError.message); return; }
@@ -871,6 +931,14 @@
             .order('score', { ascending: false })
             .order('total_time', { ascending: true });
 
+        // Если у викторины есть время закрытия, отсеиваем попытки, отправленные после закрытия
+        const closingAt = currentQuiz.closing_at ? new Date(currentQuiz.closing_at) : null;
+        const validData = (data || []).filter(att => {
+            if (!closingAt) return true;
+            const attTime = new Date(att.created_at || att.updated_at || Date.now());
+            return attTime <= closingAt;
+        });
+
         const tbody = document.getElementById('quiz-leaderboard-tbody');
         const timeHeader = document.getElementById('th-time-header');
         const isAdmin = (currentUser.email === ADMIN_EMAIL);
@@ -883,13 +951,13 @@
             timeHeader.classList.add('hidden');
         }
 
-        if (!data || data.length === 0) {
+        if (validData.length === 0) {
             const colSpan = isAdmin ? 3 : 2;
-            tbody.innerHTML = `<tr><td colspan="${colSpan}" class="p-2 text-slate-500 text-center">Пока нет результатов.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="${colSpan}" class="p-2 text-slate-500 text-center">Пока нет результатов в зачете.</td></tr>`;
             return;
         }
 
-        data.forEach(att => {
+        validData.forEach(att => {
             const isMe = (att.user_email === currentNickname) ? ' text-indigo-300 font-bold' : ' text-slate-300';
             let timeTd = isAdmin ? `<td class="p-2 text-center text-slate-400">${att.total_time || 0}с</td>` : '';
             
@@ -953,11 +1021,10 @@
     // ПАНЕЛЬ ОРГАНИЗАТОРА (ГРУППИРОВКА ПО ВИКТОРИНАМ)
     async function openOrganizerDashboard() {
         if (!quizzes || quizzes.length === 0) {
-            const { data: qData } = await supabaseClient.from('quizzes').select('*, questions(*)');
+            const { data: qData } = await supabaseClient.from('quizzes').select('*, questions(*)').order('created_at', { ascending: false });
             quizzes = qData || [];
         }
 
-        // Загружаем все попытки и всех пользователей со всеми detailed_results для глобальной статистики категорий
         const { data: attempts, error } = await supabaseClient
             .from('quiz_attempts')
             .select('*');
@@ -976,7 +1043,6 @@
             return;
         }
 
-        // Группируем попытки по викторинам
         const groupedByQuiz = {};
         attempts.forEach(att => {
             if (!groupedByQuiz[att.quiz_id]) {
@@ -1027,12 +1093,10 @@
         showScreen('organizer-screen');
     }
 
-    // СТАТИСТИКА ПО ВСЕМ КАТЕГОРИЯМ СО ВСЕХ ВИКТОРИН (С ЦВЕТОВОЙ ИНДИКАЦИЕЙ)
     function openPlayerDetails(userEmail, allAttempts) {
         document.getElementById('modal-player-title').innerText = `Статистика игрока: ${userEmail}`;
         const content = document.getElementById('modal-player-content');
         
-        // Собираем ВСЕ ответы конкретного участника по всем викторинам для глобальной статистики категорий
         const userAttempts = allAttempts.filter(a => a.user_email === userEmail);
         const globalStats = {};
         let totalScoreAll = 0;
@@ -1064,10 +1128,6 @@
             for (const [cat, data] of Object.entries(globalStats)) {
                 const percent = Math.round((data.correct / data.total) * 100);
                 
-                // Цветовая индикация в зависимости от процента:
-                // <= 33% -> красный
-                // > 33% и <= 66% -> желтый
-                // > 66% -> зеленый
                 let colorClass = 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400';
                 if (percent <= 33) {
                     colorClass = 'bg-red-500/10 border-red-500/30 text-red-400';
@@ -1095,16 +1155,46 @@
         document.getElementById('player-modal').classList.add('hidden');
     }
 
-    // ОБЩИЙ ЛИДЕРБОРД МЕСЯЦА (ПОБЕДЫ)
+    // ОБЩИЙ ЛИДЕРБОРД МЕСЯЦА (ПОБЕДЫ С ВЫБОРОМ МЕСЯЦА)
     async function openMonthlyLeaderboard() {
-        if (!quizzes || quizzes.length === 0) {
-            const { data: qData } = await supabaseClient.from('quizzes').select('*');
-            quizzes = qData || [];
+        const { data: qData } = await supabaseClient.from('quizzes').select('*').order('created_at', { ascending: false });
+        allQuizzesForMonthly = qData || [];
+
+        const monthsSet = new Set();
+        const nowStr = new Date().toISOString().slice(0, 7); // YYYY-MM
+        monthsSet.add(nowStr);
+
+        allQuizzesForMonthly.forEach(q => {
+            if (q.created_at) {
+                monthsSet.add(q.created_at.slice(0, 7));
+            }
+        });
+
+        const sortedMonths = Array.from(monthsSet).sort().reverse();
+        const selectEl = document.getElementById('monthly-select');
+        selectEl.innerHTML = '';
+
+        const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+        sortedMonths.forEach(m => {
+            const [year, month] = m.split('-');
+            const label = `${monthNames[parseInt(month, 10) - 1]} ${year}`;
+            selectEl.innerHTML += `<option value="${m}">${label}</option>`;
+        });
+
+        if (monthsSet.has(nowStr)) {
+            selectEl.value = nowStr;
         }
 
+        renderMonthlyLeaderboard();
+        showScreen('monthly-screen');
+    }
+
+    function renderMonthlyLeaderboard() {
+        const selectedMonth = document.getElementById('monthly-select').value;
         const winCounts = {};
-        quizzes.forEach(q => {
-            if (q.winner_name) {
+
+        allQuizzesForMonthly.forEach(q => {
+            if (q.created_at && q.created_at.startsWith(selectedMonth) && q.winner_name) {
                 const winner = q.winner_name.trim();
                 winCounts[winner] = (winCounts[winner] || 0) + 1;
             }
@@ -1119,25 +1209,24 @@
         tbody.innerHTML = '';
 
         if (sortedWinners.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" class="p-3 text-slate-500 text-center">В этом месяце победители еще не назначены.</td></tr>';
-        } else {
-            sortedWinners.forEach((item, idx) => {
-                let medal = `${idx + 1}`;
-                if (idx === 0) medal = '🥇 1';
-                else if (idx === 1) medal = '🥈 2';
-                else if (idx === 2) medal = '🥉 3';
-
-                tbody.innerHTML += `
-                    <tr class="border-b border-slate-800/50">
-                        <td class="p-2 font-bold text-slate-400">${medal}</td>
-                        <td class="p-2 font-medium text-slate-200">👤 ${item.name}</td>
-                        <td class="p-2 text-center font-bold text-amber-400 text-sm">${item.wins} 🏆</td>
-                    </tr>
-                `;
-            });
+            tbody.innerHTML = '<tr><td colspan="3" class="p-3 text-slate-500 text-center">В выбранном месяце победители не зафиксированы.</td></tr>';
+            return;
         }
 
-        showScreen('monthly-screen');
+        sortedWinners.forEach((item, idx) => {
+            let medal = `${idx + 1}`;
+            if (idx === 0) medal = '🥇 1';
+            else if (idx === 1) medal = '🥈 2';
+            else if (idx === 2) medal = '🥉 3';
+
+            tbody.innerHTML += `
+                <tr class="border-b border-slate-800/50">
+                    <td class="p-2 font-bold text-slate-400">${medal}</td>
+                    <td class="p-2 font-medium text-slate-200">👤 ${item.name}</td>
+                    <td class="p-2 text-center font-bold text-amber-400 text-sm">${item.wins} 🏆</td>
+                </tr>
+            `;
+        });
     }
 
     initAuth();
