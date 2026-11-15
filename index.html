@@ -476,7 +476,7 @@
             const isAdmin = (currentUser.email === ADMIN_EMAIL);
 
             // Проверяем, вышло ли время закрытия викторины
-            const isTimeOver = q.closing_at ? new Date() > new Date(q.closing_at) : false;
+            const isTimeOver = q.closing_at ? Date.now() > new Date(q.closing_at).getTime() : false;
 
             let actionButtons = '';
             if (isCompleted) {
