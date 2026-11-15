@@ -96,7 +96,7 @@
                 <input type="text" id="quiz-title-input" placeholder="Например: Исторический квиз" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-indigo-500">
             </div>
             <div>
-                <label class="block text-xs font-semibold text-amber-400 mb-1">⏳ Дата и время закрытия викторины (для зачета в рейтинг)</label>
+                <label class="block text-xs font-semibold text-amber-400 mb-1">⏳ Дата и время закрытия викторины (для зачета)</label>
                 <input type="datetime-local" id="quiz-closing-input" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-amber-500">
             </div>
             <div id="winner-input-wrapper">
@@ -428,7 +428,6 @@
     }
 
     async function loadQuizzes() {
-        // Новые викторины всегда наверху (.order('created_at', { ascending: false }))
         const { data, error } = await supabaseClient.from('quizzes').select('*, questions(*)').order('created_at', { ascending: false });
         if (error) return;
         quizzes = data || [];
@@ -476,6 +475,9 @@
             const isInProgress = attempt && !isCompleted && answeredCount > 0;
             const isAdmin = (currentUser.email === ADMIN_EMAIL);
 
+            // Проверяем, вышло ли время закрытия викторины
+            const isTimeOver = q.closing_at ? new Date() > new Date(q.closing_at) : false;
+
             let actionButtons = '';
             if (isCompleted) {
                 actionButtons = `
@@ -487,17 +489,27 @@
                     </button>
                 `;
             } else if (isInProgress) {
+                const btnLabel = isTimeOver ? `▶️ Продолжить (вне зачета)` : `▶️ Продолжить (${answeredCount}/${totalQ})`;
+                const btnClass = isTimeOver ? 'bg-amber-700 hover:bg-amber-600' : 'bg-amber-600 hover:bg-amber-500';
                 actionButtons = `
-                    <button onclick="startQuiz(${idx})" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold px-3.5 py-2 rounded-xl transition-all shadow-md shadow-amber-600/20">
-                        ▶️ Продолжить (${answeredCount}/${totalQ})
+                    <button onclick="startQuiz(${idx})" class="${btnClass} text-white text-xs font-semibold px-3.5 py-2 rounded-xl transition-all shadow-md">
+                        ${btnLabel}
                     </button>
                 `;
             } else {
-                actionButtons = `
-                    <button onclick="startQuiz(${idx})" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all shadow-md shadow-indigo-600/20">
-                        Пройти
-                    </button>
-                `;
+                if (isTimeOver) {
+                    actionButtons = `
+                        <button onclick="startQuiz(${idx})" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold px-3 py-2 rounded-xl transition-all border border-slate-600">
+                            Пройти вне зачета
+                        </button>
+                    `;
+                } else {
+                    actionButtons = `
+                        <button onclick="startQuiz(${idx})" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all shadow-md shadow-indigo-600/20">
+                            Пройти
+                        </button>
+                    `;
+                }
             }
 
             let adminButtons = '';
@@ -518,11 +530,10 @@
             if (q.closing_at) {
                 const closingDate = new Date(q.closing_at);
                 const formattedDate = closingDate.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-                const isClosed = new Date() > closingDate;
-                if (isClosed) {
-                    closingBadge = `<span class="text-[11px] text-red-400 block mt-0.5">🔴 Закрыта (${formattedDate} МСК) — вне зачета</span>`;
+                if (isTimeOver) {
+                    closingBadge = `<span class="text-[11px] text-red-400 block mt-0.5">🔴 Время вышло (${formattedDate}) — вне зачета</span>`;
                 } else {
-                    closingBadge = `<span class="text-[11px] text-amber-400 block mt-0.5">⏳ Доступна до: ${formattedDate} МСК</span>`;
+                    closingBadge = `<span class="text-[11px] text-amber-400 block mt-0.5">⏳ Доступна до: ${formattedDate}</span>`;
                 }
             }
 
@@ -931,7 +942,7 @@
             .order('score', { ascending: false })
             .order('total_time', { ascending: true });
 
-        // Если у викторины есть время закрытия, отсеиваем попытки, отправленные после закрытия
+        // Фильтрация: отсеиваем попытки, отправленные после закрытия викторины (они идут вне зачета)
         const closingAt = currentQuiz.closing_at ? new Date(currentQuiz.closing_at) : null;
         const validData = (data || []).filter(att => {
             if (!closingAt) return true;
@@ -1018,7 +1029,6 @@
         showScreen('review-screen');
     }
 
-    // ПАНЕЛЬ ОРГАНИЗАТОРА (ГРУППИРОВКА ПО ВИКТОРИНАМ)
     async function openOrganizerDashboard() {
         if (!quizzes || quizzes.length === 0) {
             const { data: qData } = await supabaseClient.from('quizzes').select('*, questions(*)').order('created_at', { ascending: false });
@@ -1155,13 +1165,12 @@
         document.getElementById('player-modal').classList.add('hidden');
     }
 
-    // ОБЩИЙ ЛИДЕРБОРД МЕСЯЦА (ПОБЕДЫ С ВЫБОРОМ МЕСЯЦА)
     async function openMonthlyLeaderboard() {
         const { data: qData } = await supabaseClient.from('quizzes').select('*').order('created_at', { ascending: false });
         allQuizzesForMonthly = qData || [];
 
         const monthsSet = new Set();
-        const nowStr = new Date().toISOString().slice(0, 7); // YYYY-MM
+        const nowStr = new Date().toISOString().slice(0, 7);
         monthsSet.add(nowStr);
 
         allQuizzesForMonthly.forEach(q => {
