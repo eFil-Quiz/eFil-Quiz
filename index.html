@@ -14,16 +14,24 @@
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
         .animate-fade-in { animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        /* Стеклянный эффект (Glassmorphism) */
+        .glass-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 flex justify-center items-center min-h-screen p-4">
+<body class="bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950 text-slate-100 flex justify-center items-center min-h-screen p-4">
 
-<div class="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl max-w-xl w-full p-8 relative overflow-hidden transition-all">
+<div class="glass-card rounded-[32px] max-w-xl w-full p-8 relative overflow-hidden transition-all">
     
     <!-- ВЕРХНЯЯ ПАНЕЛЬ -->
-    <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-800 text-sm text-slate-400">
+    <div class="flex justify-between items-center mb-6 pb-4 border-b border-white/10 text-sm text-slate-400">
         <span id="user-info-display" class="font-medium text-slate-300">Не авторизован</span>
-        <button id="logout-btn" onclick="logout()" class="hidden bg-red-500/10 border border-red-500/20 text-red-400 px-3 py-1.5 rounded-lg hover:bg-red-500/20 transition-all text-xs font-semibold">
+        <button id="logout-btn" onclick="logout()" class="hidden bg-red-500/10 border border-red-500/20 text-red-400 px-3 py-1.5 rounded-xl hover:bg-red-500/20 transition-all text-xs font-semibold">
             Выйти
         </button>
     </div>
@@ -35,13 +43,13 @@
         <div class="space-y-4">
             <div>
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Email</label>
-                <input type="email" id="auth-email" placeholder="email@example.com" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-indigo-500">
+                <input type="email" id="auth-email" placeholder="email@example.com" class="w-full px-4 py-3 bg-slate-950/60 border border-white/10 rounded-2xl text-slate-100 focus:outline-none focus:border-cyan-400">
             </div>
             <div>
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Пароль</label>
-                <input type="password" id="auth-password" placeholder="••••••••" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-indigo-500">
+                <input type="password" id="auth-password" placeholder="••••••••" class="w-full px-4 py-3 bg-slate-950/60 border border-white/10 rounded-2xl text-slate-100 focus:outline-none focus:border-cyan-400">
             </div>
-            <button onclick="handleLogin()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3.5 rounded-xl transition-all shadow-lg shadow-indigo-600/20">
+            <button onclick="handleLogin()" class="w-full bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-400 hover:to-cyan-500 text-white font-semibold py-3.5 rounded-2xl transition-all shadow-lg shadow-cyan-500/20">
                 Войти / Зарегистрироваться
             </button>
         </div>
@@ -54,9 +62,9 @@
         <div class="space-y-4">
             <div>
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Ваш никнейм</label>
-                <input type="text" id="nickname-input" placeholder="Например: Профи Квизов" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-indigo-500">
+                <input type="text" id="nickname-input" placeholder="Например: Профи Квизов" class="w-full px-4 py-3 bg-slate-950/60 border border-white/10 rounded-2xl text-slate-100 focus:outline-none focus:border-cyan-400">
             </div>
-            <button onclick="saveNickname()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3.5 rounded-xl transition-all shadow-lg shadow-indigo-600/20">
+            <button onclick="saveNickname()" class="w-full bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-400 hover:to-cyan-500 text-white font-semibold py-3.5 rounded-2xl transition-all shadow-lg shadow-cyan-500/20">
                 Продолжить
             </button>
         </div>
@@ -74,13 +82,13 @@
         <div id="quiz-list" class="space-y-3 max-h-72 overflow-y-auto pr-1"></div>
         
         <!-- Панель администратора -->
-        <div id="admin-controls" class="hidden mt-6 pt-5 border-t border-slate-800">
-            <p class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-3">Панель организатора</p>
+        <div id="admin-controls" class="hidden mt-6 pt-5 border-t border-white/10">
+            <p class="text-xs font-bold text-cyan-400 uppercase tracking-wider mb-3">Панель организатора</p>
             <div class="space-y-2.5">
-                <button onclick="openCreator()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2">
+                <button onclick="openCreator()" class="w-full bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-400 hover:to-cyan-500 text-white font-semibold py-3 rounded-2xl transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2">
                     ✨ Создать новую викторину
                 </button>
-                <button onclick="openOrganizerDashboard()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-3 rounded-xl transition-all border border-slate-700">
+                <button onclick="openOrganizerDashboard()" class="w-full bg-white/5 hover:bg-white/10 text-slate-200 font-semibold py-3 rounded-2xl transition-all border border-white/10">
                     📊 Панель организатора
                 </button>
             </div>
@@ -93,24 +101,24 @@
         <div class="mb-4 space-y-3">
             <div>
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Название викторины</label>
-                <input type="text" id="quiz-title-input" placeholder="Например: Исторический квиз" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-indigo-500">
+                <input type="text" id="quiz-title-input" placeholder="Например: Исторический квиз" class="w-full px-4 py-3 bg-slate-950/60 border border-white/10 rounded-2xl text-slate-100 focus:outline-none focus:border-cyan-400">
             </div>
             <div>
                 <label class="block text-xs font-semibold text-amber-400 mb-1">⏳ Дата и время закрытия викторины (для зачета)</label>
-                <input type="datetime-local" id="quiz-closing-input" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-amber-500">
+                <input type="datetime-local" id="quiz-closing-input" class="w-full px-4 py-3 bg-slate-950/60 border border-white/10 rounded-2xl text-slate-100 focus:outline-none focus:border-amber-400">
             </div>
             <div id="winner-input-wrapper">
                 <label class="block text-xs font-semibold text-emerald-400 mb-1">🏆 Победитель викторины (вписывает только организатор)</label>
-                <input type="text" id="quiz-winner-input" placeholder="Ник победителя этой викторины" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-emerald-500">
+                <input type="text" id="quiz-winner-input" placeholder="Ник победителя этой викторины" class="w-full px-4 py-3 bg-slate-950/60 border border-white/10 rounded-2xl text-slate-100 focus:outline-none focus:border-emerald-400">
             </div>
         </div>
         
         <div id="questions-container" class="space-y-4 max-h-56 overflow-y-auto pr-1 mb-4"></div>
 
-        <button onclick="addQuestionField()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold py-2.5 rounded-xl transition-all text-sm mb-2">
+        <button onclick="addQuestionField()" class="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 font-semibold py-2.5 rounded-2xl transition-all text-sm mb-2">
             ➕ Добавить вопрос
         </button>
-        <button onclick="saveQuizToSupabase()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-indigo-600/20">
+        <button onclick="saveQuizToSupabase()" class="w-full bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-400 hover:to-cyan-500 text-white font-semibold py-3 rounded-2xl transition-all shadow-lg shadow-cyan-500/20">
             💾 Сохранить в облако
         </button>
         <button onclick="showScreen('home-screen')" class="w-full mt-2 text-slate-400 hover:text-slate-200 py-2 text-sm transition-all">
@@ -118,27 +126,39 @@
         </button>
     </div>
 
-    <!-- ПРОХОЖДЕНИЕ ВИКТОРИНЫ -->
-    <div id="play-screen" class="hidden animate-fade-in">
-        <div class="flex justify-between items-center text-xs text-slate-400 mb-4 font-medium">
-            <span id="q-counter" class="bg-slate-800 px-2.5 py-1 rounded-md">Вопрос 1/1</span>
-            <span id="q-progress-badge" class="text-indigo-400">Отвечено: 0/0</span>
+    <!-- ПРОХОЖДЕНИЕ ВИКТОРИНЫ (НОВЫЙ СТИЛЬ РЕФЕРЕНСА) -->
+    <div id="play-screen" class="hidden animate-fade-in space-y-5">
+        <!-- Шапка с прогрессом и круглым таймером -->
+        <div class="flex justify-between items-center">
+            <div class="space-y-0.5">
+                <span id="q-counter" class="text-xs font-semibold uppercase tracking-wider text-cyan-400">Вопрос 1 из 1</span>
+                <div id="q-progress-badge" class="text-xs text-slate-400">Отвечено: 0/0</div>
+            </div>
+            <!-- Круглый индикатор-таймер в стиле референса -->
+            <div class="relative w-12 h-12 flex items-center justify-center rounded-full border-2 border-cyan-500/40 bg-cyan-950/50 shadow-inner">
+                <span id="timer-number" class="text-sm font-bold text-cyan-300">30</span>
+            </div>
         </div>
         
-        <div id="media-container" class="mb-4 flex justify-center"></div>
-        <h2 id="q-title" class="text-lg font-bold mb-4 text-slate-100">Загрузка...</h2>
+        <!-- Медиа (круглое изображение в стиле референса, если есть) -->
+        <div id="media-container" class="flex justify-center my-2"></div>
+
+        <!-- Текст вопроса -->
+        <h2 id="q-title" class="text-xl font-bold text-center text-white px-2 tracking-wide">Загрузка...</h2>
         
-        <div id="q-options" class="space-y-3"></div>
+        <!-- 4 варианта ответов ДРУГ ПОД ДРУГОМ -->
+        <div id="q-options" class="space-y-3 pt-1"></div>
         
-        <div class="mt-5 space-y-2">
-            <button id="next-q-btn" class="hidden w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-indigo-600/20 animate-fade-in" onclick="nextQuestion()">
+        <!-- Кнопки управления -->
+        <div class="mt-6 space-y-2 pt-2 border-t border-white/10">
+            <button id="next-q-btn" class="hidden w-full bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-400 hover:to-cyan-500 text-white font-semibold py-3.5 rounded-2xl transition-all shadow-lg shadow-cyan-500/20 animate-fade-in" onclick="nextQuestion()">
                 Следующий вопрос ➡️
             </button>
             <div class="flex gap-2">
-                <button id="skip-q-btn" onclick="skipQuestion()" class="w-1/2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold py-3 rounded-xl transition-all text-sm">
+                <button id="skip-q-btn" onclick="skipQuestion()" class="w-1/2 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 font-semibold py-3 rounded-2xl transition-all text-sm">
                     ⏭️ Пропустить
                 </button>
-                <button id="save-exit-btn" onclick="saveAndExitQuiz()" class="w-1/2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 font-semibold py-3 rounded-xl transition-all text-sm">
+                <button id="save-exit-btn" onclick="saveAndExitQuiz()" class="w-1/2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 font-semibold py-3 rounded-2xl transition-all text-sm">
                     💾 Сохранить и выйти
                 </button>
             </div>
@@ -152,7 +172,7 @@
         
         <div id="review-questions-list" class="space-y-4 max-h-96 overflow-y-auto pr-1 mb-4"></div>
         
-        <button onclick="showScreen('home-screen')" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold py-2.5 rounded-xl transition-all text-sm">
+        <button onclick="showScreen('home-screen')" class="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 font-semibold py-2.5 rounded-2xl transition-all text-sm">
             ← На главную
         </button>
     </div>
@@ -160,35 +180,35 @@
     <!-- ЭКРАН РЕЗУЛЬТАТОВ -->
     <div id="result-screen" class="hidden animate-fade-in">
         <h2 class="text-2xl font-bold mb-1">Итоги викторины! 🎉</h2>
-        <p id="res-summary" class="text-sm font-semibold text-indigo-400 mb-4"></p>
+        <p id="res-summary" class="text-sm font-semibold text-cyan-400 mb-4"></p>
         
-        <div id="winner-badge-container" class="hidden mb-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-center">
+        <div id="winner-badge-container" class="hidden mb-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-center">
             <span class="text-xs text-emerald-400 font-semibold uppercase tracking-wider">🏆 Победитель викторины:</span>
             <div id="winner-name-display" class="text-lg font-bold text-emerald-300"></div>
         </div>
 
         <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Ваши результаты по вопросам:</h3>
-        <div class="max-h-36 overflow-y-auto mb-4 border border-slate-800 rounded-xl bg-slate-950/40 p-2">
+        <div class="max-h-36 overflow-y-auto mb-4 border border-white/10 rounded-2xl bg-slate-950/40 p-2">
             <table class="w-full text-xs text-left">
-                <thead><tr class="border-b border-slate-800 text-slate-400"><th class="p-2">№</th><th class="p-2">Вопрос</th><th class="p-2 text-center">Статус</th></tr></thead>
-                <tbody id="res-tbody" class="divide-y divide-slate-800/50"></tbody>
+                <thead><tr class="border-b border-white/10 text-slate-400"><th class="p-2">№</th><th class="p-2">Вопрос</th><th class="p-2 text-center">Статус</th></tr></thead>
+                <tbody id="res-tbody" class="divide-y divide-white/5"></tbody>
             </table>
         </div>
 
         <!-- ТАБЛИЦА ЛИДЕРОВ ЭТОЙ ВИКТОРИНЫ -->
-        <h3 class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">📊 Участники этой викторины (в зачете):</h3>
-        <div class="max-h-36 overflow-y-auto mb-4 border border-indigo-500/30 rounded-xl bg-slate-950/60 p-2">
+        <h3 class="text-xs font-bold text-cyan-400 uppercase tracking-wider mb-2">📊 Участники этой викторины (в зачете):</h3>
+        <div class="max-h-36 overflow-y-auto mb-4 border border-cyan-500/30 rounded-2xl bg-cyan-950/20 p-2">
             <table class="w-full text-xs text-left">
-                <thead><tr class="border-b border-slate-800 text-slate-400"><th class="p-2">Участник</th><th class="p-2 text-center">Баллы</th><th id="th-time-header" class="p-2 text-center hidden">Время</th></tr></thead>
-                <tbody id="quiz-leaderboard-tbody" class="divide-y divide-slate-800/50"></tbody>
+                <thead><tr class="border-b border-white/10 text-slate-400"><th class="p-2">Участник</th><th class="p-2 text-center">Баллы</th><th id="th-time-header" class="p-2 text-center hidden">Время</th></tr></thead>
+                <tbody id="quiz-leaderboard-tbody" class="divide-y divide-white/5"></tbody>
             </table>
         </div>
 
         <div class="flex gap-2">
-            <button id="res-review-btn" class="w-1/2 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 font-semibold py-3 rounded-xl transition-all border border-indigo-500/30 text-sm">
+            <button id="res-review-btn" class="w-1/2 bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 font-semibold py-3 rounded-2xl transition-all border border-cyan-500/30 text-sm">
                 👁️ Вопросы
             </button>
-            <button onclick="showScreen('home-screen')" class="w-1/2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-indigo-600/20 text-sm">
+            <button onclick="showScreen('home-screen')" class="w-1/2 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-400 hover:to-cyan-500 text-white font-semibold py-3 rounded-2xl transition-all shadow-lg shadow-cyan-500/20 text-sm">
                 На главную
             </button>
         </div>
@@ -201,7 +221,7 @@
         
         <div id="org-list-container" class="space-y-4 max-h-80 overflow-y-auto pr-1 mb-4"></div>
         
-        <button onclick="showScreen('home-screen')" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold py-2.5 rounded-xl transition-all text-sm">
+        <button onclick="showScreen('home-screen')" class="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 font-semibold py-2.5 rounded-2xl transition-all text-sm">
             ← Назад
         </button>
     </div>
@@ -213,33 +233,33 @@
         
         <div class="mb-4">
             <label class="block text-xs font-semibold text-slate-400 mb-1">Выберите месяц:</label>
-            <select id="monthly-select" onchange="renderMonthlyLeaderboard()" class="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-indigo-500 text-sm">
+            <select id="monthly-select" onchange="renderMonthlyLeaderboard()" class="w-full px-4 py-2.5 bg-slate-950/60 border border-white/10 rounded-2xl text-slate-100 focus:outline-none focus:border-cyan-400 text-sm">
             </select>
         </div>
 
-        <div class="max-h-60 overflow-y-auto border border-slate-800 rounded-xl bg-slate-950/40 p-2 mb-4">
+        <div class="max-h-60 overflow-y-auto border border-white/10 rounded-2xl bg-slate-950/40 p-2 mb-4">
             <table class="w-full text-xs text-left">
                 <thead>
-                    <tr class="border-b border-slate-800 text-slate-400">
+                    <tr class="border-b border-white/10 text-slate-400">
                         <th class="p-2">Место</th>
                         <th class="p-2">Участник</th>
                         <th class="p-2 text-center">Побед в месяце 🏆</th>
                     </tr>
                 </thead>
-                <tbody id="monthly-tbody" class="divide-y divide-slate-800/50"></tbody>
+                <tbody id="monthly-tbody" class="divide-y divide-white/5"></tbody>
             </table>
         </div>
-        <button onclick="showScreen('home-screen')" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold py-2.5 rounded-xl transition-all text-sm">
+        <button onclick="showScreen('home-screen')" class="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 font-semibold py-2.5 rounded-2xl transition-all text-sm">
             ← На главную
         </button>
     </div>
 
-    <!-- МОДАЛЬНОЕ ОКНО СТАТИСТИКИ ПО ВСЕМ КАТЕГОРИЯМ (ЦВЕТОВАЯ ИНДИКАЦИЯ) -->
+    <!-- МОДАЛЬНОЕ ОКНО СТАТИСТИКИ ПО ВСЕМ КАТЕГОРИЯМ -->
     <div id="player-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center p-4 z-50">
-        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-lg w-full animate-fade-in shadow-2xl">
-            <h3 id="modal-player-title" class="text-lg font-bold text-indigo-400 mb-2">Статистика игрока</h3>
+        <div class="glass-card rounded-[32px] p-6 max-w-lg w-full animate-fade-in shadow-2xl">
+            <h3 id="modal-player-title" class="text-lg font-bold text-cyan-400 mb-2">Статистика игрока</h3>
             <div id="modal-player-content" class="space-y-3 max-h-80 overflow-y-auto text-xs text-slate-300 mb-4 pr-1"></div>
-            <button onclick="closePlayerModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 py-2.5 rounded-xl font-semibold transition-all text-sm border border-slate-700">
+            <button onclick="closePlayerModal()" class="w-full bg-white/5 hover:bg-white/10 text-slate-200 py-2.5 rounded-2xl font-semibold transition-all text-sm border border-white/10">
                 Закрыть
             </button>
         </div>
@@ -268,6 +288,8 @@
     let questionStartTime = 0;
     let sessionStartTime = 0;
     let skippedQuestionIndices = [];
+    let questionTimerInterval = null;
+    let secondsLeft = 30;
 
     async function initAuth() {
         const { data: { session } } = await supabaseClient.auth.getSession();
@@ -289,7 +311,7 @@
     }
 
     function updateUserDisplay() {
-        document.getElementById('user-info-display').innerHTML = `👤 ${currentNickname} (${currentUser.email}) <button onclick="promptChangeNickname()" class="ml-2 text-xs text-indigo-400 hover:underline">✏️ Сменить ник</button>`;
+        document.getElementById('user-info-display').innerHTML = `👤 ${currentNickname} (${currentUser.email}) <button onclick="promptChangeNickname()" class="ml-2 text-xs text-cyan-400 hover:underline">✏️ Сменить ник</button>`;
         document.getElementById('logout-btn').classList.remove('hidden');
     }
 
@@ -365,6 +387,7 @@
     }
 
     function showScreen(id) {
+        if (questionTimerInterval) clearInterval(questionTimerInterval);
         ['auth-screen', 'nickname-screen', 'home-screen', 'creator-screen', 'play-screen', 'review-screen', 'result-screen', 'organizer-screen', 'monthly-screen'].forEach(s => {
             document.getElementById(s).classList.add('hidden');
         });
@@ -481,16 +504,16 @@
             let actionButtons = '';
             if (isCompleted) {
                 actionButtons = `
-                    <button onclick="openResultsForQuiz(${idx})" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3 py-2 rounded-xl transition-all border border-slate-700">
+                    <button onclick="openResultsForQuiz(${idx})" class="bg-white/5 hover:bg-white/10 text-slate-200 text-xs font-semibold px-3 py-2 rounded-xl transition-all border border-white/10">
                         📊 Результаты
                     </button>
-                    <button onclick="reviewQuiz(${idx})" class="bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 text-xs font-semibold px-3 py-2 rounded-xl transition-all border border-indigo-500/30">
+                    <button onclick="reviewQuiz(${idx})" class="bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 text-xs font-semibold px-3 py-2 rounded-xl transition-all border border-cyan-500/30">
                         👁️ Вопросы
                     </button>
                 `;
             } else if (isInProgress) {
                 const btnLabel = isTimeOver ? `▶️ Продолжить (вне зачета)` : `▶️ Продолжить (${answeredCount}/${totalQ})`;
-                const btnClass = isTimeOver ? 'bg-amber-700 hover:bg-amber-600' : 'bg-amber-600 hover:bg-amber-500';
+                const btnClass = isTimeOver ? 'bg-amber-700/80 hover:bg-amber-600' : 'bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-400 hover:to-cyan-500';
                 actionButtons = `
                     <button onclick="startQuiz(${idx})" class="${btnClass} text-white text-xs font-semibold px-3.5 py-2 rounded-xl transition-all shadow-md">
                         ${btnLabel}
@@ -499,13 +522,13 @@
             } else {
                 if (isTimeOver) {
                     actionButtons = `
-                        <button onclick="startQuiz(${idx})" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold px-3 py-2 rounded-xl transition-all border border-slate-600">
+                        <button onclick="startQuiz(${idx})" class="bg-white/10 hover:bg-white/20 text-slate-200 text-xs font-semibold px-3 py-2 rounded-xl transition-all border border-white/10">
                             Пройти вне зачета
                         </button>
                     `;
                 } else {
                     actionButtons = `
-                        <button onclick="startQuiz(${idx})" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all shadow-md shadow-indigo-600/20">
+                        <button onclick="startQuiz(${idx})" class="bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-400 hover:to-cyan-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all shadow-md shadow-cyan-500/20">
                             Пройти
                         </button>
                     `;
@@ -515,7 +538,7 @@
             let adminButtons = '';
             if (isAdmin) {
                 adminButtons = `
-                    <button onclick='openCreator(${JSON.stringify(q).replace(/'/g, "&apos;")})' class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-2.5 py-2 rounded-xl border border-slate-700 transition-all" title="Редактировать">
+                    <button onclick='openCreator(${JSON.stringify(q).replace(/'/g, "&apos;")})' class="bg-white/5 hover:bg-white/10 text-slate-300 text-xs px-2.5 py-2 rounded-xl border border-white/10 transition-all" title="Редактировать">
                         ✏️
                     </button>
                     <button class="delete-quiz-btn bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs px-2.5 py-2 rounded-xl border border-red-500/20 transition-all" data-id="${q.id}" data-title="${q.title.replace(/"/g, '&quot;')}" title="Удалить викторину">
@@ -538,7 +561,7 @@
             }
 
             container.innerHTML += `
-                <div class="bg-slate-950/60 border border-slate-800 p-4 rounded-2xl flex justify-between items-center transition-all hover:border-indigo-500/50">
+                <div class="bg-slate-950/40 border border-white/10 p-4 rounded-2xl flex justify-between items-center transition-all hover:border-cyan-500/50">
                     <div>
                         <h3 class="font-bold text-slate-100 text-sm mb-0.5">${q.title}</h3>
                         <span class="text-xs text-slate-400">Вопросов: ${totalQ}</span>
@@ -597,29 +620,29 @@
         let optionsHtml = categoriesList.map(cat => `<option value="${cat}" ${cat === qCat ? 'selected' : ''}>${cat}</option>`).join('');
 
         const block = document.createElement('div');
-        block.className = 'question-block bg-slate-950/50 border border-slate-800 p-4 rounded-2xl space-y-3 animate-fade-in';
+        block.className = 'question-block bg-slate-950/50 border border-white/10 p-4 rounded-2xl space-y-3 animate-fade-in';
         block.innerHTML = `
             <div class="flex justify-between items-center"><span class="text-xs font-bold text-slate-400">Вопрос ${count}</span></div>
-            <input type="text" class="q-text w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Текст вопроса" value="${qText}">
+            <input type="text" class="q-text w-full px-3 py-2 bg-slate-900 border border-white/10 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-cyan-400" placeholder="Текст вопроса" value="${qText}">
             <div>
                 <label class="block text-xs text-slate-400 mb-1">Категория</label>
-                <select class="q-cat w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+                <select class="q-cat w-full px-3 py-2 bg-slate-900 border border-white/10 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-cyan-400">
                     ${optionsHtml}
                 </select>
             </div>
             <div>
                 <label class="block text-xs text-slate-400 mb-1">Ссылка на медиа (картинка, видео, аудио)</label>
-                <input type="text" class="q-media w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="https://example.com/audio.mp3" value="${qMedia}">
+                <input type="text" class="q-media w-full px-3 py-2 bg-slate-900 border border-white/10 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-cyan-400" placeholder="https://example.com/image.jpg" value="${qMedia}">
             </div>
             <div class="grid grid-cols-2 gap-2">
-                <input type="text" class="opt-0 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Вариант 1" value="${opts[0]}">
-                <input type="text" class="opt-1 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Вариант 2" value="${opts[1]}">
-                <input type="text" class="opt-2 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Вариант 3" value="${opts[2]}">
-                <input type="text" class="opt-3 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Вариант 4" value="${opts[3]}">
+                <input type="text" class="opt-0 px-3 py-2 bg-slate-900 border border-white/10 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-cyan-400" placeholder="Вариант 1" value="${opts[0]}">
+                <input type="text" class="opt-1 px-3 py-2 bg-slate-900 border border-white/10 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-cyan-400" placeholder="Вариант 2" value="${opts[1]}">
+                <input type="text" class="opt-2 px-3 py-2 bg-slate-900 border border-white/10 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-cyan-400" placeholder="Вариант 3" value="${opts[2]}">
+                <input type="text" class="opt-3 px-3 py-2 bg-slate-900 border border-white/10 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-cyan-400" placeholder="Вариант 4" value="${opts[3]}">
             </div>
             <div class="flex items-center gap-2">
                 <label class="text-xs text-slate-400">Правильный вариант (1-4):</label>
-                <input type="number" class="q-correct w-16 px-2 py-1 bg-slate-900 border border-slate-800 rounded-lg text-sm text-center text-slate-100" min="1" max="4" value="${correctVal}">
+                <input type="number" class="q-correct w-16 px-2 py-1 bg-slate-900 border border-white/10 rounded-xl text-sm text-center text-slate-100" min="1" max="4" value="${correctVal}">
             </div>
         `;
         container.appendChild(block);
@@ -750,29 +773,42 @@
         }
 
         const q = currentQuiz.questions[currentQIndex];
-        document.getElementById('q-counter').innerText = `Вопрос ${currentQIndex + 1}/${currentQuiz.questions.length}`;
+        document.getElementById('q-counter').innerText = `Вопрос ${currentQIndex + 1} из ${currentQuiz.questions.length}`;
         document.getElementById('q-progress-badge').innerText = `Отвечено: ${sessionResults.length}/${currentQuiz.questions.length}`;
         document.getElementById('q-title').innerText = q.question_text;
 
         questionStartTime = Date.now();
 
+        // Запуск круглого таймера (на 30 секунд для вопроса)
+        secondsLeft = 30;
+        document.getElementById('timer-number').innerText = secondsLeft;
+        if (questionTimerInterval) clearInterval(questionTimerInterval);
+        questionTimerInterval = setInterval(() => {
+            secondsLeft--;
+            if (secondsLeft >= 0) {
+                document.getElementById('timer-number').innerText = secondsLeft;
+            }
+        }, 1000);
+
+        // Медиаконтент в круглом стиле референса
         const mediaContainer = document.getElementById('media-container');
         mediaContainer.innerHTML = '';
         if (q.media_url) {
             if (q.media_url.match(/\.(mp4|webm|ogg)$/i)) {
-                mediaContainer.innerHTML = `<video src="${q.media_url}" controls class="max-h-48 rounded-xl"></video>`;
+                mediaContainer.innerHTML = `<video src="${q.media_url}" controls class="w-32 h-32 rounded-full object-cover border-2 border-white/20 shadow-xl"></video>`;
             } else if (q.media_url.match(/\.(mp3|wav|ogg)$/i)) {
                 mediaContainer.innerHTML = `<audio src="${q.media_url}" controls class="w-full"></audio>`;
             } else {
-                mediaContainer.innerHTML = `<img src="${q.media_url}" class="max-h-48 rounded-xl object-cover" />`;
+                mediaContainer.innerHTML = `<div class="w-32 h-32 rounded-full p-1 bg-gradient-to-tr from-cyan-500 to-teal-400 shadow-xl overflow-hidden flex items-center justify-center"><img src="${q.media_url}" class="w-full h-full rounded-full object-cover" /></div>`;
             }
         }
 
+        // 4 варианта ответов ДРУГ ПОД ДРУГОМ в стиле референса (стеклянные кнопки)
         const optionsContainer = document.getElementById('q-options');
         optionsContainer.innerHTML = '';
         q.options.forEach((opt, oIdx) => {
             optionsContainer.innerHTML += `
-                <button onclick="selectAnswer(${oIdx})" class="w-full text-left px-4 py-3 bg-slate-950 border border-slate-800 hover:border-indigo-500 rounded-xl transition-all text-sm text-slate-200">
+                <button onclick="selectAnswer(${oIdx})" class="w-full text-center px-5 py-3.5 bg-white/5 border border-white/15 hover:border-cyan-400 hover:bg-cyan-500/10 rounded-2xl transition-all text-sm font-medium text-slate-200 shadow-md">
                     ${opt}
                 </button>
             `;
@@ -786,13 +822,15 @@
             document.getElementById('save-exit-btn').classList.replace('w-full', 'w-1/2');
         } else {
             skipBtn.classList.add('hidden');
-            document.getElementById('save-exit-btn').classList.replace('w-1/2', 'w-full');
+            document.getElementById('save-exit-btn').classList.replace('1/2', 'w-full');
+            document.getElementById('save-exit-btn').className = 'w-full bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 font-semibold py-3 rounded-2xl transition-all text-sm';
         }
 
         document.getElementById('next-q-btn').classList.add('hidden');
     }
 
     function skipQuestion() {
+        if (questionTimerInterval) clearInterval(questionTimerInterval);
         if (!skippedQuestionIndices.includes(currentQIndex)) {
             skippedQuestionIndices.push(currentQIndex);
         }
@@ -801,6 +839,7 @@
     }
 
     function selectAnswer(selectedIdx) {
+        if (questionTimerInterval) clearInterval(questionTimerInterval);
         const q = currentQuiz.questions[currentQIndex];
         
         if (sessionResults.some(r => r.question_id === q.id)) return;
@@ -824,14 +863,16 @@
         for (let i = 0; i < buttons.length; i++) {
             buttons[i].disabled = true;
             if (i === q.correct_index) {
-                buttons[i].classList.add('bg-emerald-600/20', 'border-emerald-500', 'text-emerald-200');
+                buttons[i].className = 'w-full text-center px-5 py-3.5 bg-emerald-500/20 border border-emerald-500 text-emerald-200 rounded-2xl transition-all text-sm font-semibold shadow-lg shadow-emerald-500/10';
             } else if (i === selectedIdx && !isCorrect) {
-                buttons[i].classList.add('bg-red-600/20', 'border-red-500', 'text-red-200');
+                buttons[i].className = 'w-full text-center px-5 py-3.5 bg-red-500/20 border border-red-500 text-red-200 rounded-2xl transition-all text-sm font-semibold shadow-lg shadow-red-500/10';
+            } else {
+                buttons[i].className = 'w-full text-center px-5 py-3.5 bg-white/5 border border-white/5 text-slate-500 rounded-2xl transition-all text-sm opacity-50';
             }
         }
 
         document.getElementById('skip-q-btn').classList.add('hidden');
-        document.getElementById('save-exit-btn').classList.replace('w-1/2', 'w-full');
+        document.getElementById('save-exit-btn').className = 'w-full bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 font-semibold py-3 rounded-2xl transition-all text-sm';
         document.getElementById('next-q-btn').classList.remove('hidden');
     }
 
@@ -841,6 +882,7 @@
     }
 
     async function saveAndExitQuiz() {
+        if (questionTimerInterval) clearInterval(questionTimerInterval);
         if (sessionResults.length === 0) {
             showScreen('home-screen');
             return;
@@ -912,7 +954,7 @@
         resultsList.forEach((res, idx) => {
             const statusBadge = res.is_correct ? '<span class="text-emerald-400 font-semibold">Верно ✅</span>' : '<span class="text-red-400 font-semibold">Ошибка ❌</span>';
             tbody.innerHTML += `
-                <tr class="border-b border-slate-800/50">
+                <tr class="border-b border-white/5">
                     <td class="p-2">${idx + 1}</td>
                     <td class="p-2">${res.question_text}</td>
                     <td class="p-2 text-center">${statusBadge}</td>
@@ -968,11 +1010,11 @@
         }
 
         validData.forEach(att => {
-            const isMe = (att.user_email === currentNickname) ? ' text-indigo-300 font-bold' : ' text-slate-300';
+            const isMe = (att.user_email === currentNickname) ? ' text-cyan-300 font-bold' : ' text-slate-300';
             let timeTd = isAdmin ? `<td class="p-2 text-center text-slate-400">${att.total_time || 0}с</td>` : '';
             
             tbody.innerHTML += `
-                <tr class="border-b border-slate-800/50">
+                <tr class="border-b border-white/5">
                     <td class="p-2${isMe}">👤 ${att.user_email}</td>
                     <td class="p-2 text-center font-bold text-emerald-400">${att.score}</td>
                     ${timeTd}
@@ -1013,13 +1055,13 @@
         q.questions.forEach((question, idx) => {
             let optsHtml = question.options.map((opt, oIdx) => {
                 const isCorrect = (oIdx === question.correct_index);
-                const colorClass = isCorrect ? 'text-emerald-300 font-bold bg-emerald-500/10 border-emerald-500/30' : 'text-slate-300 border-slate-800';
-                return `<div class="p-2 rounded-lg border ${colorClass} text-xs mb-1">${oIdx + 1}. ${opt}</div>`;
+                const colorClass = isCorrect ? 'text-emerald-300 font-bold bg-emerald-500/10 border-emerald-500/30' : 'text-slate-300 border-white/10';
+                return `<div class="p-2.5 rounded-xl border ${colorClass} text-xs mb-1.5">${oIdx + 1}. ${opt}</div>`;
             }).join('');
 
             container.innerHTML += `
-                <div class="bg-slate-950/50 border border-slate-800 p-4 rounded-2xl space-y-2">
-                    <span class="text-xs font-bold text-indigo-400">Вопрос ${idx + 1} (${question.category})</span>
+                <div class="bg-slate-950/50 border border-white/10 p-4 rounded-2xl space-y-2">
+                    <span class="text-xs font-bold text-cyan-400">Вопрос ${idx + 1} (${question.category})</span>
                     <h4 class="text-sm font-bold text-slate-100">${question.question_text}</h4>
                     <div>${optsHtml}</div>
                 </div>
@@ -1083,9 +1125,9 @@
                     }
                     
                     attemptsHtml += `
-                        <div class="org-player-row bg-slate-950/80 border border-slate-800 hover:border-indigo-500/50 p-3 rounded-xl cursor-pointer transition-all flex justify-between items-center" data-email="${att.user_email}">
+                        <div class="org-player-row bg-slate-950/80 border border-white/10 hover:border-cyan-500/50 p-3 rounded-2xl cursor-pointer transition-all flex justify-between items-center" data-email="${att.user_email}">
                             <div class="space-y-0.5 pointer-events-none">
-                                <span class="font-bold text-indigo-300 text-sm">👤 ${att.user_email}</span>
+                                <span class="font-bold text-cyan-300 text-sm">👤 ${att.user_email}</span>
                                 <div class="text-[11px] text-slate-400">⏱️ ${att.total_time || 0}с</div>
                             </div>
                             <div class="flex items-center gap-2 pointer-events-none">
@@ -1099,8 +1141,8 @@
             }
 
             container.innerHTML += `
-                <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-3 shadow-md">
-                    <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                <div class="glass-card p-4 rounded-2xl space-y-3 shadow-md">
+                    <div class="flex justify-between items-center border-b border-white/10 pb-2">
                         <h3 class="font-bold text-slate-100 text-sm">🎯 ${quiz.title}</h3>
                         <span class="text-xs text-slate-400">Попыток: ${quizAttempts.length}</span>
                     </div>
@@ -1144,11 +1186,11 @@
         });
 
         let html = `
-            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 mb-3 space-y-1">
+            <div class="bg-slate-950 p-3 rounded-2xl border border-white/10 mb-3 space-y-1">
                 <p class="text-slate-300">Суммарное время: <b class="text-slate-100">${totalTimeAll} сек.</b></p>
                 <p class="text-slate-300">Всего правильных ответов: <b class="text-emerald-400">${totalScoreAll}</b></p>
             </div>
-            <h4 class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">📊 Суммарная статистика по категориям (все викторины):</h4>
+            <h4 class="text-xs font-bold text-cyan-400 uppercase tracking-wider mb-2">📊 Суммарная статистика по категориям (все викторины):</h4>
         `;
 
         if (Object.keys(globalStats).length > 0) {
@@ -1164,7 +1206,7 @@
                 }
 
                 html += `
-                    <div class="p-2.5 rounded-xl border ${colorClass} flex justify-between items-center text-xs font-medium">
+                    <div class="p-2.5 rounded-2xl border ${colorClass} flex justify-between items-center text-xs font-medium">
                         <span>${cat}</span>
                         <span>${data.correct} / ${data.total} верных (${percent}%)</span>
                     </div>
@@ -1247,7 +1289,7 @@
             else if (idx === 2) medal = '🥉 3';
 
             tbody.innerHTML += `
-                <tr class="border-b border-slate-800/50">
+                <tr class="border-b border-white/5">
                     <td class="p-2 font-bold text-slate-400">${medal}</td>
                     <td class="p-2 font-medium text-slate-200">👤 ${item.name}</td>
                     <td class="p-2 text-center font-bold text-amber-400 text-sm">${item.wins} 🏆</td>
