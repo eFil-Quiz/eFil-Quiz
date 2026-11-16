@@ -126,21 +126,15 @@
         </button>
     </div>
 
-    <!-- ПРОХОЖДЕНИЕ ВИКТОРИНЫ (НОВЫЙ СТИЛЬ РЕФЕРЕНСА) -->
+    <!-- ПРОХОЖДЕНИЕ ВИКТОРИНЫ -->
     <div id="play-screen" class="hidden animate-fade-in space-y-5">
-        <!-- Шапка с прогрессом и круглым таймером -->
+        <!-- Шапка с прогрессом -->
         <div class="flex justify-between items-center">
-            <div class="space-y-0.5">
-                <span id="q-counter" class="text-xs font-semibold uppercase tracking-wider text-cyan-400">Вопрос 1 из 1</span>
-                <div id="q-progress-badge" class="text-xs text-slate-400">Отвечено: 0/0</div>
-            </div>
-            <!-- Круглый индикатор-таймер в стиле референса -->
-            <div class="relative w-12 h-12 flex items-center justify-center rounded-full border-2 border-cyan-500/40 bg-cyan-950/50 shadow-inner">
-                <span id="timer-number" class="text-sm font-bold text-cyan-300">30</span>
-            </div>
+            <span id="q-counter" class="text-xs font-semibold uppercase tracking-wider text-cyan-400">Вопрос 1 из 1</span>
+            <div id="q-progress-badge" class="text-xs text-slate-400">Отвечено: 0/0</div>
         </div>
         
-        <!-- Медиа (круглое изображение в стиле референса, если есть) -->
+        <!-- Медиа (круглое изображение, если есть) -->
         <div id="media-container" class="flex justify-center my-2"></div>
 
         <!-- Текст вопроса -->
@@ -288,8 +282,6 @@
     let questionStartTime = 0;
     let sessionStartTime = 0;
     let skippedQuestionIndices = [];
-    let questionTimerInterval = null;
-    let secondsLeft = 30;
 
     async function initAuth() {
         const { data: { session } } = await supabaseClient.auth.getSession();
@@ -387,7 +379,6 @@
     }
 
     function showScreen(id) {
-        if (questionTimerInterval) clearInterval(questionTimerInterval);
         ['auth-screen', 'nickname-screen', 'home-screen', 'creator-screen', 'play-screen', 'review-screen', 'result-screen', 'organizer-screen', 'monthly-screen'].forEach(s => {
             document.getElementById(s).classList.add('hidden');
         });
@@ -779,18 +770,7 @@
 
         questionStartTime = Date.now();
 
-        // Запуск круглого таймера (на 30 секунд для вопроса)
-        secondsLeft = 30;
-        document.getElementById('timer-number').innerText = secondsLeft;
-        if (questionTimerInterval) clearInterval(questionTimerInterval);
-        questionTimerInterval = setInterval(() => {
-            secondsLeft--;
-            if (secondsLeft >= 0) {
-                document.getElementById('timer-number').innerText = secondsLeft;
-            }
-        }, 1000);
-
-        // Медиаконтент в круглом стиле референса
+        // Медиаконтент в круглом стиле
         const mediaContainer = document.getElementById('media-container');
         mediaContainer.innerHTML = '';
         if (q.media_url) {
@@ -803,7 +783,7 @@
             }
         }
 
-        // 4 варианта ответов ДРУГ ПОД ДРУГОМ в стиле референса (стеклянные кнопки)
+        // 4 варианта ответов ДРУГ ПОД ДРУГОМ (стеклянные кнопки)
         const optionsContainer = document.getElementById('q-options');
         optionsContainer.innerHTML = '';
         q.options.forEach((opt, oIdx) => {
@@ -830,7 +810,6 @@
     }
 
     function skipQuestion() {
-        if (questionTimerInterval) clearInterval(questionTimerInterval);
         if (!skippedQuestionIndices.includes(currentQIndex)) {
             skippedQuestionIndices.push(currentQIndex);
         }
@@ -839,7 +818,6 @@
     }
 
     function selectAnswer(selectedIdx) {
-        if (questionTimerInterval) clearInterval(questionTimerInterval);
         const q = currentQuiz.questions[currentQIndex];
         
         if (sessionResults.some(r => r.question_id === q.id)) return;
@@ -882,7 +860,6 @@
     }
 
     async function saveAndExitQuiz() {
-        if (questionTimerInterval) clearInterval(questionTimerInterval);
         if (sessionResults.length === 0) {
             showScreen('home-screen');
             return;
