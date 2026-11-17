@@ -40,7 +40,7 @@
 </head>
 <body class="bg-[#030712] bg-gradient-to-tr from-[#020617] via-[#091E3A] to-[#041E2B] text-slate-100 flex justify-center items-center min-h-screen p-3 sm:p-6">
 
-<div class="glass-card rounded-[36px] max-w-lg w-full p-6 sm:p-8 relative overflow-hidden transition-all pb-28">
+<div class="glass-card rounded-[36px] max-w-lg w-full p-6 sm:p-8 relative overflow-hidden transition-all">
     
     <!-- ВЕРХНЯЯ ПАНЕЛЬ -->
     <div class="flex justify-between items-center mb-5 pb-3 border-b border-white/10 text-xs sm:text-sm text-slate-400">
@@ -246,7 +246,7 @@
         <div id="org-list-container" class="space-y-2.5 max-h-[280px] overflow-y-auto pr-1 mb-3"></div>
         
         <button onclick="showScreen('home-screen')" class="w-full glass-btn hover:bg-white/10 text-slate-200 font-semibold py-2.5 rounded-2xl transition-all text-sm border border-white/10">
-            ← Назад
+            ← На главную
         </button>
     </div>
 
@@ -287,26 +287,6 @@
                 Закрыть
             </button>
         </div>
-    </div>
-
-    <!-- НИЖНЯЯ ПАНЕЛЬ НАВИГАЦИИ -->
-    <div class="absolute bottom-0 left-0 right-0 bg-[#020617]/95 backdrop-blur-xl border-t border-white/10 py-2.5 px-4 flex justify-around items-center rounded-b-[36px] z-20">
-        <button onclick="showScreen('home-screen')" class="flex flex-col items-center gap-0.5 text-cyan-400 transition-all hover:scale-105">
-            <span class="text-base">🏠</span>
-            <span class="text-[10px] font-semibold">Главная</span>
-        </button>
-        <button onclick="openMonthlyLeaderboard()" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-200 transition-all hover:scale-105">
-            <span class="text-base">🏆</span>
-            <span class="text-[10px] font-semibold">Топ</span>
-        </button>
-        <button onclick="openOrganizerDashboard()" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-200 transition-all hover:scale-105">
-            <span class="text-base">📊</span>
-            <span class="text-[10px] font-semibold">Результаты</span>
-        </button>
-        <button onclick="promptChangeNickname()" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-200 transition-all hover:scale-105">
-            <span class="text-base">⚙️</span>
-            <span class="text-[10px] font-semibold">Настройки</span>
-        </button>
     </div>
 
 </div>
@@ -354,7 +334,7 @@
     }
 
     function updateUserDisplay() {
-        document.getElementById('user-info-display').innerHTML = `👤 ${currentNickname} (${currentUser.email})`;
+        document.getElementById('user-info-display').innerHTML = `👤 ${currentNickname} (${currentUser.email}) <button onclick="promptChangeNickname()" class="ml-2 text-cyan-400 hover:underline">✏️ Сменить</button>`;
         document.getElementById('logout-btn').classList.remove('hidden');
     }
 
