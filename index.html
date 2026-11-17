@@ -14,7 +14,6 @@
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
         .animate-fade-in { animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        /* Стеклянный эффект (Glassmorphism) */
         .glass-card {
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01));
             backdrop-filter: blur(25px);
@@ -32,7 +31,6 @@
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.05));
             border-color: rgba(56, 189, 248, 0.4);
         }
-        /* Скрытие скроллбара */
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
@@ -181,15 +179,15 @@
         </div>
     </div>
 
-    <!-- ПРОХОЖДЕНИЕ ТАЙ-БРЕЙКА (ДОП. ВОПРОСА НА ВЫБЫВАНИЕ) -->
+    <!-- ПРОХОЖДЕНИЕ ТАЙ-БРЕЙКА (НОВЫЕ ПРАВИЛА) -->
     <div id="tiebreak-screen" class="hidden animate-fade-in space-y-3">
         <div class="flex justify-between items-center text-xs">
             <span class="font-semibold uppercase tracking-wider text-amber-400">⚡ Тай-брейк: Раунд на выбывание</span>
             <div id="tb-round-badge" class="text-slate-400">Раунд 1</div>
         </div>
         
-        <div class="p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-[11px] text-amber-300">
-            ℹ️ Участвуют только игроки с равным максимальным счетом. Ошибся — выбываешь из претендентов на победу! Остальные могут наблюдать за ходом раунда.
+        <div class="p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-[11px] text-amber-300" id="tb-info-box">
+            ℹ️ Отвечать могут все, но в зачет идут только ответы претендентов на победу! Побеждает тот, кто останется единственным с правильным ответом.
         </div>
 
         <div id="tb-media-container" class="flex justify-center my-1"></div>
@@ -262,7 +260,7 @@
         <p class="text-slate-400 text-xs mb-2.5">Результаты участников по викторинам:</p>
         <div id="org-list-container" class="space-y-2.5 max-h-[280px] overflow-y-auto pr-1 mb-3"></div>
         <button onclick="showScreen('home-screen')" class="w-full glass-btn hover:bg-white/10 text-slate-200 font-semibold py-2.5 rounded-2xl transition-all text-sm border border-white/10">
-            ← На главную
+            ← Назад
         </button>
     </div>
 
@@ -499,7 +497,7 @@
                 actionButtons = `<button onclick="startQuiz(${idx})" class="${btnClass} text-white text-xs font-semibold px-3 py-1.5 rounded-xl transition-all shadow-md">${btnLabel}</button>`;
             } else {
                 if (isTimeOver) {
-                    actionButtons = `<button onclick="startQuiz(${idx})" class="glass-btn hover:bg-white/10 text-slate-200 text-xs font-semibold px-2.5 py-1.5 rounded-xl transition-all border border-white/10">Пройти вне зачета</button>`;
+                    actionButtons = `<button onclick="startQuiz(${idx})" class="glass-btn hover:bg-white/10 text-slate-200 text-xs font-semibold px-3 py-1.5 rounded-xl transition-all border border-white/10">Пройти вне зачета</button>`;
                 } else {
                     actionButtons = `<button onclick="startQuiz(${idx})" class="bg-gradient-to-r from-teal-500 to-cyan-500 text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl transition-all shadow-md">Пройти</button>`;
                 }
@@ -825,7 +823,7 @@
         });
     }
 
-    // --- ЛОГИКА ТАЙ-БРЕЙКА С СИНХРОНИЗАЦИЕЙ ЧЕРЕЗ SUPABASE ---
+    // --- НОВАЯ УПРОЩЕННАЯ И СТРОГАЯ ЛОГИКА ТАЙ-БРЕЙКА ---
     async function startTiebreakSession() {
         const { data: tbData } = await supabaseClient.from('tiebreak_questions').select('*');
         if (!tbData || tbData.length === 0) {
@@ -839,58 +837,54 @@
 
         tiebreakCurrentIdx = 0;
         showScreen('tiebreak-screen');
-        await loadTiebreakState();
+        await renderTiebreakQuestion();
     }
 
-    async function loadTiebreakState() {
-        const { data: attempts } = await supabaseClient.from('tiebreak_attempts').select('*').eq('quiz_id', currentQuiz.id).eq('round_index', tiebreakCurrentIdx);
-        
-        if (attempts && attempts.length > 0) {
-            const failedUsers = attempts.filter(a => !a.is_correct).map(a => a.user_email);
-            tiebreakCandidates = tiebreakCandidates.filter(nick => !failedUsers.includes(nick));
-        }
-
-        if (tiebreakCandidates.length <= 1 || tiebreakCurrentIdx >= tiebreakQuestions.length) {
-            finishTiebreak();
+    async function renderTiebreakQuestion() {
+        if (tiebreakCurrentIdx >= tiebreakQuestions.length) {
+            alert('Вопросы для тай-брейка закончились, а победитель не выявлен!');
+            showScreen('home-screen');
             return;
         }
 
-        renderTiebreakQuestion();
-    }
-
-    function renderTiebreakQuestion() {
         const q = tiebreakQuestions[tiebreakCurrentIdx];
-        document.getElementById('tb-round-badge').innerText = `Раунд ${tiebreakCurrentIdx + 1} (Претендентов: ${tiebreakCandidates.length})`;
+        document.getElementById('tb-round-badge').innerText = `Раунд ${tiebreakCurrentIdx + 1} (Претендентов в игре: ${tiebreakCandidates.length})`;
         
         const isCandidate = tiebreakCandidates.includes(currentNickname);
-        let titleHtml = q.question_text;
-        if (!isCandidate) {
-            titleHtml += `<span class="block text-[11px] text-amber-400 mt-1">👀 Вы выбыли из тай-брейка или не входите в число лидеров. Вы наблюдаете за раундом.</span>`;
-        }
-        document.getElementById('tb-title').innerHTML = titleHtml;
+        let infoText = isCandidate 
+            ? `⭐ Вы официальный претендент на победу в этом раунде!` 
+            : `👀 Вы можете ответить на вопрос и увидеть правильный ответ, но в зачет идут только ответы официальных претендентов.`;
+        
+        document.getElementById('tb-info-box').innerHTML = `ℹ️ ${infoText} Осталось претендентов: <b>${tiebreakCandidates.join(', ')}</b>`;
+        document.getElementById('tb-title').innerText = q.question_text;
 
         const optionsContainer = document.getElementById('tb-options');
         optionsContainer.innerHTML = '';
         
         q.options.forEach((opt, oIdx) => {
-            const disabledAttr = !isCandidate ? 'disabled' : '';
-            optionsContainer.innerHTML += `<button ${disabledAttr} onclick="answerTiebreak(${oIdx}, ${q.correct_index})" class="w-full text-center px-4 py-3 glass-btn rounded-2xl transition-all text-xs sm:text-sm font-medium text-slate-200 hover:border-amber-400">${opt}</button>`;
+            optionsContainer.innerHTML += `<button onclick="answerTiebreak(${oIdx}, ${q.correct_index})" class="tb-opt-btn w-full text-center px-4 py-3 glass-btn rounded-2xl transition-all text-xs sm:text-sm font-medium text-slate-200 hover:border-amber-400">${opt}</button>`;
         });
 
         document.getElementById('tb-next-btn').classList.add('hidden');
+        window._tbAnsweredCurrent = false;
     }
 
     async function answerTiebreak(selectedIdx, correctIdx) {
+        if (window._tbAnsweredCurrent) return;
+        window._tbAnsweredCurrent = true;
+
         const isCorrect = (selectedIdx === correctIdx);
         
-        const buttons = document.getElementById('tb-options').children;
+        // Подсвечиваем кнопки для игрока
+        const buttons = document.getElementsByClassName('tb-opt-btn');
         for (let i = 0; i < buttons.length; i++) {
             buttons[i].disabled = true;
-            if (i === correctIdx) buttons[i].className = 'w-full text-center px-4 py-3 bg-emerald-500/20 border border-emerald-500 text-emerald-200 rounded-2xl text-xs font-semibold';
-            else if (i === selectedIdx && !isCorrect) buttons[i].className = 'w-full text-center px-4 py-3 bg-red-500/20 border border-red-500 text-red-200 rounded-2xl text-xs font-semibold';
-            else buttons[i].className = 'w-full text-center px-4 py-3 glass-btn text-slate-500 rounded-2xl text-xs opacity-40';
+            if (i === correctIdx) buttons[i].className = 'tb-opt-btn w-full text-center px-4 py-3 bg-emerald-500/20 border border-emerald-500 text-emerald-200 rounded-2xl text-xs font-semibold';
+            else if (i === selectedIdx && !isCorrect) buttons[i].className = 'tb-opt-btn w-full text-center px-4 py-3 bg-red-500/20 border border-red-500 text-red-200 rounded-2xl text-xs font-semibold';
+            else buttons[i].className = 'tb-opt-btn w-full text-center px-4 py-3 glass-btn text-slate-500 rounded-2xl text-xs opacity-40';
         }
 
+        // Фиксируем ответ участника в Supabase (для всех, но зачет идет по кандидатам)
         await supabaseClient.from('tiebreak_attempts').insert([{
             quiz_id: currentQuiz.id,
             user_email: currentNickname,
@@ -898,49 +892,62 @@
             is_correct: isCorrect
         }]);
 
-        if (!isCorrect) {
-            alert('❌ Вы ответили неверно и выбываете из борьбы за победу!');
-            tiebreakCandidates = tiebreakCandidates.filter(nick => nick !== currentNickname);
+        if (tiebreakCandidates.includes(currentNickname)) {
+            if (isCorrect) alert('✅ Верно!');
+            else alert('❌ Неверно!');
         } else {
-            alert('✅ Верно!');
+            alert(isCorrect ? '✅ Вы ответили верно (вне зачета)' : '❌ Вы ответили неверно (вне зачета)');
         }
 
         document.getElementById('tb-next-btn').classList.remove('hidden');
     }
 
     async function nextTiebreakStep() {
-        tiebreakCurrentIdx++;
-        const { data: attempts } = await supabaseClient.from('tiebreak_attempts').select('*').eq('quiz_id', currentQuiz.id).eq('round_index', tiebreakCurrentIdx - 1);
+        // Подтягиваем из базы все ответы претендентов за текущий раунд
+        const { data: attempts } = await supabaseClient.from('tiebreak_attempts').select('*').eq('quiz_id', currentQuiz.id).eq('round_index', tiebreakCurrentIdx);
+        
+        const roundResults = {};
         if (attempts) {
-            const failed = attempts.filter(a => !a.is_correct).map(a => a.user_email);
-            tiebreakCandidates = tiebreakCandidates.filter(nick => !failed.includes(nick));
+            attempts.forEach(a => {
+                if (tiebreakCandidates.includes(a.user_email)) {
+                    roundResults[a.user_email] = a.is_correct;
+                }
+            });
         }
 
-        if (tiebreakCandidates.length === 1 || tiebreakCurrentIdx >= tiebreakQuestions.length) {
-            finishTiebreak();
-        } else if (tiebreakCandidates.length === 0) {
-            alert('Все оставшиеся участники ошиблись! Переигровка раунда.');
-            tiebreakCandidates = await getOriginalTopParticipants();
+        // Выделяем кто из текущих кандидатов дал правильный ответ, а кто нет
+        const correctCandidates = tiebreakCandidates.filter(nick => roundResults[nick] === true);
+        const incorrectCandidates = tiebreakCandidates.filter(nick => roundResults[nick] === false || roundResults[nick] === undefined);
+
+        // Правило 2: Если все кандидаты ответили неправильно (или вообще не ответили) -> никто не выбывает, продолжаем вопросы
+        if (correctCandidates.length === 0) {
+            alert('🔄 Все претенденты ответили неправильно в этом раунде! Никто не выбывает, переходим к следующему дополнительному вопросу.');
+            tiebreakCurrentIdx++;
             renderTiebreakQuestion();
-        } else {
-            renderTiebreakQuestion();
+            return;
         }
-    }
 
-    async function getOriginalTopParticipants() {
-        const { data } = await supabaseClient.from('quiz_attempts').select('*').eq('quiz_id', currentQuiz.id).order('score', { ascending: false });
-        if (!data || data.length === 0) return [];
-        const maxScore = data[0].score;
-        return data.filter(d => d.score === maxScore).map(p => p.user_email);
-    }
+        // Правило 3: Победа присуждается ТОЛЬКО если ровно 1 участник дал правильный ответ, а остальные нет
+        if (correctCandidates.length === 1 && (incorrectCandidates.length > 0 || tiebreakCandidates.length === 1)) {
+            const winner = correctCandidates[0];
+            await supabaseClient.from('quizzes').update({ winner_name: winner }).eq('id', currentQuiz.id);
+            currentQuiz.winner_name = winner;
+            alert(`🎉 Поздравляем! Единственный правильный ответ дал(а) ${winner}. Это победа в викторине!`);
+            showScreen('home-screen');
+            return;
+        }
 
-    async function finishTiebreak() {
-        const finalWinner = tiebreakCandidates.length > 0 ? tiebreakCandidates[0] : "Ничья";
-        await supabaseClient.from('quizzes').update({ winner_name: finalWinner }).eq('id', currentQuiz.id);
-        currentQuiz.winner_name = finalWinner;
+        // Правило 4: Если два или более участника ответили правильно, выбывают только те, кто ответил неправильно
+        if (correctCandidates.length > 1) {
+            alert(`⚠️ Сразу ${correctCandidates.length} участника(ов) ответили правильно (${correctCandidates.join(', ')}). Остальные выбывают. Продолжаем дуэль между ними!`);
+            tiebreakCandidates = correctCandidates;
+            tiebreakCurrentIdx++;
+            renderTiebreakQuestion();
+            return;
+        }
 
-        alert(`🎉 Победитель по итогам тай-брейка: ${finalWinner}!`);
-        showScreen('home-screen');
+        tiebreakCurrentIdx++;
+        renderTiebreakQuestion();
     }
 
     async function openResultsForQuiz(quizIdx) {
