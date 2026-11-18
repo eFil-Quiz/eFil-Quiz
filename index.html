@@ -3,12 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quizify Pro — Викторины для друзей (Жемчужный стиль)</title>
+    <title>Quizify Pro — Викторины для друзей</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #F8FAFC;
+            background-image: linear-gradient(135deg, #F1F5F9 0%, #F8FAFC 50%, #EEF2F6 100%);
+            color: #1E293B;
+        }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(8px) scale(0.99); }
             to { opacity: 1; transform: translateY(0) scale(1); }
@@ -37,7 +42,7 @@
         ::-webkit-scrollbar-thumb { background: rgba(203, 213, 225, 0.6); border-radius: 4px; }
     </style>
 </head>
-<body class="bg-[#F8FAFC] bg-gradient-to-tr from-[#F1F5F9] via-[#F8FAFC] to-[#EEF2F6] text-slate-800 flex justify-center items-center min-h-screen p-3 sm:p-6">
+<body class="flex justify-center items-center min-h-screen p-3 sm:p-6">
 
 <div class="glass-card rounded-[36px] max-w-lg w-full p-6 sm:p-8 relative overflow-hidden transition-all">
     
