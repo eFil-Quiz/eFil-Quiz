@@ -8,11 +8,24 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
+        :root {
+            --bg-page: #F4F6FB;
+            --bg-card: #FFFFFF;
+            --bg-top-month: #FFFBEB;
+            --border-top-month: #FDE68A;
+            --bg-organizer: #EEF2FF;
+            --border-organizer: #C7D2FE;
+            --text-main: #1E293B;
+            --text-muted: #64707D;
+            --border-subtle: #E2E8F0;
+            --accent-primary: #3B82F6;
+            --accent-primary-dark: #2563EB;
+        }
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
-            background-color: #F8FAFC;
-            background-image: linear-gradient(135deg, #F1F5F9 0%, #F8FAFC 50%, #EEF2F6 100%);
-            color: #1E293B;
+            background-color: var(--bg-page);
+            background-image: linear-gradient(135deg, #F4F6FB 0%, #EDF2FA 55%, #F7F5EE 100%);
+            color: var(--text-main);
         }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(8px) scale(0.99); }
@@ -20,26 +33,39 @@
         }
         .animate-fade-in { animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .glass-card {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(248, 250, 252, 0.65));
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-            box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.07), 0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            box-shadow: 0 16px 36px -12px rgba(15, 23, 42, 0.08), 0 4px 12px -4px rgba(15, 23, 42, 0.04);
         }
         .glass-btn {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(241, 245, 249, 0.6));
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(226, 232, 240, 0.9);
-            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+            background: #FFFFFF;
+            border: 1px solid var(--border-subtle);
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
         }
         .glass-btn:hover {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 1), rgba(248, 250, 252, 0.9));
-            border-color: rgba(14, 165, 233, 0.4);
-            box-shadow: 0 8px 20px rgba(14, 165, 233, 0.1);
+            background: #F8FAFC;
+            border-color: #93C5FD;
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.08);
+        }
+        .top-month-card {
+            background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+            border: 1px solid var(--border-top-month);
+            box-shadow: 0 4px 14px rgba(245, 158, 11, 0.08);
+        }
+        .top-month-card:hover {
+            border-color: #F59E0B;
+            box-shadow: 0 8px 20px rgba(245, 158, 11, 0.14);
+        }
+        .organizer-panel-box {
+            background: linear-gradient(180deg, #EEF2FF 0%, #F5F7FF 100%);
+            border: 1px solid var(--border-organizer);
+            border-radius: 24px;
+            padding: 14px;
+            box-shadow: 0 6px 18px rgba(79, 70, 229, 0.05);
         }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(203, 213, 225, 0.6); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.5); border-radius: 4px; }
     </style>
 </head>
 <body class="flex justify-center items-center min-h-screen p-3 sm:p-6">
@@ -57,7 +83,7 @@
     <!-- АВТОРИЗАЦИЯ -->
     <div id="auth-screen" class="animate-fade-in">
         <div class="flex justify-center mb-3">
-            <div class="w-16 h-16 rounded-2xl glass-btn flex items-center justify-center text-2xl shadow-sm border border-slate-200 text-sky-600">
+            <div class="w-16 h-16 rounded-2xl glass-btn flex items-center justify-center text-2xl shadow-sm border border-indigo-200 text-indigo-600 bg-indigo-50/60">
                 ❓
             </div>
         </div>
@@ -66,13 +92,13 @@
         <div class="space-y-3.5">
             <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">Email</label>
-                <input type="email" id="auth-email" placeholder="email@example.com" class="w-full px-4 py-3 bg-white/70 border border-slate-200 rounded-2xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/10 text-sm">
+                <input type="email" id="auth-email" placeholder="email@example.com" class="w-full px-4 py-3 bg-slate-50/80 border border-slate-200 rounded-2xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15 text-sm">
             </div>
             <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">Пароль</label>
-                <input type="password" id="auth-password" placeholder="••••••••" class="w-full px-4 py-3 bg-white/70 border border-slate-200 rounded-2xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/10 text-sm">
+                <input type="password" id="auth-password" placeholder="••••••••" class="w-full px-4 py-3 bg-slate-50/80 border border-slate-200 rounded-2xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15 text-sm">
             </div>
-            <button onclick="handleLogin()" class="w-full bg-gradient-to-r from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white font-semibold py-3.5 rounded-2xl transition-all shadow-lg shadow-slate-900/10 text-sm">
+            <button onclick="handleLogin()" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-3.5 rounded-2xl transition-all shadow-md shadow-blue-600/20 text-sm">
                 Войти / Зарегистрироваться
             </button>
         </div>
@@ -85,9 +111,9 @@
         <div class="space-y-4">
             <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1.5">Ваш никнейм</label>
-                <input type="text" id="nickname-input" placeholder="Например: Профи Квизов" class="w-full px-4 py-3.5 bg-white/70 border border-slate-200 rounded-2xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/10 text-sm">
+                <input type="text" id="nickname-input" placeholder="Например: Профи Квизов" class="w-full px-4 py-3.5 bg-slate-50/80 border border-slate-200 rounded-2xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15 text-sm">
             </div>
-            <button onclick="saveNickname()" class="w-full bg-gradient-to-r from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white font-semibold py-3.5 rounded-2xl transition-all shadow-lg shadow-slate-900/10 text-sm">
+            <button onclick="saveNickname()" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-3.5 rounded-2xl transition-all shadow-md shadow-blue-600/20 text-sm">
                 Продолжить
             </button>
         </div>
@@ -95,17 +121,17 @@
 
     <!-- ГЛАВНЫЙ ЭКРАН -->
     <div id="home-screen" class="hidden animate-fade-in space-y-3.5">
-        <div onclick="openMonthlyLeaderboard()" class="glass-btn p-3.5 rounded-2xl flex items-center justify-between cursor-pointer transition-all hover:border-amber-400/50 group">
+        <div onclick="openMonthlyLeaderboard()" class="top-month-card p-3.5 rounded-2xl flex items-center justify-between cursor-pointer transition-all group">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-lg shrink-0 text-amber-600 shadow-sm">
+                <div class="w-10 h-10 rounded-xl bg-white/90 border border-amber-200 flex items-center justify-center text-lg shrink-0 text-amber-500 shadow-sm">
                     🏆
                 </div>
                 <div>
                     <h3 class="font-bold text-slate-900 text-sm">Топ месяца</h3>
-                    <p class="text-[11px] text-slate-500">Рейтинг победителей викторин</p>
+                    <p class="text-[11px] text-amber-800/80 font-medium">Рейтинг победителей викторин</p>
                 </div>
             </div>
-            <span class="text-slate-400 group-hover:translate-x-1 transition-transform text-lg">›</span>
+            <span class="text-amber-600 group-hover:translate-x-1 transition-transform text-lg font-bold">›</span>
         </div>
         
         <div class="flex justify-between items-center pt-1">
@@ -115,13 +141,13 @@
         <div id="quiz-list" class="space-y-2.5 max-h-[300px] overflow-y-auto pr-1"></div>
         
         <!-- Панель администратора -->
-        <div id="admin-controls" class="hidden mt-3 pt-3 border-t border-slate-200">
-            <p class="text-[11px] font-bold text-sky-600 uppercase tracking-wider mb-2">Панель организатора</p>
+        <div id="admin-controls" class="hidden mt-3 organizer-panel-box">
+            <p class="text-[11px] font-bold text-indigo-600 uppercase tracking-wider mb-2.5">Панель организатора</p>
             <div class="space-y-2">
-                <button onclick="openCreator()" class="w-full bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white font-semibold py-3 rounded-2xl transition-all shadow-md shadow-sky-600/20 flex items-center justify-center gap-2 text-sm">
+                <button onclick="openCreator()" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-400 hover:to-blue-500 text-white font-semibold py-3 rounded-2xl transition-all shadow-md shadow-blue-500/25 flex items-center justify-center gap-2 text-sm">
                     ✨ Создать новую викторину
                 </button>
-                <button onclick="openOrganizerDashboard()" class="w-full glass-btn hover:bg-white text-slate-700 font-semibold py-2.5 rounded-2xl transition-all text-sm border border-slate-200">
+                <button onclick="openOrganizerDashboard()" class="w-full bg-white/90 hover:bg-white text-slate-800 font-semibold py-2.5 rounded-2xl transition-all text-sm border border-indigo-200 shadow-sm">
                     📊 Панель организатора
                 </button>
             </div>
@@ -134,24 +160,24 @@
         <div class="mb-3 space-y-2.5">
             <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">Название викторины</label>
-                <input type="text" id="quiz-title-input" placeholder="Например: Исторический квиз" class="w-full px-3.5 py-2.5 bg-white/70 border border-slate-200 rounded-2xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-sky-500 text-sm">
+                <input type="text" id="quiz-title-input" placeholder="Например: Исторический квиз" class="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-2xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 text-sm">
             </div>
             <div>
-                <label class="block text-xs font-semibold text-amber-600 mb-1">⏳ Дата и время закрытия викторины (для зачета)</label>
-                <input type="datetime-local" id="quiz-closing-input" class="w-full px-3.5 py-2.5 bg-white/70 border border-slate-200 rounded-2xl text-slate-800 focus:outline-none focus:border-amber-500 text-sm">
+                <label class="block text-xs font-semibold text-amber-700 mb-1">⏳ Дата и время закрытия викторины (для зачета)</label>
+                <input type="datetime-local" id="quiz-closing-input" class="w-full px-3.5 py-2.5 bg-amber-50/50 border border-amber-200 rounded-2xl text-slate-800 focus:outline-none focus:border-amber-500 text-sm">
             </div>
             <div id="winner-input-wrapper" class="hidden">
-                <label class="block text-xs font-semibold text-emerald-600 mb-1">🏆 Победитель викторины</label>
-                <input type="text" id="quiz-winner-input" placeholder="Ник победителя" class="w-full px-3.5 py-2.5 bg-white/70 border border-slate-200 rounded-2xl text-slate-800 focus:outline-none focus:border-emerald-500 text-sm">
+                <label class="block text-xs font-semibold text-emerald-700 mb-1">🏆 Победитель викторины</label>
+                <input type="text" id="quiz-winner-input" placeholder="Ник победителя" class="w-full px-3.5 py-2.5 bg-emerald-50/50 border border-emerald-200 rounded-2xl text-slate-800 focus:outline-none focus:border-emerald-500 text-sm">
             </div>
         </div>
         
         <div id="questions-container" class="space-y-3 max-h-[220px] overflow-y-auto pr-1 mb-3"></div>
 
-        <button onclick="addQuestionField()" class="w-full glass-btn hover:bg-white text-slate-700 font-semibold py-2 rounded-2xl transition-all text-xs mb-2 border border-slate-200">
+        <button onclick="addQuestionField()" class="w-full glass-btn hover:bg-slate-50 text-slate-700 font-semibold py-2 rounded-2xl transition-all text-xs mb-2 border border-slate-200">
             ➕ Добавить вопрос
         </button>
-        <button onclick="saveQuizToSupabase()" class="w-full bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white font-semibold py-3 rounded-2xl transition-all shadow-md shadow-sky-600/20 text-sm">
+        <button onclick="saveQuizToSupabase()" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-3 rounded-2xl transition-all shadow-md shadow-blue-600/20 text-sm">
             💾 Сохранить в облако
         </button>
         <button onclick="showScreen('home-screen')" class="w-full mt-1.5 text-slate-500 hover:text-slate-800 py-1.5 text-xs transition-all">
@@ -162,7 +188,7 @@
     <!-- ПРОХОЖДЕНИЕ ВИКТОРИНЫ -->
     <div id="play-screen" class="hidden animate-fade-in space-y-3">
         <div class="flex justify-between items-center text-xs">
-            <span id="q-counter" class="font-semibold uppercase tracking-wider text-sky-600">Вопрос 1 из 1</span>
+            <span id="q-counter" class="font-semibold uppercase tracking-wider text-blue-600">Вопрос 1 из 1</span>
             <div id="q-progress-badge" class="text-slate-500">Отвечено: 0/0</div>
         </div>
         
@@ -171,11 +197,11 @@
         <div id="q-options" class="space-y-2 pt-1"></div>
         
         <div class="mt-3 space-y-2 pt-2.5 border-t border-slate-200">
-            <button id="next-q-btn" class="hidden w-full bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white font-semibold py-3 rounded-2xl transition-all shadow-md shadow-sky-600/20 animate-fade-in text-sm" onclick="nextQuestion()">
+            <button id="next-q-btn" class="hidden w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-3 rounded-2xl transition-all shadow-md shadow-blue-600/20 animate-fade-in text-sm" onclick="nextQuestion()">
                 Следующий вопрос ➡️
             </button>
             <div class="flex gap-2">
-                <button id="skip-q-btn" onclick="skipQuestion()" class="w-1/2 glass-btn hover:bg-white text-slate-700 font-semibold py-2.5 rounded-2xl transition-all text-xs border border-slate-200">
+                <button id="skip-q-btn" onclick="skipQuestion()" class="w-1/2 glass-btn hover:bg-slate-50 text-slate-700 font-semibold py-2.5 rounded-2xl transition-all text-xs border border-slate-200">
                     ⏭️ Пропустить
                 </button>
                 <button id="save-exit-btn" onclick="saveAndExitQuiz()" class="w-1/2 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 font-semibold py-2.5 rounded-2xl transition-all text-xs">
@@ -212,7 +238,7 @@
         <h2 id="review-quiz-title" class="text-lg font-bold mb-1 text-slate-900">Просмотр вопросов</h2>
         <p class="text-slate-500 text-xs mb-3">Изучите все вопросы и правильные ответы:</p>
         <div id="review-questions-list" class="space-y-2.5 max-h-[280px] overflow-y-auto pr-1 mb-3"></div>
-        <button onclick="showScreen('home-screen')" class="w-full glass-btn hover:bg-white text-slate-700 font-semibold py-2.5 rounded-2xl transition-all text-sm border border-slate-200">
+        <button onclick="showScreen('home-screen')" class="w-full glass-btn hover:bg-slate-50 text-slate-700 font-semibold py-2.5 rounded-2xl transition-all text-sm border border-slate-200">
             ← На главную
         </button>
     </div>
@@ -220,7 +246,7 @@
     <!-- ЭКРАН РЕЗУЛЬТАТОВ -->
     <div id="result-screen" class="hidden animate-fade-in space-y-2.5">
         <h2 class="text-lg sm:text-xl font-bold mb-0.5 text-slate-900">Итоги викторины! 🎉</h2>
-        <p id="res-summary" class="text-xs font-semibold text-sky-600 mb-2"></p>
+        <p id="res-summary" class="text-xs font-semibold text-blue-600 mb-2"></p>
         
         <div id="winner-badge-container" class="hidden p-2.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-center">
             <span class="text-[10px] text-emerald-600 font-semibold uppercase tracking-wider">🏆 Победитель викторины:</span>
@@ -234,26 +260,26 @@
         </div>
 
         <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Ваши результаты:</h3>
-        <div class="max-h-24 overflow-y-auto border border-slate-200 rounded-2xl bg-white/50 p-2">
+        <div class="max-h-24 overflow-y-auto border border-slate-200 rounded-2xl bg-slate-50/70 p-2">
             <table class="w-full text-xs text-left">
                 <thead><tr class="border-b border-slate-200 text-slate-500"><th class="p-1">№</th><th class="p-1">Вопрос</th><th class="p-1 text-center">Статус</th></tr></thead>
                 <tbody id="res-tbody" class="divide-y divide-slate-100"></tbody>
             </table>
         </div>
 
-        <h3 class="text-xs font-bold text-sky-600 uppercase tracking-wider">📊 Участники в зачете:</h3>
-        <div class="max-h-24 overflow-y-auto border border-sky-200 rounded-2xl bg-sky-50/50 p-2">
+        <h3 class="text-xs font-bold text-indigo-600 uppercase tracking-wider">📊 Участники в зачете:</h3>
+        <div class="max-h-24 overflow-y-auto border border-indigo-200 rounded-2xl bg-indigo-50/50 p-2">
             <table class="w-full text-xs text-left">
-                <thead><tr class="border-b border-sky-100 text-slate-500"><th class="p-1">Участник</th><th class="p-1 text-center">Баллы</th><th id="th-time-header" class="p-1 text-center hidden">Время</th></tr></thead>
-                <tbody id="quiz-leaderboard-tbody" class="divide-y divide-sky-100/50"></tbody>
+                <thead><tr class="border-b border-indigo-100 text-slate-500"><th class="p-1">Участник</th><th class="p-1 text-center">Баллы</th><th id="th-time-header" class="p-1 text-center hidden">Время</th></tr></thead>
+                <tbody id="quiz-leaderboard-tbody" class="divide-y divide-indigo-100/60"></tbody>
             </table>
         </div>
 
         <div class="flex gap-2 pt-1">
-            <button id="res-review-btn" class="w-1/2 bg-sky-50 hover:bg-sky-100 text-sky-700 font-semibold py-2.5 rounded-2xl transition-all border border-sky-200 text-xs">
+            <button id="res-review-btn" class="w-1/2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold py-2.5 rounded-2xl transition-all border border-indigo-200 text-xs">
                 👁️ Вопросы
             </button>
-            <button onclick="showScreen('home-screen')" class="w-1/2 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white font-semibold py-2.5 rounded-2xl transition-all shadow-md shadow-sky-600/20 text-xs">
+            <button onclick="showScreen('home-screen')" class="w-1/2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-2.5 rounded-2xl transition-all shadow-md shadow-blue-600/20 text-xs">
                 На главную
             </button>
         </div>
@@ -264,7 +290,7 @@
         <h2 class="text-lg font-bold mb-1 text-slate-900">Панель организатора 📊</h2>
         <p class="text-slate-500 text-xs mb-2.5">Результаты участников по викторинам:</p>
         <div id="org-list-container" class="space-y-2.5 max-h-[280px] overflow-y-auto pr-1 mb-3"></div>
-        <button onclick="showScreen('home-screen')" class="w-full glass-btn hover:bg-white text-slate-700 font-semibold py-2.5 rounded-2xl transition-all text-sm border border-slate-200">
+        <button onclick="showScreen('home-screen')" class="w-full glass-btn hover:bg-slate-50 text-slate-700 font-semibold py-2.5 rounded-2xl transition-all text-sm border border-slate-200">
             ← Назад
         </button>
     </div>
@@ -276,11 +302,11 @@
         
         <div class="mb-2.5">
             <label class="block text-xs font-semibold text-slate-600 mb-1">Выберите месяц:</label>
-            <select id="monthly-select" onchange="renderMonthlyLeaderboard()" class="w-full px-3.5 py-2.5 bg-white/70 border border-slate-200 rounded-2xl text-slate-800 focus:outline-none focus:border-sky-500 text-xs">
+            <select id="monthly-select" onchange="renderMonthlyLeaderboard()" class="w-full px-3.5 py-2.5 bg-amber-50/50 border border-amber-200 rounded-2xl text-slate-800 focus:outline-none focus:border-amber-500 text-xs">
             </select>
         </div>
 
-        <div class="max-h-[220px] overflow-y-auto border border-slate-200 rounded-2xl bg-white/50 p-2 mb-3">
+        <div class="max-h-[220px] overflow-y-auto border border-slate-200 rounded-2xl bg-slate-50/70 p-2 mb-3">
             <table class="w-full text-xs text-left">
                 <thead>
                     <tr class="border-b border-slate-200 text-slate-500">
@@ -292,7 +318,7 @@
                 <tbody id="monthly-tbody" class="divide-y divide-slate-100"></tbody>
             </table>
         </div>
-        <button onclick="showScreen('home-screen')" class="w-full glass-btn hover:bg-white text-slate-700 font-semibold py-2.5 rounded-2xl transition-all text-sm border border-slate-200">
+        <button onclick="showScreen('home-screen')" class="w-full glass-btn hover:bg-slate-50 text-slate-700 font-semibold py-2.5 rounded-2xl transition-all text-sm border border-slate-200">
             ← На главную
         </button>
     </div>
@@ -300,9 +326,9 @@
     <!-- МОДАЛЬНОЕ ОКНО СТАТИСТИКИ -->
     <div id="player-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex justify-center items-center p-4 z-50">
         <div class="glass-card rounded-[32px] p-6 max-w-md w-full animate-fade-in shadow-2xl border border-slate-200">
-            <h3 id="modal-player-title" class="text-base font-bold text-sky-600 mb-2">Статистика игрока</h3>
+            <h3 id="modal-player-title" class="text-base font-bold text-indigo-600 mb-2">Статистика игрока</h3>
             <div id="modal-player-content" class="space-y-2 max-h-64 overflow-y-auto text-xs text-slate-600 mb-3 pr-1"></div>
-            <button onclick="closePlayerModal()" class="w-full glass-btn hover:bg-white text-slate-700 py-2.5 rounded-2xl font-semibold transition-all text-sm border border-slate-200">
+            <button onclick="closePlayerModal()" class="w-full glass-btn hover:bg-slate-50 text-slate-700 py-2.5 rounded-2xl font-semibold transition-all text-sm border border-slate-200">
                 Закрыть
             </button>
         </div>
@@ -351,7 +377,7 @@
     }
 
     function updateUserDisplay() {
-        document.getElementById('user-info-display').innerHTML = `👤 ${currentNickname} (${currentUser.email}) <button onclick="promptChangeNickname()" class="ml-2 text-sky-600 hover:underline">✏️ Сменить</button>`;
+        document.getElementById('user-info-display').innerHTML = `👤 ${currentNickname} (${currentUser.email}) <button onclick="promptChangeNickname()" class="ml-2 text-blue-600 hover:underline">✏️ Сменить</button>`;
         document.getElementById('logout-btn').classList.remove('hidden');
     }
 
@@ -492,40 +518,40 @@
             if (isCompleted) {
                 actionButtons = `
                     <div class="flex flex-col sm:flex-row gap-1">
-                        <button onclick="openResultsForQuiz(${idx})" class="glass-btn hover:bg-white text-slate-700 text-xs font-semibold px-2.5 py-1.5 rounded-xl transition-all border border-slate-200">📊 Результаты</button>
-                        <button onclick="reviewQuiz(${idx})" class="bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-semibold px-2.5 py-1.5 rounded-xl transition-all border border-sky-200">▶️ Вопросы</button>
+                        <button onclick="openResultsForQuiz(${idx})" class="glass-btn hover:bg-slate-50 text-slate-700 text-xs font-semibold px-2.5 py-1.5 rounded-xl transition-all border border-slate-200">📊 Результаты</button>
+                        <button onclick="reviewQuiz(${idx})" class="bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold px-2.5 py-1.5 rounded-xl transition-all border border-blue-200">▶️ Вопросы</button>
                     </div>`;
             } else if (isInProgress) {
                 const btnLabel = isTimeOver ? `▶️ Продолжить (вне зачета)` : `▶️ Продолжить (${answeredCount}/${totalQ})`;
-                const btnClass = isTimeOver ? 'bg-amber-600 hover:bg-amber-500' : 'bg-gradient-to-r from-sky-600 to-blue-600';
+                const btnClass = isTimeOver ? 'bg-amber-600 hover:bg-amber-500' : 'bg-gradient-to-r from-blue-600 to-indigo-600';
                 actionButtons = `<button onclick="startQuiz(${idx})" class="${btnClass} text-white text-xs font-semibold px-3 py-1.5 rounded-xl transition-all shadow-sm">${btnLabel}</button>`;
             } else {
                 if (isTimeOver) {
-                    actionButtons = `<button onclick="startQuiz(${idx})" class="glass-btn hover:bg-white text-slate-700 text-xs font-semibold px-3 py-1.5 rounded-xl transition-all border border-slate-200">Пройти вне зачета</button>`;
+                    actionButtons = `<button onclick="startQuiz(${idx})" class="glass-btn hover:bg-slate-50 text-slate-700 text-xs font-semibold px-3 py-1.5 rounded-xl transition-all border border-slate-200">Пройти вне зачета</button>`;
                 } else {
-                    actionButtons = `<button onclick="startQuiz(${idx})" class="bg-gradient-to-r from-sky-600 to-blue-600 text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl transition-all shadow-sm">Пройти</button>`;
+                    actionButtons = `<button onclick="startQuiz(${idx})" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl transition-all shadow-sm">Пройти</button>`;
                 }
             }
 
             let adminButtons = '';
             if (isAdmin) {
                 adminButtons = `
-                    <button onclick='openCreator(${JSON.stringify(q).replace(/'/g, "&apos;")})' class="glass-btn hover:bg-white text-slate-700 text-xs px-2 py-1.5 rounded-xl border border-slate-200 transition-all" title="Редактировать">✏️</button>
+                    <button onclick='openCreator(${JSON.stringify(q).replace(/'/g, "&apos;")})' class="bg-amber-50 hover:bg-amber-100 text-amber-600 text-xs px-2 py-1.5 rounded-xl border border-amber-200 transition-all" title="Редактировать">✏️</button>
                     <button class="delete-quiz-btn bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs px-2.5 py-1.5 rounded-xl border border-rose-200 transition-all" data-id="${q.id}" data-title="${q.title.replace(/"/g, '&quot;')}" title="Удалить">🗑️</button>`;
             }
 
-            let winnerBadge = q.winner_name ? `<span class="text-[11px] text-emerald-600 block mt-0.5">🏆 Победитель: ${q.winner_name}</span>` : '';
+            let winnerBadge = q.winner_name ? `<span class="text-[11px] text-emerald-600 font-medium block mt-0.5">🏆 Победитель: ${q.winner_name}</span>` : '';
             
             let closingBadge = '';
             if (q.closing_at) {
                 const formattedDate = new Date(q.closing_at).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
                 closingBadge = isTimeOver
                     ? `<span class="text-[11px] text-rose-600 block mt-0.5">🔴 Время вышло (${formattedDate}) — вне зачета</span>`
-                    : `<span class="text-[11px] text-amber-600 block mt-0.5">⏳ Доступна до: ${formattedDate}</span>`;
+                    : `<span class="text-[11px] text-amber-700 block mt-0.5">⏳ Доступна до: ${formattedDate}</span>`;
             }
 
             container.innerHTML += `
-                <div class="glass-btn p-3 rounded-2xl flex justify-between items-center transition-all hover:border-sky-300 gap-2">
+                <div class="glass-btn p-3.5 rounded-2xl flex justify-between items-center transition-all hover:border-blue-300 gap-2">
                     <div class="space-y-0.5">
                         <h3 class="font-bold text-slate-900 text-sm">${q.title}</h3>
                         <span class="text-xs text-slate-500">💬 Вопросов: ${totalQ}</span>
@@ -568,20 +594,20 @@
         block.className = 'question-block glass-btn p-3 rounded-2xl space-y-2.5 animate-fade-in border border-slate-200';
         block.innerHTML = `
             <div class="flex justify-between items-center"><span class="text-xs font-bold text-slate-500">Вопрос ${count}</span></div>
-            <input type="text" class="q-text w-full px-3 py-2 bg-white/70 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800" placeholder="Текст вопроса" value="${qText}">
+            <input type="text" class="q-text w-full px-3 py-2 bg-slate-50/80 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800" placeholder="Текст вопроса" value="${qText}">
             <div class="grid grid-cols-2 gap-2">
-                <select class="q-cat w-full px-2 py-1.5 bg-white/70 border border-slate-200 rounded-xl text-xs text-slate-800">${optionsHtml}</select>
-                <input type="text" class="q-media w-full px-2.5 py-1.5 bg-white/70 border border-slate-200 rounded-xl text-xs text-slate-800" placeholder="URL картинки/видео" value="${qMedia}">
+                <select class="q-cat w-full px-2 py-1.5 bg-slate-50/80 border border-slate-200 rounded-xl text-xs text-slate-800">${optionsHtml}</select>
+                <input type="text" class="q-media w-full px-2.5 py-1.5 bg-slate-50/80 border border-slate-200 rounded-xl text-xs text-slate-800" placeholder="URL картинки/видео" value="${qMedia}">
             </div>
             <div class="grid grid-cols-2 gap-2">
-                <input type="text" class="opt-0 px-2.5 py-1.5 bg-white/70 border border-slate-200 rounded-xl text-xs text-slate-800" placeholder="Вариант 1" value="${opts[0]}">
-                <input type="text" class="opt-1 px-2.5 py-1.5 bg-white/70 border border-slate-200 rounded-xl text-xs text-slate-800" placeholder="Вариант 2" value="${opts[1]}">
-                <input type="text" class="opt-2 px-2.5 py-1.5 bg-white/70 border border-slate-200 rounded-xl text-xs text-slate-800" placeholder="Вариант 3" value="${opts[2]}">
-                <input type="text" class="opt-3 px-2.5 py-1.5 bg-white/70 border border-slate-200 rounded-xl text-xs text-slate-800" placeholder="Вариант 4" value="${opts[3]}">
+                <input type="text" class="opt-0 px-2.5 py-1.5 bg-slate-50/80 border border-slate-200 rounded-xl text-xs text-slate-800" placeholder="Вариант 1" value="${opts[0]}">
+                <input type="text" class="opt-1 px-2.5 py-1.5 bg-slate-50/80 border border-slate-200 rounded-xl text-xs text-slate-800" placeholder="Вариант 2" value="${opts[1]}">
+                <input type="text" class="opt-2 px-2.5 py-1.5 bg-slate-50/80 border border-slate-200 rounded-xl text-xs text-slate-800" placeholder="Вариант 3" value="${opts[2]}">
+                <input type="text" class="opt-3 px-2.5 py-1.5 bg-slate-50/80 border border-slate-200 rounded-xl text-xs text-slate-800" placeholder="Вариант 4" value="${opts[3]}">
             </div>
             <div class="flex items-center gap-2">
                 <label class="text-[11px] text-slate-500">Правильный (1-4):</label>
-                <input type="number" class="q-correct w-14 px-2 py-1 bg-white/70 border border-slate-200 rounded-xl text-xs text-center text-slate-800" min="1" max="4" value="${correctVal}">
+                <input type="number" class="q-correct w-14 px-2 py-1 bg-slate-50/80 border border-slate-200 rounded-xl text-xs text-center text-slate-800" min="1" max="4" value="${correctVal}">
             </div>`;
         container.appendChild(block);
     }
@@ -687,18 +713,18 @@
         mediaContainer.innerHTML = '';
         if (q.media_url) {
             if (q.media_url.match(/\.(mp4|webm|ogg)$/i)) {
-                mediaContainer.innerHTML = `<video src="${q.media_url}" controls class="w-28 h-28 rounded-full object-cover border-2 border-sky-300 shadow-md"></video>`;
+                mediaContainer.innerHTML = `<video src="${q.media_url}" controls class="w-28 h-28 rounded-full object-cover border-2 border-blue-300 shadow-md"></video>`;
             } else if (q.media_url.match(/\.(mp3|wav|ogg)$/i)) {
                 mediaContainer.innerHTML = `<audio src="${q.media_url}" controls class="w-full"></audio>`;
             } else {
-                mediaContainer.innerHTML = `<div class="w-24 h-24 rounded-full p-1 bg-gradient-to-tr from-sky-500 to-blue-600 overflow-hidden flex items-center justify-center shadow-sm"><img src="${q.media_url}" class="w-full h-full rounded-full object-cover" /></div>`;
+                mediaContainer.innerHTML = `<div class="w-24 h-24 rounded-full p-1 bg-gradient-to-tr from-blue-500 to-indigo-600 overflow-hidden flex items-center justify-center shadow-sm"><img src="${q.media_url}" class="w-full h-full rounded-full object-cover" /></div>`;
             }
         }
 
         const optionsContainer = document.getElementById('q-options');
         optionsContainer.innerHTML = '';
         q.options.forEach((opt, oIdx) => {
-            optionsContainer.innerHTML += `<button onclick="selectAnswer(${oIdx})" class="w-full text-center px-4 py-3 glass-btn rounded-2xl transition-all text-xs sm:text-sm font-medium text-slate-800 hover:border-sky-400">${opt}</button>`;
+            optionsContainer.innerHTML += `<button onclick="selectAnswer(${oIdx})" class="w-full text-center px-4 py-3 glass-btn rounded-2xl transition-all text-xs sm:text-sm font-medium text-slate-800 hover:border-blue-400">${opt}</button>`;
         });
 
         const skipBtn = document.getElementById('skip-q-btn');
@@ -820,9 +846,9 @@
         }
 
         validData.forEach(att => {
-            const isMe = (att.user_email === currentNickname) ? ' text-sky-700 font-bold' : ' text-slate-700';
+            const isMe = (att.user_email === currentNickname) ? ' text-indigo-700 font-bold' : ' text-slate-700';
             let timeTd = isAdmin ? `<td class="p-1 text-center text-slate-500">${att.total_time || 0}с</td>` : '';
-            tbody.innerHTML += `<tr class="border-b border-sky-100/50"><td class="p-1${isMe}">👤 ${att.user_email}</td><td class="p-1 text-center font-bold text-emerald-600">${att.score}</td>${timeTd}</tr>`;
+            tbody.innerHTML += `<tr class="border-b border-indigo-100/60"><td class="p-1${isMe}">👤 ${att.user_email}</td><td class="p-1 text-center font-bold text-emerald-600">${att.score}</td>${timeTd}</tr>`;
         });
     }
 
@@ -962,7 +988,7 @@
         container.innerHTML = '';
         q.questions.forEach((question, idx) => {
             let optsHtml = question.options.map((opt, oIdx) => `<div class="p-2 rounded-xl border ${oIdx === question.correct_index ? 'text-emerald-700 font-bold bg-emerald-50 border-emerald-200' : 'text-slate-600 border-slate-200 opacity-70'} text-xs mb-1">${oIdx + 1}. ${opt}</div>`).join('');
-            container.innerHTML += `<div class="glass-btn p-3 rounded-2xl space-y-1.5 border border-slate-200"><span class="text-[10px] font-bold text-sky-600">Вопрос ${idx + 1} (${question.category})</span><h4 class="text-xs sm:text-sm font-bold text-slate-900">${question.question_text}</h4><div>${optsHtml}</div></div>`;
+            container.innerHTML += `<div class="glass-btn p-3 rounded-2xl space-y-1.5 border border-slate-200"><span class="text-[10px] font-bold text-blue-600">Вопрос ${idx + 1} (${question.category})</span><h4 class="text-xs sm:text-sm font-bold text-slate-900">${question.question_text}</h4><div>${optsHtml}</div></div>`;
         });
         showScreen('review-screen');
     }
@@ -987,14 +1013,14 @@
             const closingAt = quiz.closing_at ? new Date(quiz.closing_at) : null;
 
             let attemptsHtml = quizAttempts.length === 0 ? '<p class="text-slate-400 text-xs py-1">Никто не проходил.</p>' : quizAttempts.map(att => {
-                const statusMark = att.is_completed === false ? '<span class="text-[9px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-md border border-amber-200">В процессе</span>' : '<span class="text-[9px] text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-200">Завершено</span>';
+                const statusMark = att.is_completed === false ? '<span class="text-[9px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-md border border-amber-200">В процессе</span>' : '<span class="text-[9px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-200">Завершено</span>';
                 let outOfTimeMark = '';
                 if (closingAt && new Date(att.created_at || att.updated_at || Date.now()) > closingAt) {
                     outOfTimeMark = '<span class="text-[9px] text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded-md ml-1 border border-rose-200">🔴 Вне зачета</span>';
                 }
-                return `<div class="org-player-row glass-btn p-2 rounded-xl flex justify-between items-center cursor-pointer" data-email="${att.user_email}"><div class="space-y-0.5 pointer-events-none"><span class="font-bold text-sky-700 text-xs">👤 ${att.user_email}</span><div class="text-[10px] text-slate-500">⏱️ ${att.total_time || 0}с</div></div><div class="flex items-center gap-1.5 pointer-events-none"><span class="text-xs">Баллы: <b class="text-emerald-600">${att.score}</b></span>${statusMark} ${outOfTimeMark}</div></div>`;
+                return `<div class="org-player-row glass-btn p-2 rounded-xl flex justify-between items-center cursor-pointer" data-email="${att.user_email}"><div class="space-y-0.5 pointer-events-none"><span class="font-bold text-indigo-700 text-xs">👤 ${att.user_email}</span><div class="text-[10px] text-slate-500">⏱️ ${att.total_time || 0}с</div></div><div class="flex items-center gap-1.5 pointer-events-none"><span class="text-xs">Баллы: <b class="text-emerald-600">${att.score}</b></span>${statusMark} ${outOfTimeMark}</div></div>`;
             }).join('');
-            container.innerHTML += `<div class="glass-btn p-3 rounded-2xl space-y-2 border border-slate-200"><div class="flex justify-between items-center border-b border-slate-200 pb-1"><h3 class="font-bold text-slate-900 text-xs">🎯 ${quiz.title}</h3><span class="text-[10px] text-slate-500">Попыток: ${quizAttempts.length}</span></div><div class="space-y-1">${attemptsHtml}</div></div>`;
+            container.innerHTML += `<div class="organizer-panel-box space-y-2"><div class="flex justify-between items-center border-b border-indigo-200/80 pb-1"><h3 class="font-bold text-slate-900 text-xs">🎯 ${quiz.title}</h3><span class="text-[10px] text-slate-500">Попыток: ${quizAttempts.length}</span></div><div class="space-y-1">${attemptsHtml}</div></div>`;
         });
         document.querySelectorAll('.org-player-row').forEach(row => row.addEventListener('click', () => openPlayerDetails(row.getAttribute('data-email'), window._allOrganizerAttempts)));
         showScreen('organizer-screen');
@@ -1019,7 +1045,7 @@
             }
         });
 
-        let html = `<div class="glass-btn p-2.5 rounded-xl border border-slate-200 mb-2 space-y-0.5 text-xs"><p class="text-slate-600">Суммарное время: <b class="text-slate-900">${totalTimeAll} сек.</b></p><p class="text-slate-600">Всего правильных: <b class="text-emerald-600">${totalScoreAll}</b></p></div><h4 class="text-[11px] font-bold text-sky-600 uppercase tracking-wider mb-1">📊 Статистика по категориям:</h4>`;
+        let html = `<div class="glass-btn p-2.5 rounded-xl border border-slate-200 mb-2 space-y-0.5 text-xs"><p class="text-slate-600">Суммарное время: <b class="text-slate-900">${totalTimeAll} сек.</b></p><p class="text-slate-600">Всего правильных: <b class="text-emerald-600">${totalScoreAll}</b></p></div><h4 class="text-[11px] font-bold text-indigo-600 uppercase tracking-wider mb-1">📊 Статистика по категориям:</h4>`;
         if (Object.keys(globalStats).length > 0) {
             html += `<div class="space-y-1 mb-2">`;
             for (const [cat, data] of Object.entries(globalStats)) {
