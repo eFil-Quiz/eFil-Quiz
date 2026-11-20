@@ -64,6 +64,53 @@
             padding: 14px;
             box-shadow: 0 6px 18px rgba(79, 70, 229, 0.05);
         }
+        .quiz-media-img {
+            max-width: 100%;
+            max-height: 220px;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            border-radius: 18px;
+            cursor: zoom-in;
+            border: 1px solid var(--border-subtle);
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .quiz-media-img:hover {
+            transform: scale(1.02);
+            box-shadow: 0 12px 26px rgba(59, 130, 246, 0.18);
+        }
+        .quiz-media-video {
+            max-width: 100%;
+            max-height: 220px;
+            width: auto;
+            height: auto;
+            border-radius: 18px;
+            border: 1px solid var(--border-subtle);
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+        }
+        .lightbox-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.86);
+            backdrop-filter: blur(6px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            cursor: zoom-out;
+            padding: 20px;
+        }
+        .lightbox-overlay.active {
+            display: flex;
+        }
+        .lightbox-overlay img {
+            max-width: 94vw;
+            max-height: 90vh;
+            object-fit: contain;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+        }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.5); border-radius: 4px; }
@@ -193,7 +240,7 @@
             <div id="q-progress-badge" class="text-slate-500">Отвечено: 0/0</div>
         </div>
         
-        <div id="media-container" class="flex justify-center my-1"></div>
+        <div id="media-container" class="flex flex-col items-center my-1"></div>
         <h2 id="q-title" class="text-base sm:text-lg font-bold text-center text-slate-900 px-1 tracking-wide">Загрузка...</h2>
         <div id="q-options" class="space-y-2 pt-1"></div>
         
@@ -223,7 +270,7 @@
             Участники раунда:
         </div>
 
-        <div id="tb-media-container" class="flex justify-center my-1"></div>
+        <div id="tb-media-container" class="flex flex-col items-center my-1"></div>
         <h2 id="tb-title" class="text-base sm:text-lg font-bold text-center text-slate-900 px-1 tracking-wide">Загрузка доп. вопроса...</h2>
         <div id="tb-options" class="space-y-2 pt-1"></div>
 
@@ -345,10 +392,16 @@
     </div>
 </div>
 
+<!-- ЛАЙТБОКС ДЛЯ УВЕЛИЧЕНИЯ ИЗОБРАЖЕНИЙ ПО КЛИКУ -->
+<div id="lightbox" class="lightbox-overlay" onclick="closeLightbox()">
+    <img id="lightbox-img" src="" alt="Увеличенное изображение">
+</div>
+
 <script>
     const SUPABASE_URL = 'https://kronawysbxzjwdokmusa.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_tCErXZb02kl0dJY3UmTeJw_ylaWGfdH';
     const ADMIN_EMAIL = 'evgeniy.filippov8@gmail.com';
+    const MEDIA_BUCKET = 'quiz-media';
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -375,6 +428,38 @@
     let tiebreakUsedQuestionIds = new Set();
     let tiebreakPollInterval = null;
     let tiebreakNextAction = null;
+
+    function openLightbox(src) {
+        if (!src) return;
+        const lightbox = document.getElementById('lightbox');
+        const img = document.getElementById('lightbox-img');
+        img.src = src;
+        lightbox.classList.add('active');
+    }
+
+    function closeLightbox() {
+        document.getElementById('lightbox').classList.remove('active');
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeLightbox();
+    });
+
+    function buildMediaHtml(mediaUrl, isTiebreak = false) {
+        if (!mediaUrl) return '';
+        if (mediaUrl.match(/\.(mp4|webm|ogg)(\?.*)?$/i)) {
+            return `<video src="${mediaUrl}" controls class="quiz-media-video"></video>`;
+        }
+        if (mediaUrl.match(/\.(mp3|wav|ogg)(\?.*)?$/i)) {
+            return `<audio src="${mediaUrl}" controls class="w-full"></audio>`;
+        }
+        const safeUrl = mediaUrl.replace(/'/g, "\\'");
+        const hintColor = isTiebreak ? 'text-amber-700' : 'text-slate-500';
+        return `
+            <img src="${mediaUrl}" onclick="openLightbox('${safeUrl}')" title="Нажмите, чтобы увеличить" class="quiz-media-img" alt="Медиа вопроса" />
+            <span class="text-[10px] ${hintColor} mt-1">🔍 Нажмите на картинку, чтобы увеличить</span>
+        `;
+    }
 
     async function initAuth() {
         const { data: { session } } = await supabaseClient.auth.getSession();
@@ -599,6 +684,39 @@
         else { alert('Викторина успешно удалена!'); loadQuizzes(); }
     }
 
+    async function handleMediaFileUpload(fileInput, blockEl) {
+        const file = fileInput.files?.[0];
+        if (!file) return;
+
+        const statusEl = blockEl.querySelector('.q-upload-status');
+        const urlInput = blockEl.querySelector('.q-media');
+        if (statusEl) statusEl.innerText = '⏳ Загрузка...';
+
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const filePath = `questions/${Date.now()}_${Math.random().toString(36).slice(2, 8)}_${safeName}`;
+
+        const { error: uploadError } = await supabaseClient.storage
+            .from(MEDIA_BUCKET)
+            .upload(filePath, file, { cacheControl: '3600', upsert: false });
+
+        if (uploadError) {
+            if (statusEl) statusEl.innerText = '❌ Ошибка загрузки (проверьте бакет quiz-media)';
+            alert('Ошибка загрузки файла: ' + uploadError.message);
+            fileInput.value = '';
+            return;
+        }
+
+        const { data: pubData } = supabaseClient.storage
+            .from(MEDIA_BUCKET)
+            .getPublicUrl(filePath);
+
+        if (pubData?.publicUrl) {
+            urlInput.value = pubData.publicUrl;
+            if (statusEl) statusEl.innerText = `✅ Загружено: ${file.name}`;
+        }
+        fileInput.value = '';
+    }
+
     function addQuestionField(existingData = null, customNum = null) {
         const container = document.getElementById('questions-container');
         const count = customNum || (container.getElementsByClassName('question-block').length + 1);
@@ -622,8 +740,15 @@
             <input type="text" class="q-text w-full px-3 py-2 bg-slate-50/80 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800" placeholder="Текст вопроса" value="${qText}">
             <div class="grid grid-cols-2 gap-2">
                 <select class="q-cat w-full px-2 py-1.5 bg-slate-50/80 border border-slate-200 rounded-xl text-xs text-slate-800">${optionsHtml}</select>
-                <input type="text" class="q-media w-full px-2.5 py-1.5 bg-slate-50/80 border border-slate-200 rounded-xl text-xs text-slate-800" placeholder="URL картинки/видео" value="${qMedia}">
+                <div class="flex gap-1">
+                    <input type="text" class="q-media w-full px-2.5 py-1.5 bg-slate-50/80 border border-slate-200 rounded-xl text-xs text-slate-800" placeholder="URL или файл" value="${qMedia}">
+                    <label class="px-2 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-xs font-semibold cursor-pointer shrink-0 transition-all" title="Загрузить с компьютера">
+                        📁
+                        <input type="file" accept="image/*,video/*,audio/*" class="q-file-input hidden">
+                    </label>
+                </div>
             </div>
+            <div class="q-upload-status text-[10px] text-slate-500"></div>
             <div class="grid grid-cols-2 gap-2">
                 <input type="text" class="opt-0 px-2.5 py-1.5 bg-slate-50/80 border border-slate-200 rounded-xl text-xs text-slate-800" placeholder="Вариант 1" value="${opts[0]}">
                 <input type="text" class="opt-1 px-2.5 py-1.5 bg-slate-50/80 border border-slate-200 rounded-xl text-xs text-slate-800" placeholder="Вариант 2" value="${opts[1]}">
@@ -634,6 +759,9 @@
                 <label class="text-[11px] text-slate-500">Правильный (1-4):</label>
                 <input type="number" class="q-correct w-14 px-2 py-1 bg-slate-50/80 border border-slate-200 rounded-xl text-xs text-center text-slate-800" min="1" max="4" value="${correctVal}">
             </div>`;
+
+        const fileInput = block.querySelector('.q-file-input');
+        fileInput.addEventListener('change', () => handleMediaFileUpload(fileInput, block));
         container.appendChild(block);
     }
 
@@ -735,16 +863,7 @@
         questionStartTime = Date.now();
 
         const mediaContainer = document.getElementById('media-container');
-        mediaContainer.innerHTML = '';
-        if (q.media_url) {
-            if (q.media_url.match(/\.(mp4|webm|ogg)$/i)) {
-                mediaContainer.innerHTML = `<video src="${q.media_url}" controls class="w-28 h-28 rounded-full object-cover border-2 border-blue-300 shadow-md"></video>`;
-            } else if (q.media_url.match(/\.(mp3|wav|ogg)$/i)) {
-                mediaContainer.innerHTML = `<audio src="${q.media_url}" controls class="w-full"></audio>`;
-            } else {
-                mediaContainer.innerHTML = `<div class="w-24 h-24 rounded-full p-1 bg-gradient-to-tr from-blue-500 to-indigo-600 overflow-hidden flex items-center justify-center shadow-sm"><img src="${q.media_url}" class="w-full h-full rounded-full object-cover" /></div>`;
-            }
-        }
+        mediaContainer.innerHTML = buildMediaHtml(q.media_url, false);
 
         const optionsContainer = document.getElementById('q-options');
         optionsContainer.innerHTML = '';
@@ -930,14 +1049,12 @@
 
         const globalAttempts = await fetchGlobalTiebreakAttempts();
 
-        // 1. Собираем все question_id, которые уже участвовали в тай-брейках в любых викторинах
         globalAttempts.forEach(a => {
             if (a.question_id !== undefined && a.question_id !== null && String(a.question_id).trim() !== '') {
                 tiebreakUsedQuestionIds.add(String(a.question_id));
             }
         });
 
-        // 2. Проверяем незавершённый раунд в текущей викторине (если кто-то из кандидатов текущей викторины ещё не ответил)
         const currentQuizAttempts = globalAttempts.filter(a => String(a.quiz_id) === String(currentQuiz.id));
         const quizRounds = Array.from(new Set(
             currentQuizAttempts
@@ -983,7 +1100,6 @@
             }
         }
 
-        // 3. Если в записях без question_id были разыграны вопросы в других викторинах — пропускаем их по порядку
         const legacyOtherQuizAttempts = globalAttempts.filter(
             a => String(a.quiz_id) !== String(currentQuiz.id) && (!a.question_id || String(a.question_id).trim() === '')
         );
@@ -1026,10 +1142,7 @@
         document.getElementById('tb-title').innerText = q.question_text;
 
         const mediaContainer = document.getElementById('tb-media-container');
-        mediaContainer.innerHTML = '';
-        if (q.media_url) {
-            mediaContainer.innerHTML = `<div class="w-20 h-20 rounded-full p-1 bg-gradient-to-tr from-amber-500 to-orange-500 overflow-hidden flex items-center justify-center shadow-sm"><img src="${q.media_url}" class="w-full h-full rounded-full object-cover" /></div>`;
-        }
+        mediaContainer.innerHTML = buildMediaHtml(q.media_url, true);
 
         const optionsContainer = document.getElementById('tb-options');
         optionsContainer.innerHTML = '';
