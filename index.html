@@ -227,6 +227,7 @@
         <h2 id="tb-title" class="text-base sm:text-lg font-bold text-center text-slate-900 px-1 tracking-wide">Загрузка доп. вопроса...</h2>
         <div id="tb-options" class="space-y-2 pt-1"></div>
 
+        <div id="tb-answer-feedback" class="hidden p-2.5 rounded-2xl text-xs font-semibold border"></div>
         <div id="tb-status-box" class="hidden p-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-700 space-y-1"></div>
         
         <div class="mt-3 pt-2.5 border-t border-slate-200 space-y-2">
@@ -875,7 +876,6 @@
     }
 
     async function loadTiebreakQuestionsOrdered() {
-        // 1. Сначала проверяем вопросы, привязанные именно к текущей викторине
         let quizRes = await supabaseClient
             .from('tiebreak_questions')
             .select('*')
@@ -886,7 +886,6 @@
             return quizRes.data;
         }
 
-        // 2. Если персональных нет — берём общие вопросы (quiz_id IS NULL)
         let globalRes = await supabaseClient
             .from('tiebreak_questions')
             .select('*')
@@ -897,7 +896,6 @@
             return globalRes.data;
         }
 
-        // 3. Fallback на все вопросы таблицы без фильтра по quiz_id
         let allRes = await supabaseClient
             .from('tiebreak_questions')
             .select('*')
@@ -984,7 +982,7 @@
         
         const isCandidate = tiebreakCandidates.includes(currentNickname);
         let infoText = isCandidate 
-            ? `⭐ Вы участвуете в тай-брейке. После ответа дождитесь остальных участников — итог раунда появится только после ответов всех участников.` 
+            ? `⭐ Вы участвуете в тай-брейке. После ответа вы сразу увидите верность своего ответа и будете ждать остальных.` 
             : `👀 Вы не в списке претендентов этого раунда. В зачет идут ответы только участников тай-брейка.`;
         
         document.getElementById('tb-info-box').innerHTML = `ℹ️ ${infoText} Участники раунда: <b>${tiebreakCandidates.join(', ')}</b>`;
@@ -1003,6 +1001,11 @@
             optionsContainer.innerHTML += `<button onclick="answerTiebreak(${oIdx}, ${q.correct_index})" class="tb-opt-btn w-full text-center px-4 py-3 glass-btn rounded-2xl transition-all text-xs sm:text-sm font-medium text-slate-800 hover:border-amber-400">${opt}</button>`;
         });
 
+        const feedbackBox = document.getElementById('tb-answer-feedback');
+        feedbackBox.classList.add('hidden');
+        feedbackBox.innerHTML = '';
+        feedbackBox.className = 'hidden p-2.5 rounded-2xl text-xs font-semibold border';
+
         document.getElementById('tb-status-box').classList.add('hidden');
         document.getElementById('tb-status-box').innerHTML = '';
         document.getElementById('tb-wait-btn').classList.add('hidden');
@@ -1013,16 +1016,35 @@
         const myExisting = existingAttempts.find(a => a.user_email === currentNickname);
         if (myExisting) {
             window._tbAnsweredCurrent = true;
-            lockTiebreakOptions();
+            const chosenIdx = typeof myExisting.selected_option === 'number'
+                ? myExisting.selected_option
+                : (myExisting.is_correct ? q.correct_index : -1);
+            revealTiebreakAnswer(chosenIdx, q.correct_index, !!myExisting.is_correct);
             await evaluateTiebreakRound();
         }
     }
 
-    function lockTiebreakOptions() {
+    function revealTiebreakAnswer(selectedIdx, correctIdx, isCorrect) {
         const buttons = document.getElementsByClassName('tb-opt-btn');
         for (let i = 0; i < buttons.length; i++) {
             buttons[i].disabled = true;
-            buttons[i].classList.add('opacity-60');
+            if (i === correctIdx) {
+                buttons[i].className = 'tb-opt-btn w-full text-center px-4 py-3 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-2xl text-xs sm:text-sm font-semibold';
+            } else if (i === selectedIdx && !isCorrect) {
+                buttons[i].className = 'tb-opt-btn w-full text-center px-4 py-3 bg-rose-50 border border-rose-300 text-rose-800 rounded-2xl text-xs sm:text-sm font-semibold';
+            } else {
+                buttons[i].className = 'tb-opt-btn w-full text-center px-4 py-3 glass-btn text-slate-400 rounded-2xl text-xs opacity-40';
+            }
+        }
+
+        const feedbackBox = document.getElementById('tb-answer-feedback');
+        feedbackBox.classList.remove('hidden');
+        if (isCorrect) {
+            feedbackBox.className = 'p-2.5 rounded-2xl text-xs font-semibold border bg-emerald-50 border-emerald-200 text-emerald-800';
+            feedbackBox.innerHTML = '✅ Вы ответили правильно! Ожидаем ответы остальных участников...';
+        } else {
+            feedbackBox.className = 'p-2.5 rounded-2xl text-xs font-semibold border bg-rose-50 border-rose-200 text-rose-800';
+            feedbackBox.innerHTML = '❌ Вы ответили неверно. Ожидаем ответы остальных участников...';
         }
     }
 
@@ -1031,7 +1053,7 @@
         window._tbAnsweredCurrent = true;
 
         const isCorrect = (selectedIdx === correctIdx);
-        lockTiebreakOptions();
+        revealTiebreakAnswer(selectedIdx, correctIdx, isCorrect);
 
         const existingAttempts = await fetchRoundAttempts(tiebreakCurrentIdx);
         const alreadySaved = existingAttempts.some(a => a.user_email === currentNickname);
@@ -1288,4 +1310,3 @@
 </script>
 </body>
 </html>
-```[cite: 1]
