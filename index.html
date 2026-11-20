@@ -215,12 +215,12 @@
     <!-- ТАЙ-БРЕЙК -->
     <div id="tiebreak-screen" class="hidden animate-fade-in space-y-3">
         <div class="flex justify-between items-center text-xs">
-            <span class="font-semibold uppercase tracking-wider text-amber-600">⚡ Тай-брейк: Раунд на выбывание</span>
-            <div id="tb-round-badge" class="text-slate-500">Раунд 1</div>
+            <span class="font-semibold uppercase tracking-wider text-amber-600">⚡ Тай-брейк: Раунд на выявление победителя</span>
+            <div id="tb-round-badge" class="text-slate-500">Участников: 0</div>
         </div>
         
         <div class="p-2.5 bg-amber-50 border border-amber-200 rounded-2xl text-[11px] text-amber-800" id="tb-info-box">
-            ℹ️ Отвечают участники тай-брейка. Результаты подводятся после ответа всех участников!
+            Участники раунда:
         </div>
 
         <div id="tb-media-container" class="flex justify-center my-1"></div>
@@ -371,6 +371,7 @@
     let tiebreakCandidates = [];
     let tiebreakQuestions = [];
     let tiebreakCurrentIdx = 0;
+    let tiebreakUsedQuestionIds = new Set();
     let tiebreakPollInterval = null;
     let tiebreakNextAction = null;
 
@@ -907,6 +908,15 @@
         return allRes.data || [];
     }
 
+    async function fetchAllQuizTiebreakAttempts() {
+        const { data, error } = await supabaseClient
+            .from('tiebreak_attempts')
+            .select('*')
+            .eq('quiz_id', currentQuiz.id);
+        if (error) return [];
+        return data || [];
+    }
+
     async function fetchRoundAttempts(roundIdx) {
         const { data, error } = await supabaseClient
             .from('tiebreak_attempts')
@@ -917,52 +927,78 @@
         return data || [];
     }
 
+    function getQuestionUniqueKey(q, fallbackIndex = 0) {
+        if (q && q.id !== undefined && q.id !== null) return String(q.id);
+        return `idx_${fallbackIndex}_${q?.question_text || ''}`;
+    }
+
     async function startTiebreakSession() {
         clearTiebreakPolling();
         tiebreakNextAction = null;
+        tiebreakUsedQuestionIds = new Set();
 
-        const dbQuestions = await loadTiebreakQuestionsOrdered();
-        if (!dbQuestions || dbQuestions.length === 0) {
+        const allDbQuestions = await loadTiebreakQuestionsOrdered();
+        if (!allDbQuestions || allDbQuestions.length === 0) {
             alert('В таблице tiebreak_questions пока нет вопросов.');
             return;
         }
 
-        tiebreakQuestions = dbQuestions;
-        tiebreakCurrentIdx = 0;
+        const allAttempts = await fetchAllQuizTiebreakAttempts();
+
+        // Определяем, какие вопросы тай-брейка уже были разыграны по этой викторине
+        const maxRoundInAttempts = allAttempts.reduce((maxR, a) => {
+            const r = typeof a.round_index === 'number' ? a.round_index : -1;
+            return Math.max(maxR, r);
+        }, -1);
 
         let activeCandidates = [...tiebreakCandidates];
-        for (let r = 0; r < tiebreakQuestions.length; r++) {
-            const roundAtts = await fetchRoundAttempts(r);
+        for (let r = 0; r <= maxRoundInAttempts; r++) {
+            const roundAtts = allAttempts.filter(a => a.round_index === r);
             const answeredByCandidate = {};
             roundAtts.forEach(a => {
                 if (activeCandidates.includes(a.user_email)) {
                     answeredByCandidate[a.user_email] = !!a.is_correct;
                 }
             });
+
+            const usedQIdInRound = roundAtts.find(a => a.question_id !== undefined && a.question_id !== null)?.question_id;
+            if (usedQIdInRound !== undefined && usedQIdInRound !== null) {
+                tiebreakUsedQuestionIds.add(String(usedQIdInRound));
+            } else if (allDbQuestions[r]) {
+                tiebreakUsedQuestionIds.add(getQuestionUniqueKey(allDbQuestions[r], r));
+            }
+
             const allAnswered = activeCandidates.length > 0 && activeCandidates.every(nick => Object.prototype.hasOwnProperty.call(answeredByCandidate, nick));
             if (!allAnswered) {
-                tiebreakCurrentIdx = r;
                 break;
             }
+
             const correctOnes = activeCandidates.filter(nick => answeredByCandidate[nick] === true);
-            if (correctOnes.length === 1) {
+            if (correctOnes.length === 1 && activeCandidates.length > 1) {
                 const winner = correctOnes[0];
                 if (!currentQuiz.winner_name) {
                     await supabaseClient.from('quizzes').update({ winner_name: winner }).eq('id', currentQuiz.id);
                     currentQuiz.winner_name = winner;
                 }
-                alert(`🏆 Победитель тай-брейка: ${winner}!`);
+                alert(`🏆 Все ответили! Победителем становится: ${winner}`);
                 showScreen('home-screen');
                 return;
             } else if (correctOnes.length > 1) {
                 activeCandidates = correctOnes;
-                tiebreakCurrentIdx = r + 1;
-            } else {
-                tiebreakCurrentIdx = r + 1;
             }
         }
 
+        // Оставляем только ещё не разыгранные вопросы тай-брейка
+        tiebreakQuestions = allDbQuestions.filter((q, idx) => !tiebreakUsedQuestionIds.has(getQuestionUniqueKey(q, idx)));
         tiebreakCandidates = activeCandidates;
+        tiebreakCurrentIdx = 0;
+
+        if (tiebreakQuestions.length === 0) {
+            alert('Все доступные вопросы из tiebreak_questions уже были разыграны!');
+            showScreen('home-screen');
+            return;
+        }
+
         showScreen('tiebreak-screen');
         await renderTiebreakQuestion();
     }
@@ -972,20 +1008,17 @@
         tiebreakNextAction = null;
 
         if (tiebreakCurrentIdx >= tiebreakQuestions.length) {
-            alert('Вопросы в tiebreak_questions закончились, а победитель не выявлен!');
+            alert('Новые уникальные вопросы в tiebreak_questions закончились, а победитель не выявлен!');
             showScreen('home-screen');
             return;
         }
 
         const q = tiebreakQuestions[tiebreakCurrentIdx];
-        document.getElementById('tb-round-badge').innerText = `Вопрос ${tiebreakCurrentIdx + 1} из ${tiebreakQuestions.length} (Участников: ${tiebreakCandidates.length})`;
-        
-        const isCandidate = tiebreakCandidates.includes(currentNickname);
-        let infoText = isCandidate 
-            ? `⭐ Вы участвуете в тай-брейке. После ответа вы сразу увидите верность своего ответа и будете ждать остальных.` 
-            : `👀 Вы не в списке претендентов этого раунда. В зачет идут ответы только участников тай-брейка.`;
-        
-        document.getElementById('tb-info-box').innerHTML = `ℹ️ ${infoText} Участники раунда: <b>${tiebreakCandidates.join(', ')}</b>`;
+        const qKey = getQuestionUniqueKey(q, tiebreakCurrentIdx);
+        tiebreakUsedQuestionIds.add(qKey);
+
+        document.getElementById('tb-round-badge').innerText = `Участников: ${tiebreakCandidates.length}`;
+        document.getElementById('tb-info-box').innerHTML = `Участники раунда: <b>${tiebreakCandidates.join(', ')}</b>`;
         document.getElementById('tb-title').innerText = q.question_text;
 
         const mediaContainer = document.getElementById('tb-media-container');
@@ -1052,18 +1085,27 @@
         if (window._tbAnsweredCurrent) return;
         window._tbAnsweredCurrent = true;
 
+        const q = tiebreakQuestions[tiebreakCurrentIdx];
         const isCorrect = (selectedIdx === correctIdx);
         revealTiebreakAnswer(selectedIdx, correctIdx, isCorrect);
 
         const existingAttempts = await fetchRoundAttempts(tiebreakCurrentIdx);
         const alreadySaved = existingAttempts.some(a => a.user_email === currentNickname);
         if (!alreadySaved) {
-            await supabaseClient.from('tiebreak_attempts').insert([{
+            const payload = {
                 quiz_id: currentQuiz.id,
                 user_email: currentNickname,
                 round_index: tiebreakCurrentIdx,
                 is_correct: isCorrect
-            }]);
+            };
+            if (q && q.id !== undefined && q.id !== null) {
+                payload.question_id = q.id;
+            }
+            const { error } = await supabaseClient.from('tiebreak_attempts').insert([payload]);
+            if (error && payload.question_id !== undefined) {
+                delete payload.question_id;
+                await supabaseClient.from('tiebreak_attempts').insert([payload]);
+            }
         }
 
         await evaluateTiebreakRound();
@@ -1125,7 +1167,7 @@
             currentQuiz.winner_name = winner;
 
             statusBox.innerHTML = `
-                <div class="font-bold text-emerald-700">🏆 Все ответили! Победитель выявлен: ${winner}</div>
+                <div class="font-bold text-emerald-700">🏆 Все ответили! Победителем становится: ${winner}</div>
                 <div class="pt-1 border-t border-slate-200 space-y-0.5">${rowsHtml}</div>
             `;
             nextBtn.innerText = 'Завершить тай-брейк 🏆';
@@ -1310,3 +1352,4 @@
 </script>
 </body>
 </html>
+```[cite: 1]
