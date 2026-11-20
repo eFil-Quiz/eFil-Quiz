@@ -220,16 +220,24 @@
         </div>
         
         <div class="p-2.5 bg-amber-50 border border-amber-200 rounded-2xl text-[11px] text-amber-800" id="tb-info-box">
-            ℹ️ Отвечать могут все, но в зачет идут только ответы претендентов на победу!
+            ℹ️ Отвечают участники тай-брейка. Результаты подводятся после ответа всех участников!
         </div>
 
         <div id="tb-media-container" class="flex justify-center my-1"></div>
         <h2 id="tb-title" class="text-base sm:text-lg font-bold text-center text-slate-900 px-1 tracking-wide">Загрузка доп. вопроса...</h2>
         <div id="tb-options" class="space-y-2 pt-1"></div>
+
+        <div id="tb-status-box" class="hidden p-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-700 space-y-1"></div>
         
-        <div class="mt-3 pt-2.5 border-t border-slate-200">
+        <div class="mt-3 pt-2.5 border-t border-slate-200 space-y-2">
+            <button id="tb-wait-btn" class="hidden w-full bg-amber-100 hover:bg-amber-200 text-amber-900 font-semibold py-2.5 rounded-2xl transition-all border border-amber-300 text-xs" onclick="evaluateTiebreakRound()">
+                ⏳ Ожидание остальных участников... (Проверить ответы)
+            </button>
             <button id="tb-next-btn" class="hidden w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-semibold py-3 rounded-2xl transition-all shadow-md shadow-amber-500/20 text-sm" onclick="nextTiebreakStep()">
-                Далее ➡️
+                Следующий вопрос ➡️
+            </button>
+            <button onclick="showScreen('home-screen')" class="w-full glass-btn hover:bg-slate-50 text-slate-600 font-semibold py-2 rounded-2xl transition-all text-xs border border-slate-200">
+                ← На главную
             </button>
         </div>
     </div>
@@ -320,7 +328,7 @@
             </table>
         </div>
         <button onclick="showScreen('home-screen')" class="w-full glass-btn hover:bg-slate-50 text-slate-700 font-semibold py-2.5 rounded-2xl transition-all text-sm border border-slate-200">
-            ← На главную
+            ← Назад
         </button>
     </div>
 
@@ -362,6 +370,8 @@
     let tiebreakCandidates = [];
     let tiebreakQuestions = [];
     let tiebreakCurrentIdx = 0;
+    let tiebreakPollInterval = null;
+    let tiebreakNextAction = null;
 
     async function initAuth() {
         const { data: { session } } = await supabaseClient.auth.getSession();
@@ -431,6 +441,7 @@
     }
 
     async function logout() {
+        clearTiebreakPolling();
         await supabaseClient.auth.signOut();
         currentUser = null;
         currentNickname = '';
@@ -439,11 +450,21 @@
     }
 
     function showScreen(id) {
+        if (id !== 'tiebreak-screen') {
+            clearTiebreakPolling();
+        }
         ['auth-screen', 'nickname-screen', 'home-screen', 'creator-screen', 'play-screen', 'tiebreak-screen', 'review-screen', 'result-screen', 'organizer-screen', 'monthly-screen'].forEach(s => {
             document.getElementById(s).classList.add('hidden');
         });
         document.getElementById(id).classList.remove('hidden');
         if (id === 'home-screen') loadQuizzes();
+    }
+
+    function clearTiebreakPolling() {
+        if (tiebreakPollInterval) {
+            clearInterval(tiebreakPollInterval);
+            tiebreakPollInterval = null;
+        }
     }
 
     function openCreator(quizToEdit = null) {
@@ -853,39 +874,127 @@
         });
     }
 
-    async function startTiebreakSession() {
-        const { data: tbData } = await supabaseClient.from('tiebreak_questions').select('*');
-        if (!tbData || tbData.length === 0) {
-            tiebreakQuestions = [
-                { question_text: "Сколько континентов на Земле?", options: ["5", "6", "7", "8"], correct_index: 2 },
-                { question_text: "Какая температура кипения воды (градусов Цельсия)?", options: ["90", "100", "110", "120"], correct_index: 1 }
-            ];
-        } else {
-            tiebreakQuestions = tbData;
+    async function loadTiebreakQuestionsOrdered() {
+        // 1. Сначала проверяем вопросы, привязанные именно к текущей викторине
+        let quizRes = await supabaseClient
+            .from('tiebreak_questions')
+            .select('*')
+            .eq('quiz_id', currentQuiz.id)
+            .order('id', { ascending: true });
+
+        if (!quizRes.error && Array.isArray(quizRes.data) && quizRes.data.length > 0) {
+            return quizRes.data;
         }
 
+        // 2. Если персональных нет — берём общие вопросы (quiz_id IS NULL)
+        let globalRes = await supabaseClient
+            .from('tiebreak_questions')
+            .select('*')
+            .is('quiz_id', null)
+            .order('id', { ascending: true });
+
+        if (!globalRes.error && Array.isArray(globalRes.data) && globalRes.data.length > 0) {
+            return globalRes.data;
+        }
+
+        // 3. Fallback на все вопросы таблицы без фильтра по quiz_id
+        let allRes = await supabaseClient
+            .from('tiebreak_questions')
+            .select('*')
+            .order('id', { ascending: true });
+
+        if (allRes.error) {
+            allRes = await supabaseClient.from('tiebreak_questions').select('*');
+        }
+        return allRes.data || [];
+    }
+
+    async function fetchRoundAttempts(roundIdx) {
+        const { data, error } = await supabaseClient
+            .from('tiebreak_attempts')
+            .select('*')
+            .eq('quiz_id', currentQuiz.id)
+            .eq('round_index', roundIdx);
+        if (error) return [];
+        return data || [];
+    }
+
+    async function startTiebreakSession() {
+        clearTiebreakPolling();
+        tiebreakNextAction = null;
+
+        const dbQuestions = await loadTiebreakQuestionsOrdered();
+        if (!dbQuestions || dbQuestions.length === 0) {
+            alert('В таблице tiebreak_questions пока нет вопросов.');
+            return;
+        }
+
+        tiebreakQuestions = dbQuestions;
         tiebreakCurrentIdx = 0;
+
+        let activeCandidates = [...tiebreakCandidates];
+        for (let r = 0; r < tiebreakQuestions.length; r++) {
+            const roundAtts = await fetchRoundAttempts(r);
+            const answeredByCandidate = {};
+            roundAtts.forEach(a => {
+                if (activeCandidates.includes(a.user_email)) {
+                    answeredByCandidate[a.user_email] = !!a.is_correct;
+                }
+            });
+            const allAnswered = activeCandidates.length > 0 && activeCandidates.every(nick => Object.prototype.hasOwnProperty.call(answeredByCandidate, nick));
+            if (!allAnswered) {
+                tiebreakCurrentIdx = r;
+                break;
+            }
+            const correctOnes = activeCandidates.filter(nick => answeredByCandidate[nick] === true);
+            if (correctOnes.length === 1) {
+                const winner = correctOnes[0];
+                if (!currentQuiz.winner_name) {
+                    await supabaseClient.from('quizzes').update({ winner_name: winner }).eq('id', currentQuiz.id);
+                    currentQuiz.winner_name = winner;
+                }
+                alert(`🏆 Победитель тай-брейка: ${winner}!`);
+                showScreen('home-screen');
+                return;
+            } else if (correctOnes.length > 1) {
+                activeCandidates = correctOnes;
+                tiebreakCurrentIdx = r + 1;
+            } else {
+                tiebreakCurrentIdx = r + 1;
+            }
+        }
+
+        tiebreakCandidates = activeCandidates;
         showScreen('tiebreak-screen');
         await renderTiebreakQuestion();
     }
 
     async function renderTiebreakQuestion() {
+        clearTiebreakPolling();
+        tiebreakNextAction = null;
+
         if (tiebreakCurrentIdx >= tiebreakQuestions.length) {
-            alert('Вопросы для тай-брейка закончились, а победитель не выявлен!');
+            alert('Вопросы в tiebreak_questions закончились, а победитель не выявлен!');
             showScreen('home-screen');
             return;
         }
 
         const q = tiebreakQuestions[tiebreakCurrentIdx];
-        document.getElementById('tb-round-badge').innerText = `Раунд ${tiebreakCurrentIdx + 1} (Претендентов в игре: ${tiebreakCandidates.length})`;
+        document.getElementById('tb-round-badge').innerText = `Вопрос ${tiebreakCurrentIdx + 1} из ${tiebreakQuestions.length} (Участников: ${tiebreakCandidates.length})`;
         
         const isCandidate = tiebreakCandidates.includes(currentNickname);
         let infoText = isCandidate 
-            ? `⭐ Вы официальный претендент на победу в этом раунде!` 
-            : `👀 Вы можете ответить на вопрос, но в зачет идут только ответы официальных претендентов.`;
+            ? `⭐ Вы участвуете в тай-брейке. После ответа дождитесь остальных участников — итог раунда появится только после ответов всех участников.` 
+            : `👀 Вы не в списке претендентов этого раунда. В зачет идут ответы только участников тай-брейка.`;
         
-        document.getElementById('tb-info-box').innerHTML = `ℹ️ ${infoText} Осталось претендентов: <b>${tiebreakCandidates.join(', ')}</b>`;
+        document.getElementById('tb-info-box').innerHTML = `ℹ️ ${infoText} Участники раунда: <b>${tiebreakCandidates.join(', ')}</b>`;
         document.getElementById('tb-title').innerText = q.question_text;
+
+        const mediaContainer = document.getElementById('tb-media-container');
+        mediaContainer.innerHTML = '';
+        if (q.media_url) {
+            mediaContainer.innerHTML = `<div class="w-20 h-20 rounded-full p-1 bg-gradient-to-tr from-amber-500 to-orange-500 overflow-hidden flex items-center justify-center shadow-sm"><img src="${q.media_url}" class="w-full h-full rounded-full object-cover" /></div>`;
+        }
 
         const optionsContainer = document.getElementById('tb-options');
         optionsContainer.innerHTML = '';
@@ -894,8 +1003,27 @@
             optionsContainer.innerHTML += `<button onclick="answerTiebreak(${oIdx}, ${q.correct_index})" class="tb-opt-btn w-full text-center px-4 py-3 glass-btn rounded-2xl transition-all text-xs sm:text-sm font-medium text-slate-800 hover:border-amber-400">${opt}</button>`;
         });
 
+        document.getElementById('tb-status-box').classList.add('hidden');
+        document.getElementById('tb-status-box').innerHTML = '';
+        document.getElementById('tb-wait-btn').classList.add('hidden');
         document.getElementById('tb-next-btn').classList.add('hidden');
         window._tbAnsweredCurrent = false;
+
+        const existingAttempts = await fetchRoundAttempts(tiebreakCurrentIdx);
+        const myExisting = existingAttempts.find(a => a.user_email === currentNickname);
+        if (myExisting) {
+            window._tbAnsweredCurrent = true;
+            lockTiebreakOptions();
+            await evaluateTiebreakRound();
+        }
+    }
+
+    function lockTiebreakOptions() {
+        const buttons = document.getElementsByClassName('tb-opt-btn');
+        for (let i = 0; i < buttons.length; i++) {
+            buttons[i].disabled = true;
+            buttons[i].classList.add('opacity-60');
+        }
     }
 
     async function answerTiebreak(selectedIdx, correctIdx) {
@@ -903,72 +1031,126 @@
         window._tbAnsweredCurrent = true;
 
         const isCorrect = (selectedIdx === correctIdx);
-        
-        const buttons = document.getElementsByClassName('tb-opt-btn');
-        for (let i = 0; i < buttons.length; i++) {
-            buttons[i].disabled = true;
-            if (i === correctIdx) buttons[i].className = 'tb-opt-btn w-full text-center px-4 py-3 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-2xl text-xs font-semibold';
-            else if (i === selectedIdx && !isCorrect) buttons[i].className = 'tb-opt-btn w-full text-center px-4 py-3 bg-rose-50 border border-rose-300 text-rose-800 rounded-2xl text-xs font-semibold';
-            else buttons[i].className = 'tb-opt-btn w-full text-center px-4 py-3 glass-btn text-slate-300 rounded-2xl text-xs opacity-40';
+        lockTiebreakOptions();
+
+        const existingAttempts = await fetchRoundAttempts(tiebreakCurrentIdx);
+        const alreadySaved = existingAttempts.some(a => a.user_email === currentNickname);
+        if (!alreadySaved) {
+            await supabaseClient.from('tiebreak_attempts').insert([{
+                quiz_id: currentQuiz.id,
+                user_email: currentNickname,
+                round_index: tiebreakCurrentIdx,
+                is_correct: isCorrect
+            }]);
         }
 
-        await supabaseClient.from('tiebreak_attempts').insert([{
-            quiz_id: currentQuiz.id,
-            user_email: currentNickname,
-            round_index: tiebreakCurrentIdx,
-            is_correct: isCorrect
-        }]);
-
-        if (tiebreakCandidates.includes(currentNickname)) {
-            alert(isCorrect ? '✅ Верно!' : '❌ Неверно!');
-        } else {
-            alert(isCorrect ? '✅ Вы ответили верно (вне зачета)' : '❌ Вы ответили неверно (вне зачета)');
-        }
-
-        document.getElementById('tb-next-btn').classList.remove('hidden');
+        await evaluateTiebreakRound();
     }
 
-    async function nextTiebreakStep() {
-        const { data: attempts } = await supabaseClient.from('tiebreak_attempts').select('*').eq('quiz_id', currentQuiz.id).eq('round_index', tiebreakCurrentIdx);
-        
-        const roundResults = {};
-        if (attempts) {
-            attempts.forEach(a => {
-                if (tiebreakCandidates.includes(a.user_email)) {
-                    roundResults[a.user_email] = a.is_correct;
-                }
-            });
-        }
+    async function evaluateTiebreakRound() {
+        const attempts = await fetchRoundAttempts(tiebreakCurrentIdx);
+        const answeredMap = {};
+        attempts.forEach(a => {
+            if (tiebreakCandidates.includes(a.user_email)) {
+                answeredMap[a.user_email] = !!a.is_correct;
+            }
+        });
 
-        const correctCandidates = tiebreakCandidates.filter(nick => roundResults[nick] === true);
-        const incorrectCandidates = tiebreakCandidates.filter(nick => roundResults[nick] === false || roundResults[nick] === undefined);
+        const answeredCandidates = tiebreakCandidates.filter(nick => Object.prototype.hasOwnProperty.call(answeredMap, nick));
+        const waitingCandidates = tiebreakCandidates.filter(nick => !Object.prototype.hasOwnProperty.call(answeredMap, nick));
 
-        if (correctCandidates.length === 0) {
-            alert('🔄 Все претенденты ответили неправильно! Никто не выбывает, переходим к следующему вопросу.');
-            tiebreakCurrentIdx++;
-            renderTiebreakQuestion();
+        const statusBox = document.getElementById('tb-status-box');
+        const waitBtn = document.getElementById('tb-wait-btn');
+        const nextBtn = document.getElementById('tb-next-btn');
+
+        statusBox.classList.remove('hidden');
+        nextBtn.classList.add('hidden');
+        tiebreakNextAction = null;
+
+        if (waitingCandidates.length > 0) {
+            statusBox.innerHTML = `
+                <div class="font-semibold text-amber-800">⏳ Ожидаем ответы остальных участников (${answeredCandidates.length}/${tiebreakCandidates.length}):</div>
+                <div class="text-[11px] text-slate-600">Ответили: <b>${answeredCandidates.length ? answeredCandidates.join(', ') : 'никто'}</b></div>
+                <div class="text-[11px] text-amber-700">Ждём: <b>${waitingCandidates.join(', ')}</b></div>
+            `;
+            waitBtn.classList.remove('hidden');
+
+            if (!tiebreakPollInterval) {
+                tiebreakPollInterval = setInterval(() => {
+                    evaluateTiebreakRound();
+                }, 2500);
+            }
             return;
         }
 
-        if (correctCandidates.length === 1 && (incorrectCandidates.length > 0 || tiebreakCandidates.length === 1)) {
+        clearTiebreakPolling();
+        waitBtn.classList.add('hidden');
+
+        const correctCandidates = tiebreakCandidates.filter(nick => answeredMap[nick] === true);
+        const incorrectCandidates = tiebreakCandidates.filter(nick => answeredMap[nick] === false);
+
+        const rowsHtml = tiebreakCandidates.map(nick => {
+            const ok = answeredMap[nick] === true;
+            return `<div class="flex justify-between items-center text-[11px]">
+                <span class="font-medium text-slate-800">👤 ${nick}</span>
+                <span class="${ok ? 'text-emerald-600 font-semibold' : 'text-rose-600 font-semibold'}">${ok ? 'Верно ✅' : 'Неверно ❌'}</span>
+            </div>`;
+        }).join('');
+
+        if (correctCandidates.length === 1 && incorrectCandidates.length > 0) {
             const winner = correctCandidates[0];
             await supabaseClient.from('quizzes').update({ winner_name: winner }).eq('id', currentQuiz.id);
             currentQuiz.winner_name = winner;
-            alert(`🎉 Поздравляем! Единственный правильный ответ дал(а) ${winner}. Это победа в викторине!`);
-            showScreen('home-screen');
+
+            statusBox.innerHTML = `
+                <div class="font-bold text-emerald-700">🏆 Все ответили! Победитель выявлен: ${winner}</div>
+                <div class="pt-1 border-t border-slate-200 space-y-0.5">${rowsHtml}</div>
+            `;
+            nextBtn.innerText = 'Завершить тай-брейк 🏆';
+            nextBtn.classList.remove('hidden');
+            tiebreakNextAction = 'finish_winner';
             return;
         }
 
         if (correctCandidates.length > 1) {
-            alert(`⚠️ Сразу ${correctCandidates.length} участника(ов) ответили правильно. Остальные выбывают. Продолжаем дуэль!`);
             tiebreakCandidates = correctCandidates;
-            tiebreakCurrentIdx++;
-            renderTiebreakQuestion();
+            statusBox.innerHTML = `
+                <div class="font-semibold text-amber-800">⚡ Верно ответили несколько участников (${correctCandidates.join(', ')}). Остальные выбывают!</div>
+                <div class="pt-1 border-t border-slate-200 space-y-0.5">${rowsHtml}</div>
+            `;
+            nextBtn.innerText = 'Следующий вопрос тай-брейка ➡️';
+            nextBtn.classList.remove('hidden');
+            tiebreakNextAction = 'next_question';
             return;
         }
 
+        if (correctCandidates.length === 0) {
+            statusBox.innerHTML = `
+                <div class="font-semibold text-slate-700">🔄 Никто из участников не ответил верно. Все остаются в игре!</div>
+                <div class="pt-1 border-t border-slate-200 space-y-0.5">${rowsHtml}</div>
+            `;
+            nextBtn.innerText = 'Следующий вопрос тай-брейка ➡️';
+            nextBtn.classList.remove('hidden');
+            tiebreakNextAction = 'next_question';
+            return;
+        }
+
+        statusBox.innerHTML = `
+            <div class="font-semibold text-slate-700">Раунд завершён. Переходим к следующему вопросу.</div>
+            <div class="pt-1 border-t border-slate-200 space-y-0.5">${rowsHtml}</div>
+        `;
+        nextBtn.innerText = 'Следующий вопрос тай-брейка ➡️';
+        nextBtn.classList.remove('hidden');
+        tiebreakNextAction = 'next_question';
+    }
+
+    async function nextTiebreakStep() {
+        if (tiebreakNextAction === 'finish_winner') {
+            showScreen('home-screen');
+            return;
+        }
         tiebreakCurrentIdx++;
-        renderTiebreakQuestion();
+        await renderTiebreakQuestion();
     }
 
     async function openResultsForQuiz(quizIdx) {
@@ -1106,3 +1288,4 @@
 </script>
 </body>
 </html>
+```[cite: 1]
