@@ -877,48 +877,27 @@
         });
     }
 
-    async function loadTiebreakQuestionsOrdered() {
-        let quizRes = await supabaseClient
-            .from('tiebreak_questions')
-            .select('*')
-            .eq('quiz_id', currentQuiz.id)
-            .order('id', { ascending: true });
-
-        if (!quizRes.error && Array.isArray(quizRes.data) && quizRes.data.length > 0) {
-            return quizRes.data;
-        }
-
-        let globalRes = await supabaseClient
-            .from('tiebreak_questions')
-            .select('*')
-            .is('quiz_id', null)
-            .order('id', { ascending: true });
-
-        if (!globalRes.error && Array.isArray(globalRes.data) && globalRes.data.length > 0) {
-            return globalRes.data;
-        }
-
-        let allRes = await supabaseClient
+    async function loadAllTiebreakQuestionsOrdered() {
+        let res = await supabaseClient
             .from('tiebreak_questions')
             .select('*')
             .order('id', { ascending: true });
 
-        if (allRes.error) {
-            allRes = await supabaseClient.from('tiebreak_questions').select('*');
+        if (res.error) {
+            res = await supabaseClient.from('tiebreak_questions').select('*');
         }
-        return allRes.data || [];
+        return res.data || [];
     }
 
-    async function fetchAllQuizTiebreakAttempts() {
+    async function fetchGlobalTiebreakAttempts() {
         const { data, error } = await supabaseClient
             .from('tiebreak_attempts')
-            .select('*')
-            .eq('quiz_id', currentQuiz.id);
+            .select('*');
         if (error) return [];
         return data || [];
     }
 
-    async function fetchRoundAttempts(roundIdx, questionId = null) {
+    async function fetchCurrentRoundAttempts(roundIdx, questionId = null) {
         const { data, error } = await supabaseClient
             .from('tiebreak_attempts')
             .select('*')
@@ -927,8 +906,8 @@
         if (error) return [];
         const list = data || [];
         if (questionId !== null && questionId !== undefined) {
-            const matchedByQ = list.filter(a => a.question_id !== undefined && a.question_id !== null && String(a.question_id) === String(questionId));
-            if (matchedByQ.length > 0) return matchedByQ;
+            const matched = list.filter(a => a.question_id !== undefined && a.question_id !== null && String(a.question_id) === String(questionId));
+            if (matched.length > 0) return matched;
         }
         return list;
     }
@@ -943,39 +922,35 @@
         tiebreakNextAction = null;
         tiebreakUsedQuestionIds = new Set();
 
-        const allDbQuestions = await loadTiebreakQuestionsOrdered();
+        const allDbQuestions = await loadAllTiebreakQuestionsOrdered();
         if (!allDbQuestions || allDbQuestions.length === 0) {
             alert('В таблице tiebreak_questions пока нет вопросов.');
             return;
         }
 
-        const allAttempts = await fetchAllQuizTiebreakAttempts();
+        const globalAttempts = await fetchGlobalTiebreakAttempts();
 
-        // Собираем все ID уже использованных в этой викторине вопросов тай-брейка
-        allAttempts.forEach(a => {
+        // 1. Собираем все question_id, которые уже участвовали в тай-брейках в любых викторинах
+        globalAttempts.forEach(a => {
             if (a.question_id !== undefined && a.question_id !== null && String(a.question_id).trim() !== '') {
                 tiebreakUsedQuestionIds.add(String(a.question_id));
             }
         });
 
-        const roundsSet = new Set(
-            allAttempts
+        // 2. Проверяем незавершённый раунд в текущей викторине (если кто-то из кандидатов текущей викторины ещё не ответил)
+        const currentQuizAttempts = globalAttempts.filter(a => String(a.quiz_id) === String(currentQuiz.id));
+        const quizRounds = Array.from(new Set(
+            currentQuizAttempts
                 .map(a => a.round_index)
                 .filter(r => typeof r === 'number' && r >= 0)
-        );
-        const sortedRounds = Array.from(roundsSet).sort((a, b) => a - b);
+        )).sort((a, b) => a - b);
 
         let activeCandidates = [...tiebreakCandidates];
-        let resumeRoundIndex = sortedRounds.length > 0 ? sortedRounds[sortedRounds.length - 1] + 1 : 0;
-        let resumeQuestionId = null;
+        let resumeRoundIndex = quizRounds.length > 0 ? quizRounds[quizRounds.length - 1] + 1 : 0;
+        let unfinishedQuestion = null;
 
-        for (const r of sortedRounds) {
-            const roundAtts = allAttempts.filter(a => a.round_index === r);
-            const qIdInRound = roundAtts.find(a => a.question_id !== undefined && a.question_id !== null)?.question_id;
-            if (qIdInRound !== undefined && qIdInRound !== null) {
-                tiebreakUsedQuestionIds.add(String(qIdInRound));
-            }
-
+        for (const r of quizRounds) {
+            const roundAtts = currentQuizAttempts.filter(a => a.round_index === r);
             const answeredByCandidate = {};
             roundAtts.forEach(a => {
                 if (activeCandidates.includes(a.user_email)) {
@@ -985,9 +960,11 @@
 
             const allAnswered = activeCandidates.length > 0 && activeCandidates.every(nick => Object.prototype.hasOwnProperty.call(answeredByCandidate, nick));
             if (!allAnswered) {
-                // Раунд ещё не завершён — возвращаемся к этому же вопросу этого раунда
+                const qIdInRound = roundAtts.find(a => a.question_id !== undefined && a.question_id !== null)?.question_id;
+                if (qIdInRound !== undefined && qIdInRound !== null) {
+                    unfinishedQuestion = allDbQuestions.find((q, idx) => getQuestionUniqueKey(q, idx) === String(qIdInRound)) || null;
+                }
                 resumeRoundIndex = r;
-                resumeQuestionId = qIdInRound !== undefined && qIdInRound !== null ? String(qIdInRound) : null;
                 break;
             }
 
@@ -1006,17 +983,18 @@
             }
         }
 
+        // 3. Если в записях без question_id были разыграны вопросы в других викторинах — пропускаем их по порядку
+        const legacyOtherQuizAttempts = globalAttempts.filter(
+            a => String(a.quiz_id) !== String(currentQuiz.id) && (!a.question_id || String(a.question_id).trim() === '')
+        );
+        const legacyUsedCount = new Set(legacyOtherQuizAttempts.map(a => `${a.quiz_id}_${a.round_index}`)).size;
+
+        const remainingUniqueQuestions = allDbQuestions.filter((q, idx) => !tiebreakUsedQuestionIds.has(getQuestionUniqueKey(q, idx)));
+        const slicedRemaining = legacyUsedCount > 0 ? remainingUniqueQuestions.slice(legacyUsedCount) : remainingUniqueQuestions;
+
         tiebreakCandidates = activeCandidates;
         tiebreakActiveRoundIndex = resumeRoundIndex;
-
-        if (resumeQuestionId) {
-            const unfinishedQ = allDbQuestions.find((q, idx) => getQuestionUniqueKey(q, idx) === resumeQuestionId);
-            const remainingUnique = allDbQuestions.filter((q, idx) => !tiebreakUsedQuestionIds.has(getQuestionUniqueKey(q, idx)));
-            tiebreakQuestions = unfinishedQ ? [unfinishedQ, ...remainingUnique] : remainingUnique;
-        } else {
-            tiebreakQuestions = allDbQuestions.filter((q, idx) => !tiebreakUsedQuestionIds.has(getQuestionUniqueKey(q, idx)));
-        }
-
+        tiebreakQuestions = unfinishedQuestion ? [unfinishedQuestion, ...slicedRemaining] : slicedRemaining;
         tiebreakCurrentIdx = 0;
 
         if (tiebreakQuestions.length === 0) {
@@ -1034,7 +1012,7 @@
         tiebreakNextAction = null;
 
         if (tiebreakCurrentIdx >= tiebreakQuestions.length) {
-            alert('Новые уникальные вопросы в tiebreak_questions закончились, а победитель не выявлен!');
+            alert('Новые вопросы в tiebreak_questions закончились, а победитель не выявлен!');
             showScreen('home-screen');
             return;
         }
@@ -1071,7 +1049,7 @@
         document.getElementById('tb-next-btn').classList.add('hidden');
         window._tbAnsweredCurrent = false;
 
-        const existingAttempts = await fetchRoundAttempts(tiebreakActiveRoundIndex, q.id);
+        const existingAttempts = await fetchCurrentRoundAttempts(tiebreakActiveRoundIndex, q.id);
         const myExisting = existingAttempts.find(a => a.user_email === currentNickname);
         if (myExisting) {
             window._tbAnsweredCurrent = true;
@@ -1115,7 +1093,7 @@
         const isCorrect = (selectedIdx === correctIdx);
         revealTiebreakAnswer(selectedIdx, correctIdx, isCorrect);
 
-        const existingAttempts = await fetchRoundAttempts(tiebreakActiveRoundIndex, q?.id);
+        const existingAttempts = await fetchCurrentRoundAttempts(tiebreakActiveRoundIndex, q?.id);
         const alreadySaved = existingAttempts.some(a => a.user_email === currentNickname);
         if (!alreadySaved) {
             const payload = {
@@ -1139,7 +1117,7 @@
 
     async function evaluateTiebreakRound() {
         const q = tiebreakQuestions[tiebreakCurrentIdx];
-        const attempts = await fetchRoundAttempts(tiebreakActiveRoundIndex, q?.id);
+        const attempts = await fetchCurrentRoundAttempts(tiebreakActiveRoundIndex, q?.id);
         const answeredMap = {};
         attempts.forEach(a => {
             if (tiebreakCandidates.includes(a.user_email)) {
