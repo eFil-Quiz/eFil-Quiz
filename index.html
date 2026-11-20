@@ -371,6 +371,7 @@
     let tiebreakCandidates = [];
     let tiebreakQuestions = [];
     let tiebreakCurrentIdx = 0;
+    let tiebreakActiveRoundIndex = 0;
     let tiebreakUsedQuestionIds = new Set();
     let tiebreakPollInterval = null;
     let tiebreakNextAction = null;
@@ -917,14 +918,19 @@
         return data || [];
     }
 
-    async function fetchRoundAttempts(roundIdx) {
+    async function fetchRoundAttempts(roundIdx, questionId = null) {
         const { data, error } = await supabaseClient
             .from('tiebreak_attempts')
             .select('*')
             .eq('quiz_id', currentQuiz.id)
             .eq('round_index', roundIdx);
         if (error) return [];
-        return data || [];
+        const list = data || [];
+        if (questionId !== null && questionId !== undefined) {
+            const matchedByQ = list.filter(a => a.question_id !== undefined && a.question_id !== null && String(a.question_id) === String(questionId));
+            if (matchedByQ.length > 0) return matchedByQ;
+        }
+        return list;
     }
 
     function getQuestionUniqueKey(q, fallbackIndex = 0) {
@@ -945,15 +951,31 @@
 
         const allAttempts = await fetchAllQuizTiebreakAttempts();
 
-        // Определяем, какие вопросы тай-брейка уже были разыграны по этой викторине
-        const maxRoundInAttempts = allAttempts.reduce((maxR, a) => {
-            const r = typeof a.round_index === 'number' ? a.round_index : -1;
-            return Math.max(maxR, r);
-        }, -1);
+        // Собираем все ID уже использованных в этой викторине вопросов тай-брейка
+        allAttempts.forEach(a => {
+            if (a.question_id !== undefined && a.question_id !== null && String(a.question_id).trim() !== '') {
+                tiebreakUsedQuestionIds.add(String(a.question_id));
+            }
+        });
+
+        const roundsSet = new Set(
+            allAttempts
+                .map(a => a.round_index)
+                .filter(r => typeof r === 'number' && r >= 0)
+        );
+        const sortedRounds = Array.from(roundsSet).sort((a, b) => a - b);
 
         let activeCandidates = [...tiebreakCandidates];
-        for (let r = 0; r <= maxRoundInAttempts; r++) {
+        let resumeRoundIndex = sortedRounds.length > 0 ? sortedRounds[sortedRounds.length - 1] + 1 : 0;
+        let resumeQuestionId = null;
+
+        for (const r of sortedRounds) {
             const roundAtts = allAttempts.filter(a => a.round_index === r);
+            const qIdInRound = roundAtts.find(a => a.question_id !== undefined && a.question_id !== null)?.question_id;
+            if (qIdInRound !== undefined && qIdInRound !== null) {
+                tiebreakUsedQuestionIds.add(String(qIdInRound));
+            }
+
             const answeredByCandidate = {};
             roundAtts.forEach(a => {
                 if (activeCandidates.includes(a.user_email)) {
@@ -961,15 +983,11 @@
                 }
             });
 
-            const usedQIdInRound = roundAtts.find(a => a.question_id !== undefined && a.question_id !== null)?.question_id;
-            if (usedQIdInRound !== undefined && usedQIdInRound !== null) {
-                tiebreakUsedQuestionIds.add(String(usedQIdInRound));
-            } else if (allDbQuestions[r]) {
-                tiebreakUsedQuestionIds.add(getQuestionUniqueKey(allDbQuestions[r], r));
-            }
-
             const allAnswered = activeCandidates.length > 0 && activeCandidates.every(nick => Object.prototype.hasOwnProperty.call(answeredByCandidate, nick));
             if (!allAnswered) {
+                // Раунд ещё не завершён — возвращаемся к этому же вопросу этого раунда
+                resumeRoundIndex = r;
+                resumeQuestionId = qIdInRound !== undefined && qIdInRound !== null ? String(qIdInRound) : null;
                 break;
             }
 
@@ -988,9 +1006,17 @@
             }
         }
 
-        // Оставляем только ещё не разыгранные вопросы тай-брейка
-        tiebreakQuestions = allDbQuestions.filter((q, idx) => !tiebreakUsedQuestionIds.has(getQuestionUniqueKey(q, idx)));
         tiebreakCandidates = activeCandidates;
+        tiebreakActiveRoundIndex = resumeRoundIndex;
+
+        if (resumeQuestionId) {
+            const unfinishedQ = allDbQuestions.find((q, idx) => getQuestionUniqueKey(q, idx) === resumeQuestionId);
+            const remainingUnique = allDbQuestions.filter((q, idx) => !tiebreakUsedQuestionIds.has(getQuestionUniqueKey(q, idx)));
+            tiebreakQuestions = unfinishedQ ? [unfinishedQ, ...remainingUnique] : remainingUnique;
+        } else {
+            tiebreakQuestions = allDbQuestions.filter((q, idx) => !tiebreakUsedQuestionIds.has(getQuestionUniqueKey(q, idx)));
+        }
+
         tiebreakCurrentIdx = 0;
 
         if (tiebreakQuestions.length === 0) {
@@ -1045,7 +1071,7 @@
         document.getElementById('tb-next-btn').classList.add('hidden');
         window._tbAnsweredCurrent = false;
 
-        const existingAttempts = await fetchRoundAttempts(tiebreakCurrentIdx);
+        const existingAttempts = await fetchRoundAttempts(tiebreakActiveRoundIndex, q.id);
         const myExisting = existingAttempts.find(a => a.user_email === currentNickname);
         if (myExisting) {
             window._tbAnsweredCurrent = true;
@@ -1089,17 +1115,17 @@
         const isCorrect = (selectedIdx === correctIdx);
         revealTiebreakAnswer(selectedIdx, correctIdx, isCorrect);
 
-        const existingAttempts = await fetchRoundAttempts(tiebreakCurrentIdx);
+        const existingAttempts = await fetchRoundAttempts(tiebreakActiveRoundIndex, q?.id);
         const alreadySaved = existingAttempts.some(a => a.user_email === currentNickname);
         if (!alreadySaved) {
             const payload = {
                 quiz_id: currentQuiz.id,
                 user_email: currentNickname,
-                round_index: tiebreakCurrentIdx,
+                round_index: tiebreakActiveRoundIndex,
                 is_correct: isCorrect
             };
             if (q && q.id !== undefined && q.id !== null) {
-                payload.question_id = q.id;
+                payload.question_id = String(q.id);
             }
             const { error } = await supabaseClient.from('tiebreak_attempts').insert([payload]);
             if (error && payload.question_id !== undefined) {
@@ -1112,7 +1138,8 @@
     }
 
     async function evaluateTiebreakRound() {
-        const attempts = await fetchRoundAttempts(tiebreakCurrentIdx);
+        const q = tiebreakQuestions[tiebreakCurrentIdx];
+        const attempts = await fetchRoundAttempts(tiebreakActiveRoundIndex, q?.id);
         const answeredMap = {};
         attempts.forEach(a => {
             if (tiebreakCandidates.includes(a.user_email)) {
@@ -1213,7 +1240,9 @@
             showScreen('home-screen');
             return;
         }
-        tiebreakCurrentIdx++;
+        tiebreakActiveRoundIndex++;
+        tiebreakQuestions = tiebreakQuestions.filter((q, idx) => idx !== tiebreakCurrentIdx && !tiebreakUsedQuestionIds.has(getQuestionUniqueKey(q, idx)));
+        tiebreakCurrentIdx = 0;
         await renderTiebreakQuestion();
     }
 
@@ -1352,4 +1381,3 @@
 </script>
 </body>
 </html>
-```[cite: 1]
