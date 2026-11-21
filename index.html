@@ -1360,7 +1360,7 @@
 
         if (statusText) {
             if (isGeneratingHostHint) {
-                statusText.innerText = '🤖 Генерирую подсказку...';
+                statusText.innerText = '🤖 Подбираю подсказку...';
             } else if (currentQuestionRetryArmed) {
                 statusText.innerText = '🛡️ Право на ошибку активно';
             } else {
@@ -1379,29 +1379,57 @@
         const cleaned = String(correctAnswer || '').trim();
         const category = questionObj?.category || 'Общие';
         const questionText = questionObj?.question_text || '';
+        const optionsList = Array.isArray(questionObj?.options) ? questionObj.options : [];
 
         if (!cleaned) {
             const genericTemplates = [
-                `Вспомните ключевые признаки темы «${category}» и сопоставьте их с каждым вариантом.`,
-                `Попробуйте отбросить варианты, которые явно не подходят под смысл вопроса «${questionText}».`,
-                `Сделайте ставку на вариант, который логичнее всего вписывается в контекст вопроса.`
+                `Загляни в тему «${category}» — один из вариантов явно ближе к её сути, чем остальные.`,
+                `Попробуй отбросить то, что звучит слишком натянуто к вопросу «${questionText}».`,
+                `Прислушайся к интуиции: верный ответ обычно не выглядит случайным на фоне других.`
             ];
             return genericTemplates[Math.floor(Math.random() * genericTemplates.length)];
         }
 
-        const firstChar = cleaned[0].toUpperCase();
-        const lastChar = cleaned[cleaned.length - 1];
-        const len = cleaned.length;
-        const wordCount = cleaned.split(/\s+/).filter(Boolean).length;
+        const lettersOnly = cleaned.replace(/[^а-яА-ЯёЁa-zA-Z]/g, '');
+        const letterCount = lettersOnly.length;
+        const words = cleaned.split(/\s+/).filter(Boolean);
+        const wordCount = words.length;
+        const firstLetter = lettersOnly ? lettersOnly[0].toUpperCase() : cleaned[0].toUpperCase();
+        const lastLetter = lettersOnly ? lettersOnly[lettersOnly.length - 1].toLowerCase() : cleaned[cleaned.length - 1];
 
-        const templates = [
-            `Подсказка по форме ответа: слово начинается на «${firstChar}», а его длина — ${len} симв. Присмотритесь к вариантам с такими параметрами.`,
-            `Подумайте о теме «${category}»: верный вариант связан с сутью вопроса «${questionText}» и заканчивается на «${lastChar}».`,
-            `Обратите внимание на структуру ответа: слов — ${wordCount}, символов — ${len}. Исключите то, что не сходится по смыслу.`,
-            `Начните с первой буквы «${firstChar}» и проверьте, какой из вариантов точнее всего отвечает на вопрос без лишних допущений.`
-        ];
+        const otherOptionsText = optionsList
+            .filter(opt => String(opt || '').trim() !== cleaned)
+            .join(' ')
+            .toLowerCase();
+        const candidateLetters = Array.from(new Set(
+            lettersOnly
+                .toLowerCase()
+                .split('')
+                .filter(ch => /[а-яёa-z]/.test(ch))
+        ));
+        const distinctiveLetter = candidateLetters.find(ch => !otherOptionsText.includes(ch))
+            || candidateLetters[Math.floor(candidateLetters.length / 2)]
+            || firstLetter.toLowerCase();
 
-        return templates[Math.floor(Math.random() * templates.length)];
+        const hintPool = [];
+
+        if (letterCount > 0) {
+            hintPool.push(`Обрати внимание: правильный ответ состоит из ${letterCount} букв.`);
+        }
+        if (distinctiveLetter) {
+            hintPool.push(`В правильном ответе есть буква «${distinctiveLetter.toUpperCase()}» — присмотрись к вариантам с ней.`);
+        }
+        hintPool.push(`Подсказка: верный вариант начинается на «${firstLetter}» и заканчивается на «${lastLetter}».`);
+        hintPool.push(
+            wordCount === 1
+                ? 'Формат подсказывает, что правильный ответ — это одно слово.'
+                : `Обрати внимание на форму: в правильном ответе ${wordCount} слова.`
+        );
+        hintPool.push(`Вспомни тему «${category}»: правильный ответ органичнее всего ложится именно в этот раздел.`);
+        hintPool.push(`Сравни варианты между собой — один из них заметно лучше отвечает на суть вопроса «${questionText}».`);
+        hintPool.push('Не спеши: отбрось варианты, которые кажутся слишком очевидной ловушкой, и проверь оставшиеся.');
+
+        return hintPool[Math.floor(Math.random() * hintPool.length)];
     }
 
     async function generateOpenAiHintForQuestion(quizObj, questionObj, correctAnswer) {
@@ -1411,10 +1439,10 @@
         }
 
         const angles = [
-            'Сделай акцент на историческом или культурном контексте правильного ответа.',
-            'Сделай акцент на ассоциации или смежном понятии, не называя сам ответ.',
-            'Сделай логический намёк, помогающий отсеять лишние варианты.',
-            'Сформулируй подсказку как короткую загадку по смыслу правильного ответа.'
+            'Дай живой намёк на смысл или ассоциацию правильного ответа, не называя его.',
+            'Подскажи через букву, длину слова или структуру ответа, не выдавая сам ответ.',
+            'Помоги сузить выбор с помощью логики или темы вопроса, не спойлеря ответ.',
+            'Сформулируй подсказку легко и по-дружески, как ведущий квиза.'
         ];
         const chosenAngle = angles[Math.floor(Math.random() * angles.length)];
 
@@ -1435,14 +1463,15 @@
             },
             body: JSON.stringify({
                 model: OPENAI_MODEL,
-                temperature: 0.7,
+                temperature: 0.75,
                 max_tokens: 180,
                 messages: [
                     {
                         role: 'system',
                         content:
-                            'Ты помощник в викторине на русском языке. Тебе передают вопрос, варианты ответа и точный правильный ответ (correct_answer). ' +
-                            'Напиши 1-2 коротких, полезных и остроумных предложения-подсказки на основе правильного ответа, чтобы игрок мог догадаться сам. ' +
+                            'Ты дружелюбный ведущий викторины на русском языке. Тебе передают вопрос, варианты ответа и точный правильный ответ (correct_answer). ' +
+                            'Напиши 1-2 коротких, живых и разных по стилю предложения-подсказки на основе правильного ответа, чтобы игрок мог догадаться сам. ' +
+                            'Избегай сухих канцелярских фраз вроде "обратите внимание на структуру ответа: слов — N, символов — M". ' +
                             'СТРОГО ЗАПРЕЩЕНО прямо называть или дословно цитировать текст правильного ответа (correct_answer) и указывать его номер. Пиши только на русском.'
                     },
                     {
@@ -1558,7 +1587,7 @@
         hState.hostUsed = true;
         isGeneratingHostHint = true;
         updateHintButtonsState();
-        showHintMessage('🤖 Думаю над подсказкой на основе правильного ответа...');
+        showHintMessage('🤖 Думаю над подсказкой...');
 
         const correctAnswerText = Array.isArray(q.options) ? q.options[q.correct_index] : '';
         let hintText = '';
