@@ -180,17 +180,19 @@
                 Выйти
             </button>
         </div>
-        <div id="beer-wallet-bar" class="hidden flex items-center justify-between bg-gradient-to-r from-teal-50 to-emerald-50 border border-teal-200/90 rounded-2xl px-3 py-1.5 shadow-sm">
-            <div class="flex items-center gap-1.5 text-teal-950 font-semibold text-xs">
-                <span class="inline-flex items-center gap-1"><img src="morshanskoe-bottle.png" alt="Моршанское" class="morshanskoe-icon-lg"> Баланс:</span>
-                <span id="beer-balance-value" class="font-bold text-teal-700">0</span>
-                <span id="beer-icons-preview" class="inline-flex items-center gap-0.5"></span>
+        <div id="beer-wallet-bar" class="hidden flex items-center justify-between gap-2 bg-gradient-to-r from-teal-50 to-emerald-50 border border-teal-200/90 rounded-2xl px-3 py-1.5 shadow-sm">
+            <div class="flex items-center gap-1.5 text-teal-950 font-semibold text-xs min-w-0">
+                <span class="inline-flex items-center gap-1 shrink-0">
+                    <img id="wallet-header-beer-icon" src="morshanskoe-bottle.jpg" alt="Моршанское" class="morshanskoe-icon-lg">
+                    Баланс:
+                </span>
+                <span id="beer-balance-value" class="font-bold text-teal-700 shrink-0">0</span>
+                <span id="beer-icons-preview" class="inline-flex items-center gap-0.5 overflow-hidden"></span>
             </div>
-            <button onclick="openBeerHistoryModal()" class="text-[11px] font-semibold text-teal-800 hover:text-teal-950 bg-white/90 hover:bg-white border border-teal-200 px-2.5 py-1 rounded-xl transition-all">
+            <button type="button" onclick="openBeerHistoryModal()" class="shrink-0 text-[11px] font-semibold text-teal-800 hover:text-teal-950 bg-white/95 hover:bg-white border border-teal-200 px-2.5 py-1 rounded-xl transition-all shadow-xs cursor-pointer">
                 📜 История
             </button>
         </div>
-    </div>
 
     <!-- АВТОРИЗАЦИЯ -->
     <div id="auth-screen" class="animate-fade-in">
