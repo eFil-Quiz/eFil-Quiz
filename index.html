@@ -43,7 +43,7 @@
             border: 1px solid var(--border-subtle);
             box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
         }
-        .glass-btn:hover {
+        .glass-btn:hover:not(:disabled) {
             background: #F8FAFC;
             border-color: #93C5FD;
             box-shadow: 0 6px 16px rgba(59, 130, 246, 0.08);
@@ -153,11 +153,23 @@
 <div class="glass-card rounded-[36px] max-w-lg w-full p-5 sm:p-8 relative overflow-hidden transition-all">
     
     <!-- ВЕРХНЯЯ ПАНЕЛЬ -->
-    <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-200/80 text-xs sm:text-sm text-slate-500">
-        <span id="user-info-display" class="font-medium text-slate-700 truncate max-w-[280px]">Не авторизован</span>
-        <button id="logout-btn" onclick="logout()" class="hidden bg-rose-50 border border-rose-200 text-rose-600 px-3 py-1.5 rounded-xl hover:bg-rose-100 transition-all text-xs font-semibold shrink-0">
-            Выйти
-        </button>
+    <div class="mb-4 pb-3 border-b border-slate-200/80 text-xs sm:text-sm text-slate-500 space-y-2">
+        <div class="flex justify-between items-center gap-2">
+            <span id="user-info-display" class="font-medium text-slate-700 truncate max-w-[280px]">Не авторизован</span>
+            <button id="logout-btn" onclick="logout()" class="hidden bg-rose-50 border border-rose-200 text-rose-600 px-3 py-1.5 rounded-xl hover:bg-rose-100 transition-all text-xs font-semibold shrink-0">
+                Выйти
+            </button>
+        </div>
+        <div id="beer-wallet-bar" class="hidden flex items-center justify-between bg-amber-50/90 border border-amber-200/90 rounded-2xl px-3 py-1.5">
+            <div class="flex items-center gap-1.5 text-amber-900 font-semibold text-xs">
+                <span>🍺 Баланс:</span>
+                <span id="beer-balance-value" class="font-bold text-amber-700">0</span>
+                <span id="beer-icons-preview" class="text-xs tracking-tighter"></span>
+            </div>
+            <button onclick="openBeerHistoryModal()" class="text-[11px] font-semibold text-amber-800 hover:text-amber-950 bg-white/80 hover:bg-white border border-amber-200 px-2.5 py-1 rounded-xl transition-all">
+                📜 История
+            </button>
+        </div>
     </div>
 
     <!-- АВТОРИЗАЦИЯ -->
@@ -271,6 +283,29 @@
             <span id="q-counter" class="font-semibold uppercase tracking-wider text-blue-600">Вопрос 1 из 1</span>
             <div id="q-progress-badge" class="text-slate-500">Отвечено: 0/0</div>
         </div>
+
+        <!-- ПАНЕЛЬ ПОДСКАЗОК -->
+        <div class="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-2 space-y-1.5">
+            <div class="flex justify-between items-center text-[10px] font-bold text-amber-800 uppercase tracking-wider px-1">
+                <span>🍻 Подсказки за бутылки</span>
+                <span id="hint-status-text" class="text-amber-700 font-semibold normal-case"></span>
+            </div>
+            <div class="grid grid-cols-3 gap-1.5">
+                <button id="hint-5050-btn" type="button" onclick="useHint5050()" class="glass-btn px-2 py-2 rounded-xl text-[11px] font-semibold text-slate-800 flex flex-col items-center justify-center leading-tight transition-all">
+                    <span>50/50</span>
+                    <span class="text-[10px] text-amber-700 font-bold mt-0.5">10 🍺</span>
+                </button>
+                <button id="hint-retry-btn" type="button" onclick="useHintRetry()" class="glass-btn px-2 py-2 rounded-xl text-[11px] font-semibold text-slate-800 flex flex-col items-center justify-center leading-tight transition-all">
+                    <span>Право на ошибку</span>
+                    <span class="text-[10px] text-amber-700 font-bold mt-0.5">15 🍺</span>
+                </button>
+                <button id="hint-host-btn" type="button" onclick="useHintHost()" class="glass-btn px-2 py-2 rounded-xl text-[11px] font-semibold text-slate-800 flex flex-col items-center justify-center leading-tight transition-all">
+                    <span>Подсказка</span>
+                    <span class="text-[10px] text-amber-700 font-bold mt-0.5">20 🍺</span>
+                </button>
+            </div>
+            <div id="hint-message-box" class="hidden text-[11px] px-2.5 py-1.5 rounded-xl bg-white/90 border border-amber-200 text-slate-700"></div>
+        </div>
         
         <div id="media-container" class="flex flex-col items-center my-1"></div>
         <h2 id="q-title" class="text-base sm:text-lg font-bold text-center text-slate-900 px-1 tracking-wide">Загрузка...</h2>
@@ -335,7 +370,8 @@
     <!-- ЭКРАН РЕЗУЛЬТАТОВ -->
     <div id="result-screen" class="hidden animate-fade-in space-y-2">
         <h2 class="text-lg sm:text-xl font-bold mb-0.5 text-slate-900">Итоги викторины! 🎉</h2>
-        <p id="res-summary" class="text-xs font-semibold text-blue-600 mb-1.5"></p>
+        <p id="res-summary" class="text-xs font-semibold text-blue-600"></p>
+        <p id="res-beer-reward" class="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-2.5 py-1.5"></p>
         
         <div id="winner-badge-container" class="hidden p-2 bg-emerald-50 border border-emerald-200 rounded-2xl text-center">
             <span class="text-[10px] text-emerald-600 font-semibold uppercase tracking-wider">🏆 Победитель викторины:</span>
@@ -422,6 +458,20 @@
             </button>
         </div>
     </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО ИСТОРИИ БУТЫЛОЧЕК -->
+    <div id="beer-history-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex justify-center items-center p-4 z-50">
+        <div class="glass-card rounded-[32px] p-6 max-w-md w-full animate-fade-in shadow-2xl border border-slate-200">
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="text-base font-bold text-amber-800">🍺 История начислений и расходов</h3>
+                <span id="modal-beer-balance" class="text-xs font-bold bg-amber-100 text-amber-900 px-2.5 py-1 rounded-full">0 🍺</span>
+            </div>
+            <div id="beer-history-list" class="space-y-2 max-h-64 overflow-y-auto text-xs text-slate-700 mb-3 pr-1"></div>
+            <button onclick="closeBeerHistoryModal()" class="w-full glass-btn hover:bg-slate-50 text-slate-700 py-2.5 rounded-2xl font-semibold transition-all text-sm border border-slate-200">
+                Закрыть
+            </button>
+        </div>
+    </div>
 </div>
 
 <!-- ЛАЙТБОКС ДЛЯ УВЕЛИЧЕНИЯ ИЗОБРАЖЕНИЙ ПО КЛИКУ -->
@@ -441,6 +491,12 @@
     const ADMIN_EMAIL = 'evgeniy.filippov8@gmail.com';
     const MEDIA_BUCKET = 'quiz-media';
 
+    const HINT_COSTS = {
+        retry: 15,
+        fifty: 10,
+        host: 20
+    };
+
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let currentUser = null;
@@ -454,6 +510,14 @@
     let existingAttemptId = null;
     let accumulatedTimeSec = 0;
     let editingQuizId = null;
+
+    let beerBalance = 0;
+    let beerTransactions = [];
+    let questionHintsState = {};
+    let currentQuestionRetryArmed = false;
+    let eliminatedOptionsForCurrentQ = new Set();
+    let disabledWrongOptionsForCurrentQ = new Set();
+    let currentQuestionAnswered = false;
     
     let questionStartTime = 0;
     let sessionStartTime = 0;
@@ -466,6 +530,170 @@
     let tiebreakUsedQuestionIds = new Set();
     let tiebreakPollInterval = null;
     let tiebreakNextAction = null;
+
+    function getUserWalletKey() {
+        return currentUser?.id ? `uid_${currentUser.id}` : `nick_${currentNickname}`;
+    }
+
+    function getLocalWallet() {
+        const key = getUserWalletKey();
+        if (!key) return { balance: 0, transactions: [] };
+        try {
+            const raw = localStorage.getItem(`beer_wallet_${key}`);
+            if (!raw) return { balance: 0, transactions: [] };
+            const parsed = JSON.parse(raw);
+            return {
+                balance: Math.max(0, parseInt(parsed.balance, 10) || 0),
+                transactions: Array.isArray(parsed.transactions) ? parsed.transactions : []
+            };
+        } catch (e) {
+            return { balance: 0, transactions: [] };
+        }
+    }
+
+    function saveLocalWallet(balance, transactions) {
+        const key = getUserWalletKey();
+        if (!key) return;
+        localStorage.setItem(`beer_wallet_${key}`, JSON.stringify({
+            balance: Math.max(0, parseInt(balance, 10) || 0),
+            transactions: Array.isArray(transactions) ? transactions : []
+        }));
+    }
+
+    function renderBeerWalletBar() {
+        const bar = document.getElementById('beer-wallet-bar');
+        if (!currentUser || !currentNickname) {
+            bar.classList.add('hidden');
+            return;
+        }
+        bar.classList.remove('hidden');
+        document.getElementById('beer-balance-value').innerText = `${beerBalance}`;
+        const previewCount = Math.min(beerBalance, 8);
+        document.getElementById('beer-icons-preview').innerText = previewCount > 0 ? '🍺'.repeat(previewCount) : '';
+        updateHintButtonsState();
+    }
+
+    async function loadBeerWallet() {
+        const local = getLocalWallet();
+        beerBalance = local.balance;
+        beerTransactions = [...local.transactions];
+
+        const walletKey = getUserWalletKey();
+        if (walletKey) {
+            const { data: txRows } = await supabaseClient
+                .from('beer_transactions')
+                .select('*')
+                .eq('user_key', walletKey)
+                .order('created_at', { ascending: false });
+
+            if (Array.isArray(txRows) && txRows.length > 0) {
+                const mergedMap = new Map();
+                beerTransactions.forEach(t => { if (t.op_key) mergedMap.set(t.op_key, t); });
+                txRows.forEach(t => { if (t.op_key) mergedMap.set(t.op_key, t); });
+                beerTransactions = Array.from(mergedMap.values()).sort((a, b) => {
+                    return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+                });
+
+                let calc = 0;
+                beerTransactions.forEach(t => {
+                    const amt = Math.abs(parseInt(t.amount, 10) || 0);
+                    if (t.type === 'earn') calc += amt;
+                    else if (t.type === 'spend') calc = Math.max(0, calc - amt);
+                });
+                beerBalance = calc;
+                saveLocalWallet(beerBalance, beerTransactions);
+            } else {
+                const { data: walletRow } = await supabaseClient
+                    .from('beer_wallets')
+                    .select('balance')
+                    .eq('user_key', walletKey)
+                    .maybeSingle();
+                if (walletRow && typeof walletRow.balance === 'number' && beerTransactions.length === 0) {
+                    beerBalance = Math.max(0, walletRow.balance);
+                    saveLocalWallet(beerBalance, beerTransactions);
+                }
+            }
+        }
+        renderBeerWalletBar();
+    }
+
+    async function syncWalletToSupabase(txEntry) {
+        const walletKey = getUserWalletKey();
+        if (!walletKey) return;
+        await supabaseClient
+            .from('beer_wallets')
+            .upsert({ user_key: walletKey, balance: beerBalance, updated_at: new Date().toISOString() }, { onConflict: 'user_key' });
+
+        if (txEntry) {
+            await supabaseClient
+                .from('beer_transactions')
+                .upsert([txEntry], { onConflict: 'op_key' });
+        }
+    }
+
+    async function applyBeerTransaction({ opKey, type, amount, description }) {
+        const cleanAmount = Math.abs(parseInt(amount, 10) || 0);
+        if (!opKey || cleanAmount <= 0) return { ok: false, duplicate: false };
+
+        if (beerTransactions.some(t => t.op_key === opKey)) {
+            return { ok: true, duplicate: true };
+        }
+
+        if (type === 'spend' && beerBalance < cleanAmount) {
+            return { ok: false, duplicate: false, reason: 'insufficient_funds' };
+        }
+
+        const nextBalance = type === 'earn'
+            ? beerBalance + cleanAmount
+            : Math.max(0, beerBalance - cleanAmount);
+
+        const txEntry = {
+            user_key: getUserWalletKey(),
+            op_key: opKey,
+            type,
+            amount: cleanAmount,
+            description,
+            created_at: new Date().toISOString()
+        };
+
+        beerBalance = nextBalance;
+        beerTransactions.unshift(txEntry);
+        saveLocalWallet(beerBalance, beerTransactions);
+        renderBeerWalletBar();
+        await syncWalletToSupabase(txEntry);
+        return { ok: true, duplicate: false };
+    }
+
+    function openBeerHistoryModal() {
+        document.getElementById('modal-beer-balance').innerText = `${beerBalance} 🍺`;
+        const listEl = document.getElementById('beer-history-list');
+        if (!beerTransactions || beerTransactions.length === 0) {
+            listEl.innerHTML = '<p class="text-slate-400 text-center py-4">Операций пока нет. Пройдите викторину, чтобы заработать бутылочки 🍺!</p>';
+        } else {
+            listEl.innerHTML = beerTransactions.map(tx => {
+                const isEarn = tx.type === 'earn';
+                const dateStr = tx.created_at
+                    ? new Date(tx.created_at).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+                    : '';
+                return `
+                    <div class="p-2.5 rounded-xl border ${isEarn ? 'bg-emerald-50/70 border-emerald-200' : 'bg-rose-50/60 border-rose-200'} flex justify-between items-center gap-2">
+                        <div class="space-y-0.5">
+                            <div class="font-semibold text-slate-800">${tx.description}</div>
+                            ${dateStr ? `<div class="text-[10px] text-slate-400">${dateStr}</div>` : ''}
+                        </div>
+                        <span class="font-bold shrink-0 ${isEarn ? 'text-emerald-700' : 'text-rose-700'}">
+                            ${isEarn ? '+' : '-'}${tx.amount} 🍺
+                        </span>
+                    </div>
+                `;
+            }).join('');
+        }
+        document.getElementById('beer-history-modal').classList.remove('hidden');
+    }
+
+    function closeBeerHistoryModal() {
+        document.getElementById('beer-history-modal').classList.add('hidden');
+    }
 
     function openLightbox(src) {
         if (!src) return;
@@ -490,7 +718,11 @@
     }
 
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeLightbox();
+        if (e.key === 'Escape') {
+            closeLightbox();
+            closeBeerHistoryModal();
+            closePlayerModal();
+        }
     });
 
     function buildMediaHtml(mediaUrl, isTiebreak = false) {
@@ -516,9 +748,11 @@
             currentNickname = currentUser.user_metadata?.nickname || '';
             if (!currentNickname) { showScreen('nickname-screen'); return; }
             updateUserDisplay();
+            await loadBeerWallet();
             checkAdmin();
             showScreen('home-screen');
         } else {
+            renderBeerWalletBar();
             showScreen('auth-screen');
         }
     }
@@ -572,6 +806,7 @@
         if (error) { alert('Ошибка: ' + error.message); return; }
         currentNickname = nick;
         updateUserDisplay();
+        await loadBeerWallet();
         checkAdmin();
         showScreen('home-screen');
     }
@@ -581,7 +816,10 @@
         await supabaseClient.auth.signOut();
         currentUser = null;
         currentNickname = '';
+        beerBalance = 0;
+        beerTransactions = [];
         document.getElementById('logout-btn').classList.add('hidden');
+        renderBeerWalletBar();
         showScreen('auth-screen');
     }
 
@@ -593,7 +831,10 @@
             document.getElementById(s).classList.add('hidden');
         });
         document.getElementById(id).classList.remove('hidden');
-        if (id === 'home-screen') loadQuizzes();
+        if (id === 'home-screen') {
+            renderBeerWalletBar();
+            loadQuizzes();
+        }
     }
 
     function clearTiebreakPolling() {
@@ -655,6 +896,20 @@
         Object.keys(localMap).forEach(qId => {
             if (!attemptsByQuizId[qId]) attemptsByQuizId[qId] = localMap[qId];
         });
+
+        // Начисляем бонус за победу, если организатор уже вписал победителя в завершённую викторину
+        for (const q of quizzes) {
+            const att = attemptsByQuizId[q.id];
+            const isComp = att ? (att.is_completed !== false && (att.detailed_results?.length || 0) >= q.questions.length) : false;
+            if (isComp && q.winner_name && q.winner_name.trim().toLowerCase() === currentNickname.trim().toLowerCase()) {
+                await applyBeerTransaction({
+                    opKey: `quiz_win_${q.id}`,
+                    type: 'earn',
+                    amount: 3,
+                    description: `Победа в викторине «${q.title}»`
+                });
+            }
+        }
 
         const container = document.getElementById('quiz-list');
         container.innerHTML = '';
@@ -860,6 +1115,7 @@
         sessionResults = [];
         accumulatedTimeSec = 0;
         skippedQuestionIndices = [];
+        questionHintsState = {};
 
         const { data: dbAttempts } = await supabaseClient.from('quiz_attempts').select('*').eq('quiz_id', currentQuiz.id).eq('user_email', currentNickname);
         const localAttempt = getLocalAttemptsMap()[currentQuiz.id];
@@ -887,6 +1143,160 @@
         renderQuestion();
     }
 
+    function getCurrentQuestionKey(q) {
+        return q?.id !== undefined && q?.id !== null ? String(q.id) : `q_${currentQIndex}`;
+    }
+
+    function ensureQuestionHintRecord(qKey) {
+        if (!questionHintsState[qKey]) {
+            questionHintsState[qKey] = {
+                fiftyUsed: false,
+                retryUsed: false,
+                hostUsed: false,
+                eliminated: []
+            };
+        }
+        return questionHintsState[qKey];
+    }
+
+    function updateHintButtonsState() {
+        const q = currentQuiz?.questions?.[currentQIndex];
+        if (!q) return;
+        const qKey = getCurrentQuestionKey(q);
+        const hState = ensureQuestionHintRecord(qKey);
+
+        const btn5050 = document.getElementById('hint-5050-btn');
+        const btnRetry = document.getElementById('hint-retry-btn');
+        const btnHost = document.getElementById('hint-host-btn');
+        const statusText = document.getElementById('hint-status-text');
+
+        if (!btn5050 || !btnRetry || !btnHost) return;
+
+        const wrongAvailableCount = q.options.filter((_, idx) => idx !== q.correct_index && !eliminatedOptionsForCurrentQ.has(idx)).length;
+
+        btn5050.disabled = currentQuestionAnswered || hState.fiftyUsed || wrongAvailableCount < 2 || beerBalance < HINT_COSTS.fifty;
+        btnRetry.disabled = currentQuestionAnswered || hState.retryUsed || currentQuestionRetryArmed || beerBalance < HINT_COSTS.retry;
+        btnHost.disabled = currentQuestionAnswered || hState.hostUsed || beerBalance < HINT_COSTS.host;
+
+        [btn5050, btnRetry, btnHost].forEach(btn => {
+            if (btn.disabled) {
+                btn.classList.add('opacity-45', 'cursor-not-allowed');
+            } else {
+                btn.classList.remove('opacity-45', 'cursor-not-allowed');
+            }
+        });
+
+        if (statusText) {
+            if (currentQuestionRetryArmed) {
+                statusText.innerText = '🛡️ Право на ошибку активно';
+            } else {
+                statusText.innerText = `Доступно: ${beerBalance} 🍺`;
+            }
+        }
+    }
+
+    function showHintMessage(text) {
+        const box = document.getElementById('hint-message-box');
+        box.innerText = text;
+        box.classList.remove('hidden');
+    }
+
+    async function useHint5050() {
+        const q = currentQuiz?.questions?.[currentQIndex];
+        if (!q || currentQuestionAnswered) return;
+        const qKey = getCurrentQuestionKey(q);
+        const hState = ensureQuestionHintRecord(qKey);
+        if (hState.fiftyUsed) return;
+
+        const wrongIndices = q.options
+            .map((_, idx) => idx)
+            .filter(idx => idx !== q.correct_index && !eliminatedOptionsForCurrentQ.has(idx));
+
+        if (wrongIndices.length < 2) return;
+
+        const tx = await applyBeerTransaction({
+            opKey: `hint_5050_${currentQuiz.id}_${qKey}`,
+            type: 'spend',
+            amount: HINT_COSTS.fifty,
+            description: `Подсказка «50/50» (${currentQuiz.title}, вопр. №${currentQIndex + 1})`
+        });
+
+        if (!tx.ok) {
+            alert('Недостаточно бутылочек 🍺 для подсказки «50/50» (нужно 10 🍺).');
+            updateHintButtonsState();
+            return;
+        }
+
+        // Случайным образом выбираем 2 неверных варианта для удаления
+        const shuffled = [...wrongIndices].sort(() => Math.random() - 0.5);
+        const toRemove = shuffled.slice(0, 2);
+        toRemove.forEach(idx => eliminatedOptionsForCurrentQ.add(idx));
+        hState.fiftyUsed = true;
+        hState.eliminated = Array.from(eliminatedOptionsForCurrentQ);
+
+        const buttons = document.getElementById('q-options').children;
+        toRemove.forEach(idx => {
+            if (buttons[idx]) {
+                buttons[idx].disabled = true;
+                buttons[idx].className = 'w-full text-center px-4 py-3 glass-btn text-slate-400 rounded-2xl text-xs opacity-30 line-through cursor-not-allowed';
+            }
+        });
+
+        showHintMessage('✂️ Подсказка «50/50» убрала два неверных варианта ответа.');
+        updateHintButtonsState();
+    }
+
+    async function useHintRetry() {
+        const q = currentQuiz?.questions?.[currentQIndex];
+        if (!q || currentQuestionAnswered) return;
+        const qKey = getCurrentQuestionKey(q);
+        const hState = ensureQuestionHintRecord(qKey);
+        if (hState.retryUsed || currentQuestionRetryArmed) return;
+
+        const tx = await applyBeerTransaction({
+            opKey: `hint_retry_${currentQuiz.id}_${qKey}`,
+            type: 'spend',
+            amount: HINT_COSTS.retry,
+            description: `Подсказка «Право на ошибку» (${currentQuiz.title}, вопр. №${currentQIndex + 1})`
+        });
+
+        if (!tx.ok) {
+            alert('Недостаточно бутылочек 🍺 для подсказки «Право на ошибку» (нужно 15 🍺).');
+            updateHintButtonsState();
+            return;
+        }
+
+        hState.retryUsed = true;
+        currentQuestionRetryArmed = true;
+        showHintMessage('🛡️ «Право на ошибку» активировано: если ответите неверно, сможете выбрать другой вариант.');
+        updateHintButtonsState();
+    }
+
+    async function useHintHost() {
+        const q = currentQuiz?.questions?.[currentQIndex];
+        if (!q || currentQuestionAnswered) return;
+        const qKey = getCurrentQuestionKey(q);
+        const hState = ensureQuestionHintRecord(qKey);
+        if (hState.hostUsed) return;
+
+        const tx = await applyBeerTransaction({
+            opKey: `hint_host_${currentQuiz.id}_${qKey}`,
+            type: 'spend',
+            amount: HINT_COSTS.host,
+            description: `Подсказка (${currentQuiz.title}, вопр. №${currentQIndex + 1})`
+        });
+
+        if (!tx.ok) {
+            alert('Недостаточно бутылочек 🍺 для подсказки (нужно 20 🍺).');
+            updateHintButtonsState();
+            return;
+        }
+
+        hState.hostUsed = true;
+        showHintMessage('💡 Подсказка активирована (логика подсказки будет доработана позже).');
+        updateHintButtonsState();
+    }
+
     function renderQuestion() {
         const answeredIds = new Set(sessionResults.map(r => r.question_id));
         while (currentQIndex < currentQuiz.questions.length && answeredIds.has(currentQuiz.questions[currentQIndex].id)) {
@@ -905,10 +1315,22 @@
         }
 
         const q = currentQuiz.questions[currentQIndex];
+        const qKey = getCurrentQuestionKey(q);
+        const hState = ensureQuestionHintRecord(qKey);
+
+        currentQuestionAnswered = false;
+        currentQuestionRetryArmed = false;
+        eliminatedOptionsForCurrentQ = new Set(hState.eliminated || []);
+        disabledWrongOptionsForCurrentQ = new Set();
+
         document.getElementById('q-counter').innerText = `Вопрос ${currentQIndex + 1} из ${currentQuiz.questions.length}`;
         document.getElementById('q-progress-badge').innerText = `Отвечено: ${sessionResults.length}/${currentQuiz.questions.length}`;
         document.getElementById('q-title').innerText = q.question_text;
         questionStartTime = Date.now();
+
+        const hintBox = document.getElementById('hint-message-box');
+        hintBox.classList.add('hidden');
+        hintBox.innerText = '';
 
         const mediaContainer = document.getElementById('media-container');
         mediaContainer.innerHTML = buildMediaHtml(q.media_url, false);
@@ -916,7 +1338,11 @@
         const optionsContainer = document.getElementById('q-options');
         optionsContainer.innerHTML = '';
         q.options.forEach((opt, oIdx) => {
-            optionsContainer.innerHTML += `<button onclick="selectAnswer(${oIdx})" class="w-full text-center px-4 py-3 glass-btn rounded-2xl transition-all text-xs sm:text-sm font-medium text-slate-800 hover:border-blue-400">${opt}</button>`;
+            const isEliminated = eliminatedOptionsForCurrentQ.has(oIdx);
+            const cls = isEliminated
+                ? 'w-full text-center px-4 py-3 glass-btn text-slate-400 rounded-2xl text-xs opacity-30 line-through cursor-not-allowed'
+                : 'w-full text-center px-4 py-3 glass-btn rounded-2xl transition-all text-xs sm:text-sm font-medium text-slate-800 hover:border-blue-400';
+            optionsContainer.innerHTML += `<button onclick="selectAnswer(${oIdx})" ${isEliminated ? 'disabled' : ''} class="${cls}">${opt}</button>`;
         });
 
         const skipBtn = document.getElementById('skip-q-btn');
@@ -929,6 +1355,7 @@
             document.getElementById('save-exit-btn').className = 'w-full bg-rose-50 text-rose-600 font-semibold py-2.5 rounded-2xl text-xs border border-rose-200';
         }
         document.getElementById('next-q-btn').classList.add('hidden');
+        updateHintButtonsState();
     }
 
     function skipQuestion() {
@@ -939,12 +1366,39 @@
 
     function selectAnswer(selectedIdx) {
         const q = currentQuiz.questions[currentQIndex];
+        if (currentQuestionAnswered) return;
         if (sessionResults.some(r => r.question_id === q.id)) return;
+        if (eliminatedOptionsForCurrentQ.has(selectedIdx) || disabledWrongOptionsForCurrentQ.has(selectedIdx)) return;
 
-        const timeSpentSec = Math.max(1, Math.round((Date.now() - questionStartTime) / 1000));
         const isCorrect = (selectedIdx === q.correct_index);
 
-        sessionResults.push({ question_id: q.id, question_text: q.question_text, category: q.category || 'Общие', selected_option: selectedIdx, correct_option: q.correct_index, is_correct: isCorrect, time_spent: timeSpentSec });
+        if (!isCorrect && currentQuestionRetryArmed) {
+            currentQuestionRetryArmed = false;
+            disabledWrongOptionsForCurrentQ.add(selectedIdx);
+
+            const buttons = document.getElementById('q-options').children;
+            if (buttons[selectedIdx]) {
+                buttons[selectedIdx].disabled = true;
+                buttons[selectedIdx].className = 'w-full text-center px-4 py-3 bg-rose-50 border border-rose-300 text-rose-800 rounded-2xl text-xs sm:text-sm font-semibold opacity-60 cursor-not-allowed';
+            }
+            showHintMessage('❌ Неверный вариант! Вы потратили «Право на ошибку» — выберите другой вариант ответа.');
+            updateHintButtonsState();
+            return;
+        }
+
+        currentQuestionAnswered = true;
+        currentQuestionRetryArmed = false;
+
+        const timeSpentSec = Math.max(1, Math.round((Date.now() - questionStartTime) / 1000));
+        sessionResults.push({
+            question_id: q.id,
+            question_text: q.question_text,
+            category: q.category || 'Общие',
+            selected_option: selectedIdx,
+            correct_option: q.correct_index,
+            is_correct: isCorrect,
+            time_spent: timeSpentSec
+        });
         document.getElementById('q-progress-badge').innerText = `Отвечено: ${sessionResults.length}/${currentQuiz.questions.length}`;
 
         const buttons = document.getElementById('q-options').children;
@@ -952,12 +1406,14 @@
             buttons[i].disabled = true;
             if (i === q.correct_index) buttons[i].className = 'w-full text-center px-4 py-3 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-2xl text-xs sm:text-sm font-semibold';
             else if (i === selectedIdx && !isCorrect) buttons[i].className = 'w-full text-center px-4 py-3 bg-rose-50 border border-rose-300 text-rose-800 rounded-2xl text-xs sm:text-sm font-semibold';
+            else if (eliminatedOptionsForCurrentQ.has(i)) buttons[i].className = 'w-full text-center px-4 py-3 glass-btn text-slate-400 rounded-2xl text-xs opacity-30 line-through';
             else buttons[i].className = 'w-full text-center px-4 py-3 glass-btn text-slate-400 rounded-2xl text-xs opacity-40';
         }
 
         document.getElementById('skip-q-btn').classList.add('hidden');
         document.getElementById('save-exit-btn').className = 'w-full bg-rose-50 text-rose-600 font-semibold py-2.5 rounded-2xl text-xs border border-rose-200';
         document.getElementById('next-q-btn').classList.remove('hidden');
+        updateHintButtonsState();
     }
 
     function nextQuestion() { currentQIndex++; renderQuestion(); }
@@ -965,6 +1421,55 @@
     async function saveAndExitQuiz() {
         if (sessionResults.length === 0) { showScreen('home-screen'); return; }
         await persistAttempt(sessionResults.length >= currentQuiz.questions.length, true);
+    }
+
+    async function awardCompletedQuizBeers(quizObj, resultsList) {
+        // Дедупликация ответов по question_id внутри одной викторины
+        const uniqueAnswersByQ = new Map();
+        (resultsList || []).forEach(r => {
+            if (r && r.question_id !== undefined && r.question_id !== null) {
+                uniqueAnswersByQ.set(String(r.question_id), r);
+            }
+        });
+
+        const uniqueCorrectCount = Array.from(uniqueAnswersByQ.values()).filter(r => r.is_correct).length;
+        const awardedItems = [];
+
+        if (uniqueCorrectCount > 0) {
+            const resCorrect = await applyBeerTransaction({
+                opKey: `quiz_correct_${quizObj.id}`,
+                type: 'earn',
+                amount: uniqueCorrectCount,
+                description: `Верные ответы в викторине «${quizObj.title}» (${uniqueCorrectCount})`
+            });
+            if (resCorrect.ok && !resCorrect.duplicate) {
+                awardedItems.push(`+${uniqueCorrectCount} 🍺 за верные ответы`);
+            }
+        }
+
+        const resFinish = await applyBeerTransaction({
+            opKey: `quiz_complete_${quizObj.id}`,
+            type: 'earn',
+            amount: 1,
+            description: `Прохождение викторины «${quizObj.title}»`
+        });
+        if (resFinish.ok && !resFinish.duplicate) {
+            awardedItems.push(`+1 🍺 за прохождение`);
+        }
+
+        if (quizObj.winner_name && quizObj.winner_name.trim().toLowerCase() === currentNickname.trim().toLowerCase()) {
+            const resWin = await applyBeerTransaction({
+                opKey: `quiz_win_${quizObj.id}`,
+                type: 'earn',
+                amount: 3,
+                description: `Победа в викторине «${quizObj.title}»`
+            });
+            if (resWin.ok && !resWin.duplicate) {
+                awardedItems.push(`+3 🍺 за победу`);
+            }
+        }
+
+        return awardedItems;
     }
 
     async function persistAttempt(isCompleted, returnToHome = false) {
@@ -982,12 +1487,25 @@
             if (data && data[0]) existingAttemptId = data[0].id;
         }
 
+        let awardedList = [];
+        if (isCompleted) {
+            awardedList = await awardCompletedQuizBeers(currentQuiz, sessionResults);
+        }
+
         if (returnToHome) { showScreen('home-screen'); return; }
-        await displayResultsScreen(correctCount, totalTimeSec, sessionResults);
+        await displayResultsScreen(correctCount, totalTimeSec, sessionResults, awardedList);
     }
 
-    async function displayResultsScreen(correctCount, totalTimeSec, resultsList) {
+    async function displayResultsScreen(correctCount, totalTimeSec, resultsList, awardedList = []) {
         document.getElementById('res-summary').innerText = `Правильных ответов: ${correctCount} из ${currentQuiz.questions.length}`;
+
+        const beerRewardEl = document.getElementById('res-beer-reward');
+        if (awardedList.length > 0) {
+            beerRewardEl.innerText = `🍺 Начислено за завершение: ${awardedList.join(', ')}. Текущий баланс: ${beerBalance} 🍺`;
+        } else {
+            beerRewardEl.innerText = `🍺 Баллы начисляются после прохождения всей викторины и не дублируются повторно. Баланс: ${beerBalance} 🍺`;
+        }
+
         const tbody = document.getElementById('res-tbody');
         tbody.innerHTML = '';
         resultsList.forEach((res, idx) => {
@@ -998,6 +1516,17 @@
         if (currentQuiz.winner_name) {
             document.getElementById('winner-name-display').innerText = currentQuiz.winner_name;
             winnerContainer.classList.remove('hidden');
+            if (currentQuiz.winner_name.trim().toLowerCase() === currentNickname.trim().toLowerCase()) {
+                const winRes = await applyBeerTransaction({
+                    opKey: `quiz_win_${currentQuiz.id}`,
+                    type: 'earn',
+                    amount: 3,
+                    description: `Победа в викторине «${currentQuiz.title}»`
+                });
+                if (winRes.ok && !winRes.duplicate) {
+                    beerRewardEl.innerText = `🍺 Начислено за победу: +3 🍺! Текущий баланс: ${beerBalance} 🍺`;
+                }
+            }
         } else {
             winnerContainer.classList.add('hidden');
         }
@@ -1084,6 +1613,18 @@
         return `idx_${fallbackIndex}_${q?.question_text || ''}`;
     }
 
+    async function awardTiebreakWinnerIfMatch(winnerNick) {
+        if (!winnerNick) return;
+        if (winnerNick.trim().toLowerCase() === currentNickname.trim().toLowerCase()) {
+            await applyBeerTransaction({
+                opKey: `quiz_win_${currentQuiz.id}`,
+                type: 'earn',
+                amount: 3,
+                description: `Победа в викторине «${currentQuiz.title}» (тай-брейк)`
+            });
+        }
+    }
+
     async function startTiebreakSession() {
         clearTiebreakPolling();
         tiebreakNextAction = null;
@@ -1140,6 +1681,7 @@
                     await supabaseClient.from('quizzes').update({ winner_name: winner }).eq('id', currentQuiz.id);
                     currentQuiz.winner_name = winner;
                 }
+                await awardTiebreakWinnerIfMatch(winner);
                 alert(`🏆 Все ответили! Победителем становится: ${winner}`);
                 showScreen('home-screen');
                 return;
@@ -1239,7 +1781,7 @@
         feedbackBox.classList.remove('hidden');
         if (isCorrect) {
             feedbackBox.className = 'p-2.5 rounded-2xl text-xs font-semibold border bg-emerald-50 border-emerald-200 text-emerald-800';
-            feedbackBox.innerHTML = '✅ Вы ответили правильно! Ожидаем ответы остальных участников...';
+            feedbackBox.innerHTML = '✅ Вы ответили правильно (баллы за тай-брейк начисляются только после подведения итогов). Ожидаем остальных...';
         } else {
             feedbackBox.className = 'p-2.5 rounded-2xl text-xs font-semibold border bg-rose-50 border-rose-200 text-rose-800';
             feedbackBox.innerHTML = '❌ Вы ответили неверно. Ожидаем ответы остальных участников...';
@@ -1331,6 +1873,7 @@
             const winner = correctCandidates[0];
             await supabaseClient.from('quizzes').update({ winner_name: winner }).eq('id', currentQuiz.id);
             currentQuiz.winner_name = winner;
+            await awardTiebreakWinnerIfMatch(winner);
 
             statusBox.innerHTML = `
                 <div class="font-bold text-emerald-700">🏆 Все ответили! Победителем становится: ${winner}</div>
