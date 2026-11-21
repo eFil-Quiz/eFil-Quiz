@@ -639,25 +639,26 @@
             `nick_${currentNickname}`
         ].filter(Boolean)));
 
+        const localSnapshot = getLocalWallet(getUserWalletKey());
         const mergedMap = new Map();
+
         keysToCheck.forEach(k => {
             const loc = getLocalWallet(k);
             loc.transactions.forEach(t => { if (t.op_key) mergedMap.set(t.op_key, t); });
         });
 
-        let fallbackBalance = 0;
-        keysToCheck.forEach(k => {
-            const loc = getLocalWallet(k);
-            if (loc.balance > fallbackBalance) fallbackBalance = loc.balance;
-        });
-
+        let hasRemoteTxError = false;
         for (const k of keysToCheck) {
-            const { data: txRows } = await supabaseClient
+            const { data: txRows, error } = await supabaseClient
                 .from('beer_transactions')
                 .select('*')
                 .eq('user_key', k)
                 .order('created_at', { ascending: false });
 
+            if (error) {
+                hasRemoteTxError = true;
+                continue;
+            }
             if (Array.isArray(txRows)) {
                 txRows.forEach(t => { if (t.op_key) mergedMap.set(t.op_key, t); });
             }
@@ -675,35 +676,47 @@
             });
             beerBalance = calc;
             saveLocalWallet(beerBalance, beerTransactions);
+        } else if (hasRemoteTxError && localSnapshot.transactions.length > 0) {
+            beerTransactions = localSnapshot.transactions;
+            beerBalance = localSnapshot.balance;
         } else {
             beerTransactions = [];
-            beerBalance = fallbackBalance;
+            let dbBalance = null;
             for (const k of keysToCheck) {
-                const { data: walletRow } = await supabaseClient
+                const { data: walletRow, error } = await supabaseClient
                     .from('beer_wallets')
                     .select('balance')
                     .eq('user_key', k)
                     .maybeSingle();
-                if (walletRow && typeof walletRow.balance === 'number') {
-                    beerBalance = Math.max(beerBalance, Math.max(0, walletRow.balance));
+                if (!error && walletRow && typeof walletRow.balance === 'number') {
+                    dbBalance = Math.max(0, walletRow.balance);
+                    break;
                 }
             }
+            beerBalance = dbBalance !== null ? dbBalance : localSnapshot.balance;
             saveLocalWallet(beerBalance, beerTransactions);
         }
+
         renderBeerWalletBar();
     }
 
     async function syncWalletToSupabase(txEntry, targetKey = null) {
         const walletKey = targetKey || getUserWalletKey();
         if (!walletKey) return;
-        await supabaseClient
+
+        const { error: wErr } = await supabaseClient
             .from('beer_wallets')
-            .upsert({ user_key: walletKey, balance: beerBalance, updated_at: new Date().toISOString() }, { onConflict: 'user_key' });
+            .upsert(
+                { user_key: walletKey, balance: beerBalance, updated_at: new Date().toISOString() },
+                { onConflict: 'user_key' }
+            );
+        if (wErr) console.warn('Ошибка обновления beer_wallets:', wErr.message);
 
         if (txEntry) {
-            await supabaseClient
+            const { error: tErr } = await supabaseClient
                 .from('beer_transactions')
                 .upsert([txEntry], { onConflict: 'op_key' });
+            if (tErr) console.warn('Ошибка записи beer_transactions:', tErr.message);
         }
     }
 
