@@ -1371,14 +1371,33 @@
     }
 
     function buildFallbackHintFromCorrectAnswer(questionObj, correctAnswer) {
-        const cleaned = String(correctAnswer || '').trim();
-        if (!cleaned) {
-            return `Обратите внимание на детали вопроса в категории «${questionObj.category || 'Общие'}» и сопоставьте их с вариантами ответа.`;
-        }
-        const firstChar = cleaned[0];
-        const len = cleaned.length;
-        return `Ориентируйтесь на факт, стоящий за правильным ответом (начинается на «${firstChar}», длина — ${len} симв.): подумайте, какой вариант точнее всего связан с темой вопроса «${questionObj.question_text}».`;
+    const cleaned = String(correctAnswer || '').trim();
+    const category = questionObj?.category || 'Общие';
+    const questionText = questionObj?.question_text || '';
+
+    if (!cleaned) {
+        const genericTemplates = [
+            `Вспомните ключевые признаки темы «${category}» и сопоставьте их с каждым вариантом.`,
+            `Попробуйте отбросить варианты, которые явно не подходят под смысл вопроса «${questionText}».`,
+            `Сделайте ставку на вариант, который логичнее всего вписывается в контекст вопроса.`
+        ];
+        return genericTemplates[Math.floor(Math.random() * genericTemplates.length)];
     }
+
+    const firstChar = cleaned[0].toUpperCase();
+    const lastChar = cleaned[cleaned.length - 1];
+    const len = cleaned.length;
+    const wordCount = cleaned.split(/\s+/).filter(Boolean).length;
+
+    const templates = [
+        `Подсказка по форме ответа: слово начинается на «${firstChar}», а его длина — ${len} симв. Присмотритесь к вариантам с такими параметрами.`,
+        `Подумайте о теме «${category}»: верный вариант связан с сутью вопроса «${questionText}» и заканчивается на «${lastChar}».`,
+        `Обратите внимание на структуру ответа: слов — ${wordCount}, символов — ${len}. Исключите то, что не сходится по смыслу.`,
+        `Начните с первой буквы «${firstChar}» и проверьте, какой из вариантов точнее всего отвечает на вопрос без лишних допущений.`
+    ];
+
+    return templates[Math.floor(Math.random() * templates.length)];
+}
 
     async function generateOpenAiHintForQuestion(quizObj, questionObj, correctAnswer) {
         const optionsList = Array.isArray(questionObj.options) ? questionObj.options : [];
