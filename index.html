@@ -1375,19 +1375,57 @@
         box.classList.remove('hidden');
     }
 
+    function normalizeAnswerKey(answerText) {
+        return String(answerText || '')
+            .toLowerCase()
+            .replace(/ё/g, 'е')
+            .replace(/[^a-zа-я0-9]+/gi, '_')
+            .replace(/^_+|_+$/g, '');
+    }
+
+    function getAnswerHintHistory(correctAnswer) {
+        const key = normalizeAnswerKey(correctAnswer);
+        if (!key) return [];
+        try {
+            const raw = localStorage.getItem(`ai_answer_hints_${key}`);
+            const parsed = raw ? JSON.parse(raw) : [];
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function saveAnswerHintToHistory(correctAnswer, hintText) {
+        const key = normalizeAnswerKey(correctAnswer);
+        const cleanHint = String(hintText || '').trim();
+        if (!key || !cleanHint) return;
+
+        const existing = getAnswerHintHistory(correctAnswer);
+        if (!existing.includes(cleanHint)) {
+            existing.push(cleanHint);
+            localStorage.setItem(`ai_answer_hints_${key}`, JSON.stringify(existing.slice(-12)));
+        }
+    }
+
+    function containsAnswerDirectly(text, correctAnswer) {
+        const t = String(text || '').toLowerCase().replace(/ё/g, 'е');
+        const ans = String(correctAnswer || '').toLowerCase().replace(/ё/g, 'е').trim();
+        if (!ans) return false;
+        if (t.includes(ans)) return true;
+
+        const significantWords = ans
+            .split(/[^a-zа-я0-9]+/i)
+            .filter(w => w.length >= 4);
+        return significantWords.some(word => t.includes(word));
+    }
+
     function buildFallbackHintFromCorrectAnswer(questionObj, correctAnswer) {
         const cleaned = String(correctAnswer || '').trim();
         const category = questionObj?.category || 'Общие';
-        const questionText = questionObj?.question_text || '';
-        const optionsList = Array.isArray(questionObj?.options) ? questionObj.options : [];
+        const pastHints = getAnswerHintHistory(cleaned);
 
         if (!cleaned) {
-            const genericTemplates = [
-                `Загляни в тему «${category}» — один из вариантов явно ближе к её сути, чем остальные.`,
-                `Попробуй отбросить то, что звучит слишком натянуто к вопросу «${questionText}».`,
-                `Прислушайся к интуиции: верный ответ обычно не выглядит случайным на фоне других.`
-            ];
-            return genericTemplates[Math.floor(Math.random() * genericTemplates.length)];
+            return `Вспомни тему «${category}» и прикинь, какой вариант точнее всего отвечает на сам вопрос.`;
         }
 
         const lettersOnly = cleaned.replace(/[^а-яА-ЯёЁa-zA-Z]/g, '');
@@ -1397,54 +1435,37 @@
         const firstLetter = lettersOnly ? lettersOnly[0].toUpperCase() : cleaned[0].toUpperCase();
         const lastLetter = lettersOnly ? lettersOnly[lettersOnly.length - 1].toLowerCase() : cleaned[cleaned.length - 1];
 
-        const otherOptionsText = optionsList
-            .filter(opt => String(opt || '').trim() !== cleaned)
-            .join(' ')
-            .toLowerCase();
-        const candidateLetters = Array.from(new Set(
-            lettersOnly
-                .toLowerCase()
-                .split('')
-                .filter(ch => /[а-яёa-z]/.test(ch))
-        ));
-        const distinctiveLetter = candidateLetters.find(ch => !otherOptionsText.includes(ch))
-            || candidateLetters[Math.floor(candidateLetters.length / 2)]
-            || firstLetter.toLowerCase();
+        const candidates = [
+            letterCount > 0 ? `Обрати внимание: правильный ответ состоит из ${letterCount} букв.` : '',
+            firstLetter && lastLetter
+                ? `Подсказка по форме слова: правильный ответ начинается на «${firstLetter}» и заканчивается на «${lastLetter}».`
+                : '',
+            wordCount > 1
+                ? `Правильный ответ — это выражение из ${wordCount} слов, связанное с темой «${category}».`
+                : `Правильный ответ — это одно слово в разделе «${category}».`,
+            `Подумай о том, какими характерными признаками обладает сам объект ответа в рамках темы «${category}».`
+        ].filter(Boolean);
 
-        const hintPool = [];
-
-        if (letterCount > 0) {
-            hintPool.push(`Обрати внимание: правильный ответ состоит из ${letterCount} букв.`);
-        }
-        if (distinctiveLetter) {
-            hintPool.push(`В правильном ответе есть буква «${distinctiveLetter.toUpperCase()}» — присмотрись к вариантам с ней.`);
-        }
-        hintPool.push(`Подсказка: верный вариант начинается на «${firstLetter}» и заканчивается на «${lastLetter}».`);
-        hintPool.push(
-            wordCount === 1
-                ? 'Формат подсказывает, что правильный ответ — это одно слово.'
-                : `Обрати внимание на форму: в правильном ответе ${wordCount} слова.`
-        );
-        hintPool.push(`Вспомни тему «${category}»: правильный ответ органичнее всего ложится именно в этот раздел.`);
-        hintPool.push(`Сравни варианты между собой — один из них заметно лучше отвечает на суть вопроса «${questionText}».`);
-        hintPool.push('Не спеши: отбрось варианты, которые кажутся слишком очевидной ловушкой, и проверь оставшиеся.');
-
-        return hintPool[Math.floor(Math.random() * hintPool.length)];
+        const unused = candidates.filter(c => !pastHints.includes(c));
+        const pool = unused.length > 0 ? unused : candidates;
+        return pool[Math.floor(Math.random() * pool.length)];
     }
 
     async function generateOpenAiHintForQuestion(quizObj, questionObj, correctAnswer) {
         const optionsList = Array.isArray(questionObj.options) ? questionObj.options : [];
+        const pastHints = getAnswerHintHistory(correctAnswer);
+
         if (!OPENAI_API_KEY || !OPENAI_API_KEY.trim()) {
             return buildFallbackHintFromCorrectAnswer(questionObj, correctAnswer);
         }
 
-        const angles = [
-            'Дай живой намёк на смысл или ассоциацию правильного ответа, не называя его.',
-            'Подскажи через букву, длину слова или структуру ответа, не выдавая сам ответ.',
-            'Помоги сузить выбор с помощью логики или темы вопроса, не спойлеря ответ.',
-            'Сформулируй подсказку легко и по-дружески, как ведущий квиза.'
+        const focusAngles = [
+            'Опирайся на ключевые физические свойства, устройство, внешний вид или принцип работы самого правильного ответа.',
+            'Опирайся на происхождение, среду обитания, сферу применения или историю самого правильного ответа.',
+            'Опирайся на характерное поведение, функцию или роль правильного ответа в своей теме.',
+            'Дай яркую образную подсказку через то, что отличает сам правильный ответ от похожих понятий.'
         ];
-        const chosenAngle = angles[Math.floor(Math.random() * angles.length)];
+        const chosenFocus = focusAngles[pastHints.length % focusAngles.length];
 
         const promptPayload = {
             quiz_title: quizObj?.title || 'Викторина',
@@ -1452,7 +1473,8 @@
             question: questionObj?.question_text || '',
             options: optionsList,
             correct_answer: correctAnswer,
-            style_hint: chosenAngle
+            already_used_hints_for_this_answer: pastHints,
+            focus_instruction: chosenFocus
         };
 
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -1463,16 +1485,16 @@
             },
             body: JSON.stringify({
                 model: OPENAI_MODEL,
-                temperature: 0.75,
-                max_tokens: 180,
+                temperature: 0.8,
+                max_tokens: 200,
                 messages: [
                     {
                         role: 'system',
                         content:
-                            'Ты дружелюбный ведущий викторины на русском языке. Тебе передают вопрос, варианты ответа и точный правильный ответ (correct_answer). ' +
-                            'Напиши 1-2 коротких, живых и разных по стилю предложения-подсказки на основе правильного ответа, чтобы игрок мог догадаться сам. ' +
-                            'Избегай сухих канцелярских фраз вроде "обратите внимание на структуру ответа: слов — N, символов — M". ' +
-                            'СТРОГО ЗАПРЕЩЕНО прямо называть или дословно цитировать текст правильного ответа (correct_answer) и указывать его номер. Пиши только на русском.'
+                            'Ты умный ведущий викторины на русском языке. Тебе передают вопрос, варианты ответа, точный правильный ответ (correct_answer) и список already_used_hints_for_this_answer — подсказки, которые уже выдавались для этого же правильного ответа. ' +
+                            'Твоя задача: сгенерировать 1-2 коротких, живых предложения-подсказки, базируясь на самом правильном ответе (его свойствах, функциях, происхождении или особенностях), чтобы игрок мог догадаться сам. ' +
+                            'Обязательно выбери новый ракурс, который НЕ повторяет already_used_hints_for_this_answer. ' +
+                            'СТРОГО ЗАПРЕЩЕНО прямо называть, писать или цитировать правильный ответ (correct_answer), его однокоренные слова или номер варианта. Пиши только на русском.'
                     },
                     {
                         role: 'user',
@@ -1487,10 +1509,12 @@
         }
 
         const data = await response.json();
-        const aiText = data?.choices?.[0]?.message?.content?.trim();
-        if (!aiText) {
-            throw new Error('Empty OpenAI response');
+        let aiText = data?.choices?.[0]?.message?.content?.trim() || '';
+
+        if (!aiText || containsAnswerDirectly(aiText, correctAnswer)) {
+            return buildFallbackHintFromCorrectAnswer(questionObj, correctAnswer);
         }
+
         return aiText;
     }
 
@@ -1587,7 +1611,7 @@
         hState.hostUsed = true;
         isGeneratingHostHint = true;
         updateHintButtonsState();
-        showHintMessage('🤖 Думаю над подсказкой...');
+        showHintMessage('🤖 Анализирую ответ и подбираю подсказку...');
 
         const correctAnswerText = Array.isArray(q.options) ? q.options[q.correct_index] : '';
         let hintText = '';
@@ -1599,6 +1623,7 @@
             isGeneratingHostHint = false;
         }
 
+        saveAnswerHintToHistory(correctAnswerText, hintText);
         hState.hostHintText = hintText;
         showHintMessage(`💡 <b>Подсказка:</b> ${hintText}`);
         updateHintButtonsState();
