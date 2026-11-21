@@ -160,13 +160,13 @@
                 Выйти
             </button>
         </div>
-        <div id="beer-wallet-bar" class="hidden flex items-center justify-between bg-amber-50/90 border border-amber-200/90 rounded-2xl px-3 py-1.5">
-            <div class="flex items-center gap-1.5 text-amber-900 font-semibold text-xs">
+        <div id="beer-wallet-bar" class="hidden flex items-center justify-between bg-gradient-to-r from-teal-50 to-emerald-50 border border-teal-200/90 rounded-2xl px-3 py-1.5 shadow-sm">
+            <div class="flex items-center gap-1.5 text-teal-950 font-semibold text-xs">
                 <span>🍺 Баланс:</span>
-                <span id="beer-balance-value" class="font-bold text-amber-700">0</span>
+                <span id="beer-balance-value" class="font-bold text-teal-700">0</span>
                 <span id="beer-icons-preview" class="text-xs tracking-tighter"></span>
             </div>
-            <button onclick="openBeerHistoryModal()" class="text-[11px] font-semibold text-amber-800 hover:text-amber-950 bg-white/80 hover:bg-white border border-amber-200 px-2.5 py-1 rounded-xl transition-all">
+            <button onclick="openBeerHistoryModal()" class="text-[11px] font-semibold text-teal-800 hover:text-teal-950 bg-white/90 hover:bg-white border border-teal-200 px-2.5 py-1 rounded-xl transition-all">
                 📜 История
             </button>
         </div>
@@ -285,26 +285,26 @@
         </div>
 
         <!-- ПАНЕЛЬ ПОДСКАЗОК -->
-        <div class="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-2 space-y-1.5">
-            <div class="flex justify-between items-center text-[10px] font-bold text-amber-800 uppercase tracking-wider px-1">
-                <span>🍻 Подсказки за бутылки</span>
-                <span id="hint-status-text" class="text-amber-700 font-semibold normal-case"></span>
+        <div class="bg-teal-50/70 border border-teal-200/80 rounded-2xl p-2 space-y-1.5">
+            <div class="flex justify-between items-center text-[10px] font-bold text-teal-900 uppercase tracking-wider px-1">
+                <span>🍻 Подсказки за Моршанское</span>
+                <span id="hint-status-text" class="text-teal-700 font-semibold normal-case"></span>
             </div>
             <div class="grid grid-cols-3 gap-1.5">
                 <button id="hint-5050-btn" type="button" onclick="useHint5050()" class="glass-btn px-2 py-2 rounded-xl text-[11px] font-semibold text-slate-800 flex flex-col items-center justify-center leading-tight transition-all">
                     <span>50/50</span>
-                    <span class="text-[10px] text-amber-700 font-bold mt-0.5">10 🍺</span>
+                    <span class="text-[10px] text-teal-700 font-bold mt-0.5">10 🍺</span>
                 </button>
                 <button id="hint-retry-btn" type="button" onclick="useHintRetry()" class="glass-btn px-2 py-2 rounded-xl text-[11px] font-semibold text-slate-800 flex flex-col items-center justify-center leading-tight transition-all">
                     <span>Право на ошибку</span>
-                    <span class="text-[10px] text-amber-700 font-bold mt-0.5">15 🍺</span>
+                    <span class="text-[10px] text-teal-700 font-bold mt-0.5">15 🍺</span>
                 </button>
                 <button id="hint-host-btn" type="button" onclick="useHintHost()" class="glass-btn px-2 py-2 rounded-xl text-[11px] font-semibold text-slate-800 flex flex-col items-center justify-center leading-tight transition-all">
                     <span>Подсказка</span>
-                    <span class="text-[10px] text-amber-700 font-bold mt-0.5">20 🍺</span>
+                    <span class="text-[10px] text-teal-700 font-bold mt-0.5">20 🍺</span>
                 </button>
             </div>
-            <div id="hint-message-box" class="hidden text-[11px] px-2.5 py-1.5 rounded-xl bg-white/90 border border-amber-200 text-slate-700"></div>
+            <div id="hint-message-box" class="hidden text-[11px] px-2.5 py-1.5 rounded-xl bg-white/90 border border-teal-200 text-slate-700"></div>
         </div>
         
         <div id="media-container" class="flex flex-col items-center my-1"></div>
@@ -371,7 +371,7 @@
     <div id="result-screen" class="hidden animate-fade-in space-y-2">
         <h2 class="text-lg sm:text-xl font-bold mb-0.5 text-slate-900">Итоги викторины! 🎉</h2>
         <p id="res-summary" class="text-xs font-semibold text-blue-600"></p>
-        <p id="res-beer-reward" class="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-2.5 py-1.5"></p>
+        <p id="res-beer-reward" class="text-xs font-semibold text-teal-800 bg-teal-50 border border-teal-200 rounded-xl px-2.5 py-1.5"></p>
         
         <div id="winner-badge-container" class="hidden p-2 bg-emerald-50 border border-emerald-200 rounded-2xl text-center">
             <span class="text-[10px] text-emerald-600 font-semibold uppercase tracking-wider">🏆 Победитель викторины:</span>
@@ -413,8 +413,26 @@
     <!-- ПАНЕЛЬ ОРГАНИЗАТОРА -->
     <div id="organizer-screen" class="hidden animate-fade-in">
         <h2 class="text-lg font-bold mb-1 text-slate-900">Панель организатора 📊</h2>
-        <p class="text-slate-500 text-xs mb-2.5">Результаты участников по викторинам:</p>
-        <div id="org-list-container" class="space-y-2.5 max-h-[280px] overflow-y-auto pr-1 mb-3"></div>
+        <p class="text-slate-500 text-xs mb-2.5">Результаты участников по викторинам и выдача баллов:</p>
+
+        <!-- БЛОК РУЧНОГО НАЧИСЛЕНИЯ БАЛЛОВ -->
+        <div class="bg-teal-50/80 border border-teal-200 rounded-2xl p-3 mb-3 space-y-2">
+            <div class="text-[11px] font-bold text-teal-900 uppercase tracking-wider">🍺 Начислить баллы участнику</div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <input type="text" id="org-grant-target" list="org-known-players" placeholder="Ник участника" class="sm:col-span-2 px-3 py-2 bg-white border border-teal-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-teal-500">
+                <datalist id="org-known-players"></datalist>
+                <input type="number" id="org-grant-amount" min="1" value="20" placeholder="Баллов" class="px-3 py-2 bg-white border border-teal-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-teal-500">
+            </div>
+            <div class="flex gap-2">
+                <input type="text" id="org-grant-reason" placeholder="Причина (например: Тест подсказок)" class="flex-1 px-3 py-2 bg-white border border-teal-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-teal-500">
+                <button type="button" onclick="grantBeerAsOrganizer()" class="bg-teal-600 hover:bg-teal-500 text-white font-semibold px-3.5 py-2 rounded-xl text-xs transition-all shrink-0 shadow-sm">
+                    + Начислить
+                </button>
+            </div>
+            <div id="org-grant-feedback" class="hidden text-[11px] font-semibold text-teal-800 bg-white/90 border border-teal-200 rounded-xl px-2.5 py-1.5"></div>
+        </div>
+
+        <div id="org-list-container" class="space-y-2.5 max-h-[240px] overflow-y-auto pr-1 mb-3"></div>
         <button onclick="showScreen('home-screen')" class="w-full glass-btn hover:bg-slate-50 text-slate-700 font-semibold py-2.5 rounded-2xl transition-all text-sm border border-slate-200">
             ← Назад
         </button>
@@ -463,8 +481,8 @@
     <div id="beer-history-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex justify-center items-center p-4 z-50">
         <div class="glass-card rounded-[32px] p-6 max-w-md w-full animate-fade-in shadow-2xl border border-slate-200">
             <div class="flex justify-between items-center mb-2">
-                <h3 class="text-base font-bold text-amber-800">🍺 История начислений и расходов</h3>
-                <span id="modal-beer-balance" class="text-xs font-bold bg-amber-100 text-amber-900 px-2.5 py-1 rounded-full">0 🍺</span>
+                <h3 class="text-base font-bold text-teal-900">🍺 История начислений и расходов</h3>
+                <span id="modal-beer-balance" class="text-xs font-bold bg-teal-100 text-teal-900 px-2.5 py-1 rounded-full">0 🍺</span>
             </div>
             <div id="beer-history-list" class="space-y-2 max-h-64 overflow-y-auto text-xs text-slate-700 mb-3 pr-1"></div>
             <button onclick="closeBeerHistoryModal()" class="w-full glass-btn hover:bg-slate-50 text-slate-700 py-2.5 rounded-2xl font-semibold transition-all text-sm border border-slate-200">
@@ -531,12 +549,22 @@
     let tiebreakPollInterval = null;
     let tiebreakNextAction = null;
 
-    function getUserWalletKey() {
-        return currentUser?.id ? `uid_${currentUser.id}` : `nick_${currentNickname}`;
+    function getUserWalletKey(nicknameOverride = null) {
+        const nick = nicknameOverride || currentNickname;
+        if (nicknameOverride) return `nick_${nicknameOverride}`;
+        return currentUser?.id ? `uid_${currentUser.id}` : `nick_${nick}`;
     }
 
-    function getLocalWallet() {
-        const key = getUserWalletKey();
+    function getWalletKeysForNickname(nick) {
+        const keys = [`nick_${nick}`];
+        if (nick === currentNickname && currentUser?.id) {
+            keys.unshift(`uid_${currentUser.id}`);
+        }
+        return keys;
+    }
+
+    function getLocalWallet(walletKey = null) {
+        const key = walletKey || getUserWalletKey();
         if (!key) return { balance: 0, transactions: [] };
         try {
             const raw = localStorage.getItem(`beer_wallet_${key}`);
@@ -551,8 +579,8 @@
         }
     }
 
-    function saveLocalWallet(balance, transactions) {
-        const key = getUserWalletKey();
+    function saveLocalWallet(balance, transactions, walletKey = null) {
+        const key = walletKey || getUserWalletKey();
         if (!key) return;
         localStorage.setItem(`beer_wallet_${key}`, JSON.stringify({
             balance: Math.max(0, parseInt(balance, 10) || 0),
@@ -574,51 +602,67 @@
     }
 
     async function loadBeerWallet() {
-        const local = getLocalWallet();
-        beerBalance = local.balance;
-        beerTransactions = [...local.transactions];
+        const keysToCheck = Array.from(new Set([
+            getUserWalletKey(),
+            `nick_${currentNickname}`
+        ].filter(Boolean)));
 
-        const walletKey = getUserWalletKey();
-        if (walletKey) {
+        const mergedMap = new Map();
+        keysToCheck.forEach(k => {
+            const loc = getLocalWallet(k);
+            loc.transactions.forEach(t => { if (t.op_key) mergedMap.set(t.op_key, t); });
+        });
+
+        let fallbackBalance = 0;
+        keysToCheck.forEach(k => {
+            const loc = getLocalWallet(k);
+            if (loc.balance > fallbackBalance) fallbackBalance = loc.balance;
+        });
+
+        for (const k of keysToCheck) {
             const { data: txRows } = await supabaseClient
                 .from('beer_transactions')
                 .select('*')
-                .eq('user_key', walletKey)
+                .eq('user_key', k)
                 .order('created_at', { ascending: false });
 
-            if (Array.isArray(txRows) && txRows.length > 0) {
-                const mergedMap = new Map();
-                beerTransactions.forEach(t => { if (t.op_key) mergedMap.set(t.op_key, t); });
+            if (Array.isArray(txRows)) {
                 txRows.forEach(t => { if (t.op_key) mergedMap.set(t.op_key, t); });
-                beerTransactions = Array.from(mergedMap.values()).sort((a, b) => {
-                    return new Date(b.created_at || 0) - new Date(a.created_at || 0);
-                });
+            }
+        }
 
-                let calc = 0;
-                beerTransactions.forEach(t => {
-                    const amt = Math.abs(parseInt(t.amount, 10) || 0);
-                    if (t.type === 'earn') calc += amt;
-                    else if (t.type === 'spend') calc = Math.max(0, calc - amt);
-                });
-                beerBalance = calc;
-                saveLocalWallet(beerBalance, beerTransactions);
-            } else {
+        if (mergedMap.size > 0) {
+            beerTransactions = Array.from(mergedMap.values()).sort((a, b) => {
+                return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+            });
+            let calc = 0;
+            beerTransactions.forEach(t => {
+                const amt = Math.abs(parseInt(t.amount, 10) || 0);
+                if (t.type === 'earn') calc += amt;
+                else if (t.type === 'spend') calc = Math.max(0, calc - amt);
+            });
+            beerBalance = calc;
+            saveLocalWallet(beerBalance, beerTransactions);
+        } else {
+            beerTransactions = [];
+            beerBalance = fallbackBalance;
+            for (const k of keysToCheck) {
                 const { data: walletRow } = await supabaseClient
                     .from('beer_wallets')
                     .select('balance')
-                    .eq('user_key', walletKey)
+                    .eq('user_key', k)
                     .maybeSingle();
-                if (walletRow && typeof walletRow.balance === 'number' && beerTransactions.length === 0) {
-                    beerBalance = Math.max(0, walletRow.balance);
-                    saveLocalWallet(beerBalance, beerTransactions);
+                if (walletRow && typeof walletRow.balance === 'number') {
+                    beerBalance = Math.max(beerBalance, Math.max(0, walletRow.balance));
                 }
             }
+            saveLocalWallet(beerBalance, beerTransactions);
         }
         renderBeerWalletBar();
     }
 
-    async function syncWalletToSupabase(txEntry) {
-        const walletKey = getUserWalletKey();
+    async function syncWalletToSupabase(txEntry, targetKey = null) {
+        const walletKey = targetKey || getUserWalletKey();
         if (!walletKey) return;
         await supabaseClient
             .from('beer_wallets')
@@ -631,24 +675,77 @@
         }
     }
 
-    async function applyBeerTransaction({ opKey, type, amount, description }) {
+    async function applyBeerTransaction({ opKey, type, amount, description, targetNickname = null }) {
         const cleanAmount = Math.abs(parseInt(amount, 10) || 0);
         if (!opKey || cleanAmount <= 0) return { ok: false, duplicate: false };
 
-        if (beerTransactions.some(t => t.op_key === opKey)) {
+        const isForSelf = !targetNickname || targetNickname.trim().toLowerCase() === currentNickname.trim().toLowerCase();
+
+        if (isForSelf) {
+            if (beerTransactions.some(t => t.op_key === opKey)) {
+                return { ok: true, duplicate: true };
+            }
+            if (type === 'spend' && beerBalance < cleanAmount) {
+                return { ok: false, duplicate: false, reason: 'insufficient_funds' };
+            }
+
+            const nextBalance = type === 'earn'
+                ? beerBalance + cleanAmount
+                : Math.max(0, beerBalance - cleanAmount);
+
+            const txEntry = {
+                user_key: getUserWalletKey(),
+                op_key: opKey,
+                type,
+                amount: cleanAmount,
+                description,
+                created_at: new Date().toISOString()
+            };
+
+            beerBalance = nextBalance;
+            beerTransactions.unshift(txEntry);
+            saveLocalWallet(beerBalance, beerTransactions);
+            renderBeerWalletBar();
+            await syncWalletToSupabase(txEntry, getUserWalletKey());
+            return { ok: true, duplicate: false };
+        }
+
+        // Начисление/списание другому участнику (используется организатором)
+        const targetKey = `nick_${targetNickname.trim()}`;
+        const existingLocal = getLocalWallet(targetKey);
+        const { data: remoteTx } = await supabaseClient
+            .from('beer_transactions')
+            .select('*')
+            .eq('user_key', targetKey);
+
+        const combinedMap = new Map();
+        existingLocal.transactions.forEach(t => { if (t.op_key) combinedMap.set(t.op_key, t); });
+        (remoteTx || []).forEach(t => { if (t.op_key) combinedMap.set(t.op_key, t); });
+
+        if (combinedMap.has(opKey)) {
             return { ok: true, duplicate: true };
         }
 
-        if (type === 'spend' && beerBalance < cleanAmount) {
+        let calcBal = existingLocal.balance;
+        if (combinedMap.size > 0) {
+            calcBal = 0;
+            combinedMap.forEach(t => {
+                const amt = Math.abs(parseInt(t.amount, 10) || 0);
+                if (t.type === 'earn') calcBal += amt;
+                else if (t.type === 'spend') calcBal = Math.max(0, calcBal - amt);
+            });
+        }
+
+        if (type === 'spend' && calcBal < cleanAmount) {
             return { ok: false, duplicate: false, reason: 'insufficient_funds' };
         }
 
-        const nextBalance = type === 'earn'
-            ? beerBalance + cleanAmount
-            : Math.max(0, beerBalance - cleanAmount);
+        const nextTargetBalance = type === 'earn'
+            ? calcBal + cleanAmount
+            : Math.max(0, calcBal - cleanAmount);
 
         const txEntry = {
-            user_key: getUserWalletKey(),
+            user_key: targetKey,
             op_key: opKey,
             type,
             amount: cleanAmount,
@@ -656,12 +753,55 @@
             created_at: new Date().toISOString()
         };
 
-        beerBalance = nextBalance;
-        beerTransactions.unshift(txEntry);
-        saveLocalWallet(beerBalance, beerTransactions);
-        renderBeerWalletBar();
-        await syncWalletToSupabase(txEntry);
-        return { ok: true, duplicate: false };
+        const updatedList = [txEntry, ...Array.from(combinedMap.values())];
+        saveLocalWallet(nextTargetBalance, updatedList, targetKey);
+
+        await supabaseClient
+            .from('beer_wallets')
+            .upsert({ user_key: targetKey, balance: nextTargetBalance, updated_at: new Date().toISOString() }, { onConflict: 'user_key' });
+        await supabaseClient
+            .from('beer_transactions')
+            .upsert([txEntry], { onConflict: 'op_key' });
+
+        return { ok: true, duplicate: false, newBalance: nextTargetBalance };
+    }
+
+    async function grantBeerAsOrganizer() {
+        if (currentUser?.email !== ADMIN_EMAIL) {
+            alert('Доступно только организатору.');
+            return;
+        }
+        const targetNick = document.getElementById('org-grant-target').value.trim();
+        const amount = parseInt(document.getElementById('org-grant-amount').value, 10);
+        const customReason = document.getElementById('org-grant-reason').value.trim();
+        const feedbackEl = document.getElementById('org-grant-feedback');
+
+        if (!targetNick) {
+            alert('Укажите никнейм участника!');
+            return;
+        }
+        if (!amount || amount <= 0) {
+            alert('Введите положительное количество баллов!');
+            return;
+        }
+
+        const desc = customReason || 'Начисление от организатора';
+        const opKey = `org_grant_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+        const res = await applyBeerTransaction({
+            opKey,
+            type: 'earn',
+            amount,
+            description: desc,
+            targetNickname: targetNick
+        });
+
+        if (res.ok) {
+            feedbackEl.classList.remove('hidden');
+            feedbackEl.innerText = `✅ Начислено +${amount} 🍺 участнику «${targetNick}» (${desc}).`;
+            document.getElementById('org-grant-reason').value = '';
+        } else {
+            alert('Не удалось начислить баллы.');
+        }
     }
 
     function openBeerHistoryModal() {
@@ -676,12 +816,12 @@
                     ? new Date(tx.created_at).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
                     : '';
                 return `
-                    <div class="p-2.5 rounded-xl border ${isEarn ? 'bg-emerald-50/70 border-emerald-200' : 'bg-rose-50/60 border-rose-200'} flex justify-between items-center gap-2">
+                    <div class="p-2.5 rounded-xl border ${isEarn ? 'bg-teal-50/70 border-teal-200' : 'bg-rose-50/60 border-rose-200'} flex justify-between items-center gap-2">
                         <div class="space-y-0.5">
                             <div class="font-semibold text-slate-800">${tx.description}</div>
                             ${dateStr ? `<div class="text-[10px] text-slate-400">${dateStr}</div>` : ''}
                         </div>
-                        <span class="font-bold shrink-0 ${isEarn ? 'text-emerald-700' : 'text-rose-700'}">
+                        <span class="font-bold shrink-0 ${isEarn ? 'text-teal-700' : 'text-rose-700'}">
                             ${isEarn ? '+' : '-'}${tx.amount} 🍺
                         </span>
                     </div>
@@ -770,6 +910,7 @@
         if (error) { alert('Ошибка: ' + error.message); return; }
         currentNickname = trimmed;
         updateUserDisplay();
+        await loadBeerWallet();
         loadQuizzes();
         alert('Никнейм успешно изменен!');
     }
@@ -832,8 +973,7 @@
         });
         document.getElementById(id).classList.remove('hidden');
         if (id === 'home-screen') {
-            renderBeerWalletBar();
-            loadQuizzes();
+            loadBeerWallet().then(() => loadQuizzes());
         }
     }
 
@@ -897,7 +1037,6 @@
             if (!attemptsByQuizId[qId]) attemptsByQuizId[qId] = localMap[qId];
         });
 
-        // Начисляем бонус за победу, если организатор уже вписал победителя в завершённую викторину
         for (const q of quizzes) {
             const att = attemptsByQuizId[q.id];
             const isComp = att ? (att.is_completed !== false && (att.detailed_results?.length || 0) >= q.questions.length) : false;
@@ -1227,7 +1366,6 @@
             return;
         }
 
-        // Случайным образом выбираем 2 неверных варианта для удаления
         const shuffled = [...wrongIndices].sort(() => Math.random() - 0.5);
         const toRemove = shuffled.slice(0, 2);
         toRemove.forEach(idx => eliminatedOptionsForCurrentQ.add(idx));
@@ -1424,7 +1562,6 @@
     }
 
     async function awardCompletedQuizBeers(quizObj, resultsList) {
-        // Дедупликация ответов по question_id внутри одной викторины
         const uniqueAnswersByQ = new Map();
         (resultsList || []).forEach(r => {
             if (r && r.question_id !== undefined && r.question_id !== null) {
@@ -1957,6 +2094,18 @@
             quizzes = qData || [];
         }
         const { data: attempts } = await supabaseClient.from('quiz_attempts').select('*');
+
+        // Заполняем подсказки ников известных участников
+        const knownPlayers = new Set([currentNickname].filter(Boolean));
+        (attempts || []).forEach(a => { if (a.user_email) knownPlayers.add(a.user_email); });
+        const datalistEl = document.getElementById('org-known-players');
+        datalistEl.innerHTML = Array.from(knownPlayers).map(nick => `<option value="${nick.replace(/"/g, '&quot;')}"></option>`).join('');
+        const targetInput = document.getElementById('org-grant-target');
+        if (!targetInput.value && currentNickname) {
+            targetInput.value = currentNickname;
+        }
+        document.getElementById('org-grant-feedback').classList.add('hidden');
+
         const container = document.getElementById('org-list-container');
         container.innerHTML = '';
         if (!attempts || attempts.length === 0) { container.innerHTML = '<p class="text-slate-400 text-center text-sm p-3">Пока нет результатов.</p>'; showScreen('organizer-screen'); return; }
@@ -1980,7 +2129,11 @@
             }).join('');
             container.innerHTML += `<div class="organizer-panel-box space-y-2"><div class="flex justify-between items-center border-b border-indigo-200/80 pb-1"><h3 class="font-bold text-slate-900 text-xs">🎯 ${quiz.title}</h3><span class="text-[10px] text-slate-500">Попыток: ${quizAttempts.length}</span></div><div class="space-y-1">${attemptsHtml}</div></div>`;
         });
-        document.querySelectorAll('.org-player-row').forEach(row => row.addEventListener('click', () => openPlayerDetails(row.getAttribute('data-email'), window._allOrganizerAttempts)));
+        document.querySelectorAll('.org-player-row').forEach(row => row.addEventListener('click', () => {
+            const nick = row.getAttribute('data-email');
+            document.getElementById('org-grant-target').value = nick;
+            openPlayerDetails(nick, window._allOrganizerAttempts);
+        }));
         showScreen('organizer-screen');
     }
 
