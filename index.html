@@ -64,6 +64,26 @@
             padding: 14px;
             box-shadow: 0 6px 18px rgba(79, 70, 229, 0.05);
         }
+        .morshanskoe-icon {
+            display: inline-block;
+            height: 1.25em;
+            width: auto;
+            vertical-align: -0.22em;
+            object-fit: contain;
+            mix-blend-mode: multiply;
+            pointer-events: none;
+            user-select: none;
+        }
+        .morshanskoe-icon-lg {
+            display: inline-block;
+            height: 1.55em;
+            width: auto;
+            vertical-align: -0.32em;
+            object-fit: contain;
+            mix-blend-mode: multiply;
+            pointer-events: none;
+            user-select: none;
+        }
         .quiz-media-img {
             max-width: 100%;
             max-height: 220px;
@@ -162,9 +182,9 @@
         </div>
         <div id="beer-wallet-bar" class="hidden flex items-center justify-between bg-gradient-to-r from-teal-50 to-emerald-50 border border-teal-200/90 rounded-2xl px-3 py-1.5 shadow-sm">
             <div class="flex items-center gap-1.5 text-teal-950 font-semibold text-xs">
-                <span>🍺 Баланс:</span>
+                <span class="inline-flex items-center gap-1"><img src="morshanskoe-bottle.png" alt="Моршанское" class="morshanskoe-icon-lg"> Баланс:</span>
                 <span id="beer-balance-value" class="font-bold text-teal-700">0</span>
-                <span id="beer-icons-preview" class="text-xs tracking-tighter"></span>
+                <span id="beer-icons-preview" class="inline-flex items-center gap-0.5"></span>
             </div>
             <button onclick="openBeerHistoryModal()" class="text-[11px] font-semibold text-teal-800 hover:text-teal-950 bg-white/90 hover:bg-white border border-teal-200 px-2.5 py-1 rounded-xl transition-all">
                 📜 История
@@ -287,21 +307,21 @@
         <!-- ПАНЕЛЬ ПОДСКАЗОК -->
         <div class="bg-teal-50/70 border border-teal-200/80 rounded-2xl p-2 space-y-1.5">
             <div class="flex justify-between items-center text-[10px] font-bold text-teal-900 uppercase tracking-wider px-1">
-                <span>🍻 Подсказки за Моршанское</span>
+                <span class="inline-flex items-center gap-1"><img src="morshanskoe-bottle.png" alt="Моршанское" class="morshanskoe-icon"> Подсказки за Моршанское</span>
                 <span id="hint-status-text" class="text-teal-700 font-semibold normal-case"></span>
             </div>
             <div class="grid grid-cols-3 gap-1.5">
                 <button id="hint-5050-btn" type="button" onclick="useHint5050()" class="glass-btn px-2 py-2 rounded-xl text-[11px] font-semibold text-slate-800 flex flex-col items-center justify-center leading-tight transition-all">
                     <span>50/50</span>
-                    <span class="text-[10px] text-teal-700 font-bold mt-0.5">10 🍺</span>
+                    <span class="text-[10px] text-teal-700 font-bold mt-0.5 inline-flex items-center gap-0.5">10 <img src="morshanskoe-bottle.png" alt="Моршанское" class="morshanskoe-icon"></span>
                 </button>
                 <button id="hint-retry-btn" type="button" onclick="useHintRetry()" class="glass-btn px-2 py-2 rounded-xl text-[11px] font-semibold text-slate-800 flex flex-col items-center justify-center leading-tight transition-all">
                     <span>Право на ошибку</span>
-                    <span class="text-[10px] text-teal-700 font-bold mt-0.5">15 🍺</span>
+                    <span class="text-[10px] text-teal-700 font-bold mt-0.5 inline-flex items-center gap-0.5">15 <img src="morshanskoe-bottle.png" alt="Моршанское" class="morshanskoe-icon"></span>
                 </button>
                 <button id="hint-host-btn" type="button" onclick="useHintHost()" class="glass-btn px-2 py-2 rounded-xl text-[11px] font-semibold text-slate-800 flex flex-col items-center justify-center leading-tight transition-all">
                     <span>Подсказка</span>
-                    <span class="text-[10px] text-teal-700 font-bold mt-0.5">20 🍺</span>
+                    <span class="text-[10px] text-teal-700 font-bold mt-0.5 inline-flex items-center gap-0.5">20 <img src="morshanskoe-bottle.png" alt="Моршанское" class="morshanskoe-icon"></span>
                 </button>
             </div>
             <div id="hint-message-box" class="hidden text-[11px] px-2.5 py-1.5 rounded-xl bg-white/90 border border-teal-200 text-slate-700"></div>
@@ -417,7 +437,9 @@
 
         <!-- БЛОК РУЧНОГО НАЧИСЛЕНИЯ БАЛЛОВ -->
         <div class="bg-teal-50/80 border border-teal-200 rounded-2xl p-3 mb-3 space-y-2">
-            <div class="text-[11px] font-bold text-teal-900 uppercase tracking-wider">🍺 Начислить баллы участнику</div>
+            <div class="text-[11px] font-bold text-teal-900 uppercase tracking-wider inline-flex items-center gap-1">
+                <img src="morshanskoe-bottle.png" alt="Моршанское" class="morshanskoe-icon"> Начислить баллы участнику
+            </div>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <input type="text" id="org-grant-target" list="org-known-players" placeholder="Ник участника" class="sm:col-span-2 px-3 py-2 bg-white border border-teal-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-teal-500">
                 <datalist id="org-known-players"></datalist>
@@ -481,8 +503,8 @@
     <div id="beer-history-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex justify-center items-center p-4 z-50">
         <div class="glass-card rounded-[32px] p-6 max-w-md w-full animate-fade-in shadow-2xl border border-slate-200">
             <div class="flex justify-between items-center mb-2">
-                <h3 class="text-base font-bold text-teal-900">🍺 История начислений и расходов</h3>
-                <span id="modal-beer-balance" class="text-xs font-bold bg-teal-100 text-teal-900 px-2.5 py-1 rounded-full">0 🍺</span>
+                <h3 class="text-base font-bold text-teal-900 inline-flex items-center gap-1.5"><img src="morshanskoe-bottle.png" alt="Моршанское" class="morshanskoe-icon-lg"> История начислений и расходов</h3>
+                <span id="modal-beer-balance" class="text-xs font-bold bg-teal-100 text-teal-900 px-2.5 py-1 rounded-full inline-flex items-center gap-1">0 <img src="morshanskoe-bottle.png" alt="Моршанское" class="morshanskoe-icon"></span>
             </div>
             <div id="beer-history-list" class="space-y-2 max-h-64 overflow-y-auto text-xs text-slate-700 mb-3 pr-1"></div>
             <button onclick="closeBeerHistoryModal()" class="w-full glass-btn hover:bg-slate-50 text-slate-700 py-2.5 rounded-2xl font-semibold transition-all text-sm border border-slate-200">
@@ -508,6 +530,16 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_tCErXZb02kl0dJY3UmTeJw_ylaWGfdH';
     const ADMIN_EMAIL = 'evgeniy.filippov8@gmail.com';
     const MEDIA_BUCKET = 'quiz-media';
+    const MORSHANSKOE_IMG_URL = 'morshanskoe-bottle.png';
+
+    // Вставьте сюда ваш API-ключ OpenAI (например: 'sk-proj-...')
+    const OPENAI_API_KEY = '';
+    const OPENAI_MODEL = 'gpt-4o-mini';
+
+    function morshanskoeTag(large = false) {
+        const cls = large ? 'morshanskoe-icon-lg' : 'morshanskoe-icon';
+        return `<img src="${MORSHANSKOE_IMG_URL}" alt="Моршанское" class="${cls}">`;
+    }
 
     const HINT_COSTS = {
         retry: 15,
@@ -536,6 +568,7 @@
     let eliminatedOptionsForCurrentQ = new Set();
     let disabledWrongOptionsForCurrentQ = new Set();
     let currentQuestionAnswered = false;
+    let isGeneratingHostHint = false;
     
     let questionStartTime = 0;
     let sessionStartTime = 0;
@@ -553,14 +586,6 @@
         const nick = nicknameOverride || currentNickname;
         if (nicknameOverride) return `nick_${nicknameOverride}`;
         return currentUser?.id ? `uid_${currentUser.id}` : `nick_${nick}`;
-    }
-
-    function getWalletKeysForNickname(nick) {
-        const keys = [`nick_${nick}`];
-        if (nick === currentNickname && currentUser?.id) {
-            keys.unshift(`uid_${currentUser.id}`);
-        }
-        return keys;
     }
 
     function getLocalWallet(walletKey = null) {
@@ -597,7 +622,9 @@
         bar.classList.remove('hidden');
         document.getElementById('beer-balance-value').innerText = `${beerBalance}`;
         const previewCount = Math.min(beerBalance, 8);
-        document.getElementById('beer-icons-preview').innerText = previewCount > 0 ? '🍺'.repeat(previewCount) : '';
+        document.getElementById('beer-icons-preview').innerHTML = previewCount > 0
+            ? Array.from({ length: previewCount }, () => morshanskoeTag(false)).join('')
+            : '';
         updateHintButtonsState();
     }
 
@@ -710,7 +737,6 @@
             return { ok: true, duplicate: false };
         }
 
-        // Начисление/списание другому участнику (используется организатором)
         const targetKey = `nick_${targetNickname.trim()}`;
         const existingLocal = getLocalWallet(targetKey);
         const { data: remoteTx } = await supabaseClient
@@ -797,7 +823,7 @@
 
         if (res.ok) {
             feedbackEl.classList.remove('hidden');
-            feedbackEl.innerText = `✅ Начислено +${amount} 🍺 участнику «${targetNick}» (${desc}).`;
+            feedbackEl.innerHTML = `✅ Начислено +${amount} ${morshanskoeTag(false)} участнику «${targetNick}» (${desc}).`;
             document.getElementById('org-grant-reason').value = '';
         } else {
             alert('Не удалось начислить баллы.');
@@ -805,10 +831,10 @@
     }
 
     function openBeerHistoryModal() {
-        document.getElementById('modal-beer-balance').innerText = `${beerBalance} 🍺`;
+        document.getElementById('modal-beer-balance').innerHTML = `${beerBalance} ${morshanskoeTag(false)}`;
         const listEl = document.getElementById('beer-history-list');
         if (!beerTransactions || beerTransactions.length === 0) {
-            listEl.innerHTML = '<p class="text-slate-400 text-center py-4">Операций пока нет. Пройдите викторину, чтобы заработать бутылочки 🍺!</p>';
+            listEl.innerHTML = `<p class="text-slate-400 text-center py-4">Операций пока нет. Пройдите викторину, чтобы заработать «Моршанское» ${morshanskoeTag(false)}!</p>`;
         } else {
             listEl.innerHTML = beerTransactions.map(tx => {
                 const isEarn = tx.type === 'earn';
@@ -821,8 +847,8 @@
                             <div class="font-semibold text-slate-800">${tx.description}</div>
                             ${dateStr ? `<div class="text-[10px] text-slate-400">${dateStr}</div>` : ''}
                         </div>
-                        <span class="font-bold shrink-0 ${isEarn ? 'text-teal-700' : 'text-rose-700'}">
-                            ${isEarn ? '+' : '-'}${tx.amount} 🍺
+                        <span class="font-bold shrink-0 inline-flex items-center gap-1 ${isEarn ? 'text-teal-700' : 'text-rose-700'}">
+                            ${isEarn ? '+' : '-'}${tx.amount} ${morshanskoeTag(false)}
                         </span>
                     </div>
                 `;
@@ -1255,6 +1281,7 @@
         accumulatedTimeSec = 0;
         skippedQuestionIndices = [];
         questionHintsState = {};
+        isGeneratingHostHint = false;
 
         const { data: dbAttempts } = await supabaseClient.from('quiz_attempts').select('*').eq('quiz_id', currentQuiz.id).eq('user_email', currentNickname);
         const localAttempt = getLocalAttemptsMap()[currentQuiz.id];
@@ -1292,6 +1319,7 @@
                 fiftyUsed: false,
                 retryUsed: false,
                 hostUsed: false,
+                hostHintText: '',
                 eliminated: []
             };
         }
@@ -1313,9 +1341,9 @@
 
         const wrongAvailableCount = q.options.filter((_, idx) => idx !== q.correct_index && !eliminatedOptionsForCurrentQ.has(idx)).length;
 
-        btn5050.disabled = currentQuestionAnswered || hState.fiftyUsed || wrongAvailableCount < 2 || beerBalance < HINT_COSTS.fifty;
-        btnRetry.disabled = currentQuestionAnswered || hState.retryUsed || currentQuestionRetryArmed || beerBalance < HINT_COSTS.retry;
-        btnHost.disabled = currentQuestionAnswered || hState.hostUsed || beerBalance < HINT_COSTS.host;
+        btn5050.disabled = currentQuestionAnswered || isGeneratingHostHint || hState.fiftyUsed || wrongAvailableCount < 2 || beerBalance < HINT_COSTS.fifty;
+        btnRetry.disabled = currentQuestionAnswered || isGeneratingHostHint || hState.retryUsed || currentQuestionRetryArmed || beerBalance < HINT_COSTS.retry;
+        btnHost.disabled = currentQuestionAnswered || isGeneratingHostHint || hState.hostUsed || beerBalance < HINT_COSTS.host;
 
         [btn5050, btnRetry, btnHost].forEach(btn => {
             if (btn.disabled) {
@@ -1326,18 +1354,82 @@
         });
 
         if (statusText) {
-            if (currentQuestionRetryArmed) {
+            if (isGeneratingHostHint) {
+                statusText.innerText = '🤖 Генерирую подсказку...';
+            } else if (currentQuestionRetryArmed) {
                 statusText.innerText = '🛡️ Право на ошибку активно';
             } else {
-                statusText.innerText = `Доступно: ${beerBalance} 🍺`;
+                statusText.innerHTML = `Доступно: ${beerBalance} ${morshanskoeTag(false)}`;
             }
         }
     }
 
-    function showHintMessage(text) {
+    function showHintMessage(htmlText) {
         const box = document.getElementById('hint-message-box');
-        box.innerText = text;
+        box.innerHTML = htmlText;
         box.classList.remove('hidden');
+    }
+
+    function buildFallbackHintFromCorrectAnswer(questionObj, correctAnswer) {
+        const cleaned = String(correctAnswer || '').trim();
+        if (!cleaned) {
+            return `Обратите внимание на детали вопроса в категории «${questionObj.category || 'Общие'}» и сопоставьте их с вариантами ответа.`;
+        }
+        const firstChar = cleaned[0];
+        const len = cleaned.length;
+        return `Ориентируйтесь на факт, стоящий за правильным ответом (начинается на «${firstChar}», длина — ${len} симв.): подумайте, какой вариант точнее всего связан с темой вопроса «${questionObj.question_text}».`;
+    }
+
+    async function generateOpenAiHintForQuestion(quizObj, questionObj, correctAnswer) {
+        const optionsList = Array.isArray(questionObj.options) ? questionObj.options : [];
+        if (!OPENAI_API_KEY || !OPENAI_API_KEY.trim()) {
+            return buildFallbackHintFromCorrectAnswer(questionObj, correctAnswer);
+        }
+
+        const promptPayload = {
+            quiz_title: quizObj?.title || 'Викторина',
+            category: questionObj?.category || 'Общие',
+            question: questionObj?.question_text || '',
+            options: optionsList,
+            correct_answer: correctAnswer
+        };
+
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${OPENAI_API_KEY.trim()}`
+            },
+            body: JSON.stringify({
+                model: OPENAI_MODEL,
+                temperature: 0.5,
+                max_tokens: 180,
+                messages: [
+                    {
+                        role: 'system',
+                        content:
+                            'Ты помощник в викторине на русском языке. Тебе передают вопрос, варианты ответа и точный правильный ответ (correct_answer). ' +
+                            'Напиши 1-2 коротких, полезных и остроумных предложения-подсказки на основе правильного ответа, чтобы игрок мог догадаться сам. ' +
+                            'СТРОГО ЗАПРЕЩЕНО прямо называть или дословно цитировать текст правильного ответа (correct_answer) и указывать его номер. Пиши только на русском.'
+                    },
+                    {
+                        role: 'user',
+                        content: JSON.stringify(promptPayload)
+                    }
+                ]
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`OpenAI HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        const aiText = data?.choices?.[0]?.message?.content?.trim();
+        if (!aiText) {
+            throw new Error('Empty OpenAI response');
+        }
+        return aiText;
     }
 
     async function useHint5050() {
@@ -1361,7 +1453,7 @@
         });
 
         if (!tx.ok) {
-            alert('Недостаточно бутылочек 🍺 для подсказки «50/50» (нужно 10 🍺).');
+            alert('Недостаточно «Моршанское» для подсказки «50/50» (нужно 10).');
             updateHintButtonsState();
             return;
         }
@@ -1399,7 +1491,7 @@
         });
 
         if (!tx.ok) {
-            alert('Недостаточно бутылочек 🍺 для подсказки «Право на ошибку» (нужно 15 🍺).');
+            alert('Недостаточно «Моршанское» для подсказки «Право на ошибку» (нужно 15).');
             updateHintButtonsState();
             return;
         }
@@ -1412,7 +1504,7 @@
 
     async function useHintHost() {
         const q = currentQuiz?.questions?.[currentQIndex];
-        if (!q || currentQuestionAnswered) return;
+        if (!q || currentQuestionAnswered || isGeneratingHostHint) return;
         const qKey = getCurrentQuestionKey(q);
         const hState = ensureQuestionHintRecord(qKey);
         if (hState.hostUsed) return;
@@ -1421,17 +1513,32 @@
             opKey: `hint_host_${currentQuiz.id}_${qKey}`,
             type: 'spend',
             amount: HINT_COSTS.host,
-            description: `Подсказка (${currentQuiz.title}, вопр. №${currentQIndex + 1})`
+            description: `Подсказка ИИ (${currentQuiz.title}, вопр. №${currentQIndex + 1})`
         });
 
         if (!tx.ok) {
-            alert('Недостаточно бутылочек 🍺 для подсказки (нужно 20 🍺).');
+            alert('Недостаточно «Моршанское» для подсказки (нужно 20).');
             updateHintButtonsState();
             return;
         }
 
         hState.hostUsed = true;
-        showHintMessage('💡 Подсказка активирована (логика подсказки будет доработана позже).');
+        isGeneratingHostHint = true;
+        updateHintButtonsState();
+        showHintMessage('🤖 Думаю над подсказкой на основе правильного ответа...');
+
+        const correctAnswerText = Array.isArray(q.options) ? q.options[q.correct_index] : '';
+        let hintText = '';
+        try {
+            hintText = await generateOpenAiHintForQuestion(currentQuiz, q, correctAnswerText);
+        } catch (err) {
+            hintText = buildFallbackHintFromCorrectAnswer(q, correctAnswerText);
+        } finally {
+            isGeneratingHostHint = false;
+        }
+
+        hState.hostHintText = hintText;
+        showHintMessage(`💡 <b>Подсказка:</b> ${hintText}`);
         updateHintButtonsState();
     }
 
@@ -1467,8 +1574,13 @@
         questionStartTime = Date.now();
 
         const hintBox = document.getElementById('hint-message-box');
-        hintBox.classList.add('hidden');
-        hintBox.innerText = '';
+        if (hState.hostHintText) {
+            hintBox.innerHTML = `💡 <b>Подсказка:</b> ${hState.hostHintText}`;
+            hintBox.classList.remove('hidden');
+        } else {
+            hintBox.classList.add('hidden');
+            hintBox.innerHTML = '';
+        }
 
         const mediaContainer = document.getElementById('media-container');
         mediaContainer.innerHTML = buildMediaHtml(q.media_url, false);
@@ -1580,7 +1692,7 @@
                 description: `Верные ответы в викторине «${quizObj.title}» (${uniqueCorrectCount})`
             });
             if (resCorrect.ok && !resCorrect.duplicate) {
-                awardedItems.push(`+${uniqueCorrectCount} 🍺 за верные ответы`);
+                awardedItems.push(`+${uniqueCorrectCount} ${morshanskoeTag(false)} за верные ответы`);
             }
         }
 
@@ -1591,7 +1703,7 @@
             description: `Прохождение викторины «${quizObj.title}»`
         });
         if (resFinish.ok && !resFinish.duplicate) {
-            awardedItems.push(`+1 🍺 за прохождение`);
+            awardedItems.push(`+1 ${morshanskoeTag(false)} за прохождение`);
         }
 
         if (quizObj.winner_name && quizObj.winner_name.trim().toLowerCase() === currentNickname.trim().toLowerCase()) {
@@ -1602,7 +1714,7 @@
                 description: `Победа в викторине «${quizObj.title}»`
             });
             if (resWin.ok && !resWin.duplicate) {
-                awardedItems.push(`+3 🍺 за победу`);
+                awardedItems.push(`+3 ${morshanskoeTag(false)} за победу`);
             }
         }
 
@@ -1638,9 +1750,9 @@
 
         const beerRewardEl = document.getElementById('res-beer-reward');
         if (awardedList.length > 0) {
-            beerRewardEl.innerText = `🍺 Начислено за завершение: ${awardedList.join(', ')}. Текущий баланс: ${beerBalance} 🍺`;
+            beerRewardEl.innerHTML = `Начислено за завершение: ${awardedList.join(', ')}. Баланс: ${beerBalance} ${morshanskoeTag(false)}`;
         } else {
-            beerRewardEl.innerText = `🍺 Баллы начисляются после прохождения всей викторины и не дублируются повторно. Баланс: ${beerBalance} 🍺`;
+            beerRewardEl.innerHTML = `Баллы начисляются после прохождения всей викторины и не дублируются повторно. Баланс: ${beerBalance} ${morshanskoeTag(false)}`;
         }
 
         const tbody = document.getElementById('res-tbody');
@@ -1661,7 +1773,7 @@
                     description: `Победа в викторине «${currentQuiz.title}»`
                 });
                 if (winRes.ok && !winRes.duplicate) {
-                    beerRewardEl.innerText = `🍺 Начислено за победу: +3 🍺! Текущий баланс: ${beerBalance} 🍺`;
+                    beerRewardEl.innerHTML = `Начислено за победу: +3 ${morshanskoeTag(false)}! Баланс: ${beerBalance} ${morshanskoeTag(false)}`;
                 }
             }
         } else {
@@ -2095,7 +2207,6 @@
         }
         const { data: attempts } = await supabaseClient.from('quiz_attempts').select('*');
 
-        // Заполняем подсказки ников известных участников
         const knownPlayers = new Set([currentNickname].filter(Boolean));
         (attempts || []).forEach(a => { if (a.user_email) knownPlayers.add(a.user_email); });
         const datalistEl = document.getElementById('org-known-players');
