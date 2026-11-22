@@ -182,7 +182,7 @@
         </div>
         <div id="beer-wallet-bar" class="hidden flex items-center justify-between gap-2 bg-gradient-to-r from-teal-50 to-emerald-50 border border-teal-200/90 rounded-2xl px-3.5 py-2 shadow-sm">
             <div class="flex items-center gap-1.5 text-teal-950 font-semibold text-xs sm:text-sm">
-                <span>Баланс:</span>
+                <span>Сейчас в холодильнике:</span>
                 <span id="beer-balance-value" class="font-bold text-teal-700">0</span>
                 <img id="wallet-header-beer-icon" src="morshanskoe-bottle.jpg" onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src=MORSHANSKOE_FALLBACK_SVG;}" alt="Моршанское" class="morshanskoe-icon-lg">
             </div>
@@ -1405,7 +1405,7 @@
             } else if (currentQuestionRetryArmed) {
                 statusText.innerText = '🛡️ Право на ошибку активно';
             } else {
-                statusText.innerHTML = `Доступно: ${beerBalance} ${morshanskoeTag(false)}`;
+                statusText.innerText = '';
             }
         }
     }
@@ -1878,9 +1878,9 @@
 
         const beerRewardEl = document.getElementById('res-beer-reward');
         if (awardedList.length > 0) {
-            beerRewardEl.innerHTML = `Начислено за завершение: ${awardedList.join(', ')}. Баланс: ${beerBalance} ${morshanskoeTag(false)}`;
+            beerRewardEl.innerHTML = `Начислено за завершение: ${awardedList.join(', ')}. Сейчас в холодильнике: ${beerBalance} ${morshanskoeTag(false)}`;
         } else {
-            beerRewardEl.innerHTML = `Баллы начисляются после прохождения всей викторины и не дублируются повторно. Баланс: ${beerBalance} ${morshanskoeTag(false)}`;
+            beerRewardEl.innerHTML = `Баллы начисляются после прохождения всей викторины и не дублируются повторно. Сейчас в холодильнике: ${beerBalance} ${morshanskoeTag(false)}`;
         }
 
         const tbody = document.getElementById('res-tbody');
@@ -1901,9 +1901,9 @@
                     description: `Победа в викторине «${currentQuiz.title}»`
                 });
                 if (winRes.ok && !winRes.duplicate) {
-                    beerRewardEl.innerHTML = `Начислено за победу: +3 ${morshanskoeTag(false)}! Баланс: ${beerBalance} ${morshanskoeTag(false)}`;
+                    beerRewardEl.innerHTML = `Начислено за победу: +3 ${morshanskoeTag(false)}! Сейчас в холодильнике: ${beerBalance} ${morshanskoeTag(false)}`;
                 } else {
-                    beerRewardEl.innerHTML = beerRewardEl.innerHTML.replace(/Баланс:\s*\d+/, `Баланс: ${beerBalance}`);
+                    beerRewardEl.innerHTML = beerRewardEl.innerHTML.replace(/Сейчас в холодильнике:\s*\d+/, `Сейчас в холодильнике: ${beerBalance}`);
                 }
             }
         } else {
