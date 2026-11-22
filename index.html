@@ -597,6 +597,13 @@
         return currentUser?.id ? `uid_${currentUser.id}` : `nick_${nick}`;
     }
 
+    function getAllWalletKeys() {
+        const keys = [];
+        if (currentUser?.id) keys.push(`uid_${currentUser.id}`);
+        if (currentNickname) keys.push(`nick_${currentNickname.trim()}`);
+        return Array.from(new Set(keys.filter(Boolean)));
+    }
+
     function getLocalWallet(walletKey = null) {
         const key = walletKey || getUserWalletKey();
         if (!key) return { balance: 0, transactions: [] };
@@ -622,6 +629,14 @@
         }));
     }
 
+    function saveLocalWalletToAllKeys(balance, transactions) {
+        const cleanBal = Math.max(0, parseInt(balance, 10) || 0);
+        const cleanTx = Array.isArray(transactions) ? transactions : [];
+        getAllWalletKeys().forEach(k => {
+            saveLocalWallet(cleanBal, cleanTx, k);
+        });
+    }
+
     function renderBeerWalletBar() {
         const bar = document.getElementById('beer-wallet-bar');
         if (!currentUser || !currentNickname) {
@@ -634,17 +649,14 @@
     }
 
     async function loadBeerWallet() {
-        const keysToCheck = Array.from(new Set([
-            getUserWalletKey(),
-            `nick_${currentNickname}`
-        ].filter(Boolean)));
-
-        const localSnapshot = getLocalWallet(getUserWalletKey());
+        const keysToCheck = getAllWalletKeys();
+        const localSnapshots = keysToCheck.map(k => getLocalWallet(k));
         const mergedMap = new Map();
 
-        keysToCheck.forEach(k => {
-            const loc = getLocalWallet(k);
-            loc.transactions.forEach(t => { if (t.op_key) mergedMap.set(t.op_key, t); });
+        localSnapshots.forEach(loc => {
+            loc.transactions.forEach(t => {
+                if (t && t.op_key) mergedMap.set(t.op_key, t);
+            });
         });
 
         let hasRemoteTxError = false;
@@ -660,7 +672,14 @@
                 continue;
             }
             if (Array.isArray(txRows)) {
-                txRows.forEach(t => { if (t.op_key) mergedMap.set(t.op_key, t); });
+                txRows.forEach(t => {
+                    if (t && t.op_key) {
+                        const prev = mergedMap.get(t.op_key);
+                        if (!prev || new Date(t.created_at || 0) >= new Date(prev.created_at || 0)) {
+                            mergedMap.set(t.op_key, t);
+                        }
+                    }
+                });
             }
         }
 
@@ -668,17 +687,21 @@
             beerTransactions = Array.from(mergedMap.values()).sort((a, b) => {
                 return new Date(b.created_at || 0) - new Date(a.created_at || 0);
             });
+
             let calc = 0;
-            beerTransactions.forEach(t => {
+            [...beerTransactions].reverse().forEach(t => {
                 const amt = Math.abs(parseInt(t.amount, 10) || 0);
                 if (t.type === 'earn') calc += amt;
                 else if (t.type === 'spend') calc = Math.max(0, calc - amt);
             });
+
             beerBalance = calc;
-            saveLocalWallet(beerBalance, beerTransactions);
-        } else if (hasRemoteTxError && localSnapshot.transactions.length > 0) {
-            beerTransactions = localSnapshot.transactions;
-            beerBalance = localSnapshot.balance;
+            saveLocalWalletToAllKeys(beerBalance, beerTransactions);
+        } else if (hasRemoteTxError && localSnapshots.some(s => s.transactions.length > 0)) {
+            const bestLocal = localSnapshots.find(s => s.transactions.length > 0);
+            beerTransactions = bestLocal.transactions;
+            beerBalance = bestLocal.balance;
+            saveLocalWalletToAllKeys(beerBalance, beerTransactions);
         } else {
             beerTransactions = [];
             let dbBalance = null;
@@ -693,30 +716,34 @@
                     break;
                 }
             }
-            beerBalance = dbBalance !== null ? dbBalance : localSnapshot.balance;
-            saveLocalWallet(beerBalance, beerTransactions);
+            const fallbackLocalBal = Math.max(0, ...localSnapshots.map(s => s.balance || 0));
+            beerBalance = dbBalance !== null ? dbBalance : fallbackLocalBal;
+            saveLocalWalletToAllKeys(beerBalance, beerTransactions);
         }
 
         renderBeerWalletBar();
     }
 
     async function syncWalletToSupabase(txEntry, targetKey = null) {
-        const walletKey = targetKey || getUserWalletKey();
-        if (!walletKey) return;
+        const keysToSync = targetKey ? [targetKey] : getAllWalletKeys();
+        if (keysToSync.length === 0) return;
 
-        const { error: wErr } = await supabaseClient
-            .from('beer_wallets')
-            .upsert(
-                { user_key: walletKey, balance: beerBalance, updated_at: new Date().toISOString() },
-                { onConflict: 'user_key' }
-            );
-        if (wErr) console.warn('Ошибка обновления beer_wallets:', wErr.message);
+        for (const walletKey of keysToSync) {
+            const { error: wErr } = await supabaseClient
+                .from('beer_wallets')
+                .upsert(
+                    { user_key: walletKey, balance: beerBalance, updated_at: new Date().toISOString() },
+                    { onConflict: 'user_key' }
+                );
+            if (wErr) console.warn('Ошибка обновления beer_wallets:', wErr.message);
 
-        if (txEntry) {
-            const { error: tErr } = await supabaseClient
-                .from('beer_transactions')
-                .upsert([txEntry], { onConflict: 'op_key' });
-            if (tErr) console.warn('Ошибка записи beer_transactions:', tErr.message);
+            if (txEntry) {
+                const entryForKey = { ...txEntry, user_key: walletKey };
+                const { error: tErr } = await supabaseClient
+                    .from('beer_transactions')
+                    .upsert([entryForKey], { onConflict: 'op_key' });
+                if (tErr) console.warn('Ошибка записи beer_transactions:', tErr.message);
+            }
         }
     }
 
@@ -749,9 +776,9 @@
 
             beerBalance = nextBalance;
             beerTransactions.unshift(txEntry);
-            saveLocalWallet(beerBalance, beerTransactions);
+            saveLocalWalletToAllKeys(beerBalance, beerTransactions);
             renderBeerWalletBar();
-            await syncWalletToSupabase(txEntry, getUserWalletKey());
+            await syncWalletToSupabase(txEntry);
             return { ok: true, duplicate: false };
         }
 
@@ -773,7 +800,8 @@
         let calcBal = existingLocal.balance;
         if (combinedMap.size > 0) {
             calcBal = 0;
-            combinedMap.forEach(t => {
+            const ordered = Array.from(combinedMap.values()).sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+            ordered.forEach(t => {
                 const amt = Math.abs(parseInt(t.amount, 10) || 0);
                 if (t.type === 'earn') calcBal += amt;
                 else if (t.type === 'spend') calcBal = Math.max(0, calcBal - amt);
@@ -1874,6 +1902,8 @@
                 });
                 if (winRes.ok && !winRes.duplicate) {
                     beerRewardEl.innerHTML = `Начислено за победу: +3 ${morshanskoeTag(false)}! Баланс: ${beerBalance} ${morshanskoeTag(false)}`;
+                } else {
+                    beerRewardEl.innerHTML = beerRewardEl.innerHTML.replace(/Баланс:\s*\d+/, `Баланс: ${beerBalance}`);
                 }
             }
         } else {
