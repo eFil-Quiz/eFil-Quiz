@@ -32,7 +32,21 @@
             from { opacity: 0; transform: translateY(8px) scale(0.99); }
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
+        @keyframes correctPop {
+            0% { transform: scale(1); }
+            40% { transform: scale(1.03); box-shadow: 0 10px 24px -6px rgba(16, 185, 129, 0.35); }
+            100% { transform: scale(1); }
+        }
+        @keyframes wrongShake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-6px); }
+            40% { transform: translateX(6px); }
+            60% { transform: translateX(-4px); }
+            80% { transform: translateX(4px); }
+        }
         .animate-fade-in { animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-correct { animation: correctPop 0.42s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+        .animate-wrong { animation: wrongShake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards; }
         .glass-card {
             background: var(--bg-card);
             border: 1px solid var(--border-subtle);
@@ -550,6 +564,18 @@
         return `<img src="${MORSHANSKOE_IMG_URL}" onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='${MORSHANSKOE_FALLBACK_SVG}';}" alt="Моршанское" class="${cls}">`;
     }
 
+    function formatDuration(totalSeconds) {
+        const sec = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+        const hours = Math.floor(sec / 3600);
+        const minutes = Math.floor((sec % 3600) / 60);
+        const seconds = sec % 60;
+
+        if (hours > 0) {
+            return `${hours}ч ${String(minutes).padStart(2, '0')}м ${String(seconds).padStart(2, '0')}с`;
+        }
+        return `${minutes}м ${String(seconds).padStart(2, '0')}с`;
+    }
+
     const HINT_COSTS = {
         retry: 15,
         fifty: 10,
@@ -578,6 +604,8 @@
     let disabledWrongOptionsForCurrentQ = new Set();
     let currentQuestionAnswered = false;
     let isGeneratingHostHint = false;
+    let pendingSelectedOptionIdx = null;
+    let pendingTiebreakOptionIdx = null;
     
     let questionStartTime = 0;
     let sessionStartTime = 0;
@@ -1241,10 +1269,14 @@
         const correctVal = existingData && typeof existingData.correct_index === 'number' ? (existingData.correct_index + 1) : 1;
 
         const categoriesList = [
-            "История", "Кино/Сериалы", "Музыка", "Литература", "Спорт", 
-            "Мода и стиль", "Автомобили", "Астрономия", "Русский язык", 
-            "Анатомия", "Пословицы/Поговорки", "СССР", "Общие"
-        ];
+            "История", "Кино/Сериалы", "Музыка", "Литература", "Спорт",
+            "Мода и стиль", "Автомобили", "Астрономия", "Русский язык",
+            "Анатомия", "Пословицы/Поговорки", "СССР", "Общие",
+            "География", "Математика", "Геометрия", "Искусство", "Физика",
+            "Химия", "Биология", "Другое", "Интернет", "Информатика",
+            "Еда и кулинария", "Мифология", "Логика и загадки"
+        ].sort((a, b) => a.localeCompare(b, 'ru'));
+
         let optionsHtml = categoriesList.map(cat => `<option value="${cat}" ${cat === qCat ? 'selected' : ''}>${cat}</option>`).join('');
 
         const block = document.createElement('div');
@@ -1328,6 +1360,7 @@
         skippedQuestionIndices = [];
         questionHintsState = {};
         isGeneratingHostHint = false;
+        pendingSelectedOptionIdx = null;
 
         const { data: dbAttempts } = await supabaseClient.from('quiz_attempts').select('*').eq('quiz_id', currentQuiz.id).eq('user_email', currentNickname);
         const localAttempt = getLocalAttemptsMap()[currentQuiz.id];
@@ -1591,6 +1624,10 @@
         hState.fiftyUsed = true;
         hState.eliminated = Array.from(eliminatedOptionsForCurrentQ);
 
+        if (pendingSelectedOptionIdx !== null && eliminatedOptionsForCurrentQ.has(pendingSelectedOptionIdx)) {
+            pendingSelectedOptionIdx = null;
+        }
+
         const buttons = document.getElementById('q-options').children;
         toRemove.forEach(idx => {
             if (buttons[idx]) {
@@ -1693,6 +1730,7 @@
 
         currentQuestionAnswered = false;
         currentQuestionRetryArmed = false;
+        pendingSelectedOptionIdx = null;
         eliminatedOptionsForCurrentQ = new Set(hState.eliminated || []);
         disabledWrongOptionsForCurrentQ = new Set();
 
@@ -1742,12 +1780,32 @@
         renderQuestion();
     }
 
+    function refreshPendingOptionHighlight(q) {
+        const buttons = document.getElementById('q-options').children;
+        for (let i = 0; i < buttons.length; i++) {
+            if (eliminatedOptionsForCurrentQ.has(i) || disabledWrongOptionsForCurrentQ.has(i)) continue;
+            if (pendingSelectedOptionIdx === i) {
+                buttons[i].className = 'w-full text-center px-4 py-3 bg-amber-100/90 border-2 border-amber-400 text-amber-950 rounded-2xl transition-all text-xs sm:text-sm font-semibold shadow-sm';
+            } else {
+                buttons[i].className = 'w-full text-center px-4 py-3 glass-btn rounded-2xl transition-all text-xs sm:text-sm font-medium text-slate-800 hover:border-blue-400';
+            }
+        }
+    }
+
     function selectAnswer(selectedIdx) {
-        const q = currentQuiz.questions[currentQIndex];
-        if (currentQuestionAnswered) return;
+        const q = currentQuiz?.questions?.[currentQIndex];
+        if (!q || currentQuestionAnswered) return;
         if (sessionResults.some(r => r.question_id === q.id)) return;
         if (eliminatedOptionsForCurrentQ.has(selectedIdx) || disabledWrongOptionsForCurrentQ.has(selectedIdx)) return;
 
+        // Первое нажатие мягко подсвечивает жёлтым, второе по тому же варианту фиксирует выбор
+        if (pendingSelectedOptionIdx !== selectedIdx) {
+            pendingSelectedOptionIdx = selectedIdx;
+            refreshPendingOptionHighlight(q);
+            return;
+        }
+
+        pendingSelectedOptionIdx = null;
         const isCorrect = (selectedIdx === q.correct_index);
 
         if (!isCorrect && currentQuestionRetryArmed) {
@@ -1757,8 +1815,9 @@
             const buttons = document.getElementById('q-options').children;
             if (buttons[selectedIdx]) {
                 buttons[selectedIdx].disabled = true;
-                buttons[selectedIdx].className = 'w-full text-center px-4 py-3 bg-rose-50 border border-rose-300 text-rose-800 rounded-2xl text-xs sm:text-sm font-semibold opacity-60 cursor-not-allowed';
+                buttons[selectedIdx].className = 'w-full text-center px-4 py-3 bg-rose-50 border border-rose-300 text-rose-800 rounded-2xl text-xs sm:text-sm font-semibold opacity-60 cursor-not-allowed animate-wrong';
             }
+            refreshPendingOptionHighlight(q);
             showHintMessage('❌ Неверный вариант! Вы потратили «Право на ошибку» — выберите другой вариант ответа.');
             updateHintButtonsState();
             return;
@@ -1782,10 +1841,16 @@
         const buttons = document.getElementById('q-options').children;
         for (let i = 0; i < buttons.length; i++) {
             buttons[i].disabled = true;
-            if (i === q.correct_index) buttons[i].className = 'w-full text-center px-4 py-3 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-2xl text-xs sm:text-sm font-semibold';
-            else if (i === selectedIdx && !isCorrect) buttons[i].className = 'w-full text-center px-4 py-3 bg-rose-50 border border-rose-300 text-rose-800 rounded-2xl text-xs sm:text-sm font-semibold';
-            else if (eliminatedOptionsForCurrentQ.has(i)) buttons[i].className = 'w-full text-center px-4 py-3 glass-btn text-slate-400 rounded-2xl text-xs opacity-30 line-through';
-            else buttons[i].className = 'w-full text-center px-4 py-3 glass-btn text-slate-400 rounded-2xl text-xs opacity-40';
+            if (i === q.correct_index) {
+                const animClass = isCorrect ? ' animate-correct' : '';
+                buttons[i].className = `w-full text-center px-4 py-3 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-2xl text-xs sm:text-sm font-semibold${animClass}`;
+            } else if (i === selectedIdx && !isCorrect) {
+                buttons[i].className = 'w-full text-center px-4 py-3 bg-rose-50 border border-rose-300 text-rose-800 rounded-2xl text-xs sm:text-sm font-semibold animate-wrong';
+            } else if (eliminatedOptionsForCurrentQ.has(i)) {
+                buttons[i].className = 'w-full text-center px-4 py-3 glass-btn text-slate-400 rounded-2xl text-xs opacity-30 line-through';
+            } else {
+                buttons[i].className = 'w-full text-center px-4 py-3 glass-btn text-slate-400 rounded-2xl text-xs opacity-40';
+            }
         }
 
         document.getElementById('skip-q-btn').classList.add('hidden');
@@ -1947,7 +2012,7 @@
 
         validData.forEach(att => {
             const isMe = (att.user_email === currentNickname) ? ' text-indigo-700 font-bold' : ' text-slate-700';
-            let timeTd = isAdmin ? `<td class="py-0.5 text-center text-slate-500">${att.total_time || 0}с</td>` : '';
+            let timeTd = isAdmin ? `<td class="py-0.5 text-center text-slate-500">${formatDuration(att.total_time)}</td>` : '';
             tbody.innerHTML += `<tr><td class="py-0.5${isMe}">👤 ${att.user_email}</td><td class="py-0.5 text-center font-bold text-emerald-600">${att.score}</td>${timeTd}</tr>`;
         });
     }
@@ -2095,6 +2160,7 @@
     async function renderTiebreakQuestion() {
         clearTiebreakPolling();
         tiebreakNextAction = null;
+        pendingTiebreakOptionIdx = null;
 
         if (tiebreakCurrentIdx >= tiebreakQuestions.length) {
             alert('Новые вопросы в tiebreak_questions закончились, а победитель не выявлен!');
@@ -2148,9 +2214,10 @@
         for (let i = 0; i < buttons.length; i++) {
             buttons[i].disabled = true;
             if (i === correctIdx) {
-                buttons[i].className = 'tb-opt-btn w-full text-center px-4 py-3 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-2xl text-xs sm:text-sm font-semibold';
+                const animClass = isCorrect ? ' animate-correct' : '';
+                buttons[i].className = `tb-opt-btn w-full text-center px-4 py-3 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-2xl text-xs sm:text-sm font-semibold${animClass}`;
             } else if (i === selectedIdx && !isCorrect) {
-                buttons[i].className = 'tb-opt-btn w-full text-center px-4 py-3 bg-rose-50 border border-rose-300 text-rose-800 rounded-2xl text-xs sm:text-sm font-semibold';
+                buttons[i].className = 'tb-opt-btn w-full text-center px-4 py-3 bg-rose-50 border border-rose-300 text-rose-800 rounded-2xl text-xs sm:text-sm font-semibold animate-wrong';
             } else {
                 buttons[i].className = 'tb-opt-btn w-full text-center px-4 py-3 glass-btn text-slate-400 rounded-2xl text-xs opacity-40';
             }
@@ -2167,8 +2234,27 @@
         }
     }
 
+    function refreshPendingTiebreakHighlight() {
+        const buttons = document.getElementsByClassName('tb-opt-btn');
+        for (let i = 0; i < buttons.length; i++) {
+            if (pendingTiebreakOptionIdx === i) {
+                buttons[i].className = 'tb-opt-btn w-full text-center px-4 py-3 bg-amber-100/90 border-2 border-amber-400 text-amber-950 rounded-2xl transition-all text-xs sm:text-sm font-semibold shadow-sm';
+            } else {
+                buttons[i].className = 'tb-opt-btn w-full text-center px-4 py-3 glass-btn rounded-2xl transition-all text-xs sm:text-sm font-medium text-slate-800 hover:border-amber-400';
+            }
+        }
+    }
+
     async function answerTiebreak(selectedIdx, correctIdx) {
         if (window._tbAnsweredCurrent) return;
+
+        if (pendingTiebreakOptionIdx !== selectedIdx) {
+            pendingTiebreakOptionIdx = selectedIdx;
+            refreshPendingTiebreakHighlight();
+            return;
+        }
+
+        pendingTiebreakOptionIdx = null;
         window._tbAnsweredCurrent = true;
 
         const q = tiebreakQuestions[tiebreakCurrentIdx];
@@ -2325,7 +2411,7 @@
         container.innerHTML = '';
         q.questions.forEach((question, idx) => {
             let optsHtml = question.options.map((opt, oIdx) => `<div class="p-2 rounded-xl border ${oIdx === question.correct_index ? 'text-emerald-700 font-bold bg-emerald-50 border-emerald-200' : 'text-slate-600 border-slate-200 opacity-70'} text-xs mb-1">${oIdx + 1}. ${opt}</div>`).join('');
-            container.innerHTML += `<div class="glass-btn p-3 rounded-2xl space-y-1.5 border border-slate-200"><span class="text-[10px] font-bold text-blue-600">Вопрос ${idx + 1} (${question.category})</span><h4 class="text-xs sm:text-sm font-bold text-slate-900">${question.question_text}</h4><div>${optsHtml}</div></div>`;
+            container.innerHTML += `<div class="glass-btn p-3 rounded-2xl space-y-1.5 border border-slate-200"><span class="text-[10px] font-bold text-blue-600">Вопрос ${idx + 1}</span><h4 class="text-xs sm:text-sm font-bold text-slate-900">${question.question_text}</h4><div>${optsHtml}</div></div>`;
         });
         showScreen('review-screen');
     }
@@ -2366,7 +2452,7 @@
                 if (closingAt && new Date(att.created_at || att.updated_at || Date.now()) > closingAt) {
                     outOfTimeMark = '<span class="text-[9px] text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded-md ml-1 border border-rose-200">🔴 Вне зачета</span>';
                 }
-                return `<div class="org-player-row glass-btn p-2 rounded-xl flex justify-between items-center cursor-pointer" data-email="${att.user_email}"><div class="space-y-0.5 pointer-events-none"><span class="font-bold text-indigo-700 text-xs">👤 ${att.user_email}</span><div class="text-[10px] text-slate-500">⏱️ ${att.total_time || 0}с</div></div><div class="flex items-center gap-1.5 pointer-events-none"><span class="text-xs">Баллы: <b class="text-emerald-600">${att.score}</b></span>${statusMark} ${outOfTimeMark}</div></div>`;
+                return `<div class="org-player-row glass-btn p-2 rounded-xl flex justify-between items-center cursor-pointer" data-email="${att.user_email}"><div class="space-y-0.5 pointer-events-none"><span class="font-bold text-indigo-700 text-xs">👤 ${att.user_email}</span><div class="text-[10px] text-slate-500">⏱️ ${formatDuration(att.total_time)}</div></div><div class="flex items-center gap-1.5 pointer-events-none"><span class="text-xs">Баллы: <b class="text-emerald-600">${att.score}</b></span>${statusMark} ${outOfTimeMark}</div></div>`;
             }).join('');
             container.innerHTML += `<div class="organizer-panel-box space-y-2"><div class="flex justify-between items-center border-b border-indigo-200/80 pb-1"><h3 class="font-bold text-slate-900 text-xs">🎯 ${quiz.title}</h3><span class="text-[10px] text-slate-500">Попыток: ${quizAttempts.length}</span></div><div class="space-y-1">${attemptsHtml}</div></div>`;
         });
@@ -2397,7 +2483,7 @@
             }
         });
 
-        let html = `<div class="glass-btn p-2.5 rounded-xl border border-slate-200 mb-2 space-y-0.5 text-xs"><p class="text-slate-600">Суммарное время: <b class="text-slate-900">${totalTimeAll} сек.</b></p><p class="text-slate-600">Всего правильных: <b class="text-emerald-600">${totalScoreAll}</b></p></div><h4 class="text-[11px] font-bold text-indigo-600 uppercase tracking-wider mb-1">📊 Статистика по категориям:</h4>`;
+        let html = `<div class="glass-btn p-2.5 rounded-xl border border-slate-200 mb-2 space-y-0.5 text-xs"><p class="text-slate-600">Суммарное время: <b class="text-slate-900">${formatDuration(totalTimeAll)}</b></p><p class="text-slate-600">Всего правильных: <b class="text-emerald-600">${totalScoreAll}</b></p></div><h4 class="text-[11px] font-bold text-indigo-600 uppercase tracking-wider mb-1">📊 Статистика по категориям:</h4>`;
         if (Object.keys(globalStats).length > 0) {
             html += `<div class="space-y-1 mb-2">`;
             for (const [cat, data] of Object.entries(globalStats)) {
