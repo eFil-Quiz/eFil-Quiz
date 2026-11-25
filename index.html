@@ -1123,6 +1123,44 @@
         localStorage.setItem(`quiz_progress_${currentNickname}`, JSON.stringify(map));
     }
 
+    function getLocalHintsStorageKey(quizId) {
+        return `quiz_hints_${currentNickname}_${quizId}`;
+    }
+
+    function loadLocalHintsState(quizId) {
+        try {
+            const raw = localStorage.getItem(getLocalHintsStorageKey(quizId));
+            return raw ? JSON.parse(raw) : {};
+        } catch (e) {
+            return {};
+        }
+    }
+
+    function saveLocalHintsState(quizId, hintsObj) {
+        if (!quizId) return;
+        localStorage.setItem(getLocalHintsStorageKey(quizId), JSON.stringify(hintsObj || {}));
+    }
+
+    function mergeHintsStates(primaryObj, secondaryObj) {
+        const merged = {};
+        const allKeys = new Set([
+            ...Object.keys(secondaryObj || {}),
+            ...Object.keys(primaryObj || {})
+        ]);
+        allKeys.forEach(k => {
+            const a = (secondaryObj && secondaryObj[k]) || {};
+            const b = (primaryObj && primaryObj[k]) || {};
+            merged[k] = {
+                fiftyUsed: Boolean(a.fiftyUsed || b.fiftyUsed),
+                retryUsed: Boolean(a.retryUsed || b.retryUsed),
+                hostUsed: Boolean(a.hostUsed || b.hostUsed),
+                hostHintText: b.hostHintText || a.hostHintText || '',
+                eliminated: Array.from(new Set([...(a.eliminated || []), ...(b.eliminated || [])]))
+            };
+        });
+        return merged;
+    }
+
     async function loadQuizzes() {
         const { data, error } = await supabaseClient.from('quizzes').select('*, questions(*)').order('created_at', { ascending: false });
         if (error) return;
@@ -1378,6 +1416,11 @@
             accumulatedTimeSec = savedAttempt.total_time || 0;
         }
 
+        const localHints = loadLocalHintsState(currentQuiz.id);
+        const dbHints = savedAttempt?.question_hints_state || localAttempt?.question_hints_state || {};
+        questionHintsState = mergeHintsStates(localHints, dbHints);
+        saveLocalHintsState(currentQuiz.id, questionHintsState);
+
         const answeredIds = new Set(sessionResults.map(r => r.question_id));
         const firstUnanswered = currentQuiz.questions.findIndex(q => !answeredIds.has(q.id));
         if (firstUnanswered === -1) { persistAttempt(true); return; }
@@ -1495,29 +1538,31 @@
 
     function buildFallbackHintFromCorrectAnswer(questionObj, correctAnswer) {
         const cleaned = String(correctAnswer || '').trim();
-        const category = questionObj?.category || 'Общие';
         const pastHints = getAnswerHintHistory(cleaned);
 
         if (!cleaned) {
-            return `Вспомни тему «${category}» и прикинь, какой вариант точнее всего отвечает на сам вопрос.`;
+            return 'Сверь каждый вариант с формулировкой вопроса и отбрось те, что противоречат смыслу.';
         }
 
         const lettersOnly = cleaned.replace(/[^а-яА-ЯёЁa-zA-Z]/g, '');
         const letterCount = lettersOnly.length;
-        const words = cleaned.split(/\s+/).filter(Boolean);
-        const wordCount = words.length;
         const firstLetter = lettersOnly ? lettersOnly[0].toUpperCase() : cleaned[0].toUpperCase();
         const lastLetter = lettersOnly ? lettersOnly[lettersOnly.length - 1].toLowerCase() : cleaned[cleaned.length - 1];
+        const vowelsOnly = lettersOnly.replace(/[^аеёиоуыэюяaeiouy]/gi, '');
+        const vowelCount = vowelsOnly.length;
+        const hasSpaces = /\s/.test(cleaned);
 
         const candidates = [
-            letterCount > 0 ? `Обрати внимание: правильный ответ состоит из ${letterCount} букв.` : '',
+            letterCount > 0 ? `В правильном ответе ${letterCount} букв${letterCount === 1 ? 'а' : (letterCount >= 2 && letterCount <= 4 ? 'ы' : '')}.` : '',
             firstLetter && lastLetter
-                ? `Подсказка по форме слова: правильный ответ начинается на «${firstLetter}» и заканчивается на «${lastLetter}».`
+                ? `Ответ начинается на «${firstLetter}» и заканчивается на «${lastLetter}».`
                 : '',
-            wordCount > 1
-                ? `Правильный ответ — это выражение из ${wordCount} слов, связанное с темой «${category}».`
-                : `Правильный ответ — это одно слово в разделе «${category}».`,
-            `Подумай о том, какими характерными признаками обладает сам объект ответа в рамках темы «${category}».`
+            vowelCount > 0
+                ? `В самом слове ответа встречается ${vowelCount} гласн${vowelCount === 1 ? 'ая' : 'ых'} букв${vowelCount >= 2 && vowelCount <= 4 ? 'ы' : ''}.`
+                : '',
+            hasSpaces
+                ? 'Правильный ответ состоит из нескольких слов — посмотри на составные варианты.'
+                : 'Правильный ответ пишется слитно, в одно слово.'
         ].filter(Boolean);
 
         const unused = candidates.filter(c => !pastHints.includes(c));
@@ -1536,7 +1581,7 @@
         const focusAngles = [
             'Опирайся на ключевые физические свойства, устройство, внешний вид или принцип работы самого правильного ответа.',
             'Опирайся на происхождение, среду обитания, сферу применения или историю самого правильного ответа.',
-            'Опирайся на характерное поведение, функцию или роль правильного ответа в своей теме.',
+            'Опирайся на характерное поведение, функцию или роль правильного ответа в жизни.',
             'Дай яркую образную подсказку через то, что отличает сам правильный ответ от похожих понятий.'
         ];
         const chosenFocus = focusAngles[pastHints.length % focusAngles.length];
@@ -1623,6 +1668,7 @@
         toRemove.forEach(idx => eliminatedOptionsForCurrentQ.add(idx));
         hState.fiftyUsed = true;
         hState.eliminated = Array.from(eliminatedOptionsForCurrentQ);
+        saveLocalHintsState(currentQuiz.id, questionHintsState);
 
         if (pendingSelectedOptionIdx !== null && eliminatedOptionsForCurrentQ.has(pendingSelectedOptionIdx)) {
             pendingSelectedOptionIdx = null;
@@ -1661,6 +1707,7 @@
         }
 
         hState.retryUsed = true;
+        saveLocalHintsState(currentQuiz.id, questionHintsState);
         currentQuestionRetryArmed = true;
         showHintMessage('🛡️ «Право на ошибку» активировано: если ответите неверно, сможете выбрать другой вариант.');
         updateHintButtonsState();
@@ -1687,6 +1734,7 @@
         }
 
         hState.hostUsed = true;
+        saveLocalHintsState(currentQuiz.id, questionHintsState);
         isGeneratingHostHint = true;
         updateHintButtonsState();
         showHintMessage('🤖 Анализирую ответ и подбираю подсказку...');
@@ -1703,6 +1751,7 @@
 
         saveAnswerHintToHistory(correctAnswerText, hintText);
         hState.hostHintText = hintText;
+        saveLocalHintsState(currentQuiz.id, questionHintsState);
         showHintMessage(`💡 <b>Подсказка:</b> ${hintText}`);
         updateHintButtonsState();
     }
@@ -1862,7 +1911,11 @@
     function nextQuestion() { currentQIndex++; renderQuestion(); }
 
     async function saveAndExitQuiz() {
-        if (sessionResults.length === 0) { showScreen('home-screen'); return; }
+        saveLocalHintsState(currentQuiz.id, questionHintsState);
+        if (sessionResults.length === 0 && Object.keys(questionHintsState).length === 0) {
+            showScreen('home-screen');
+            return;
+        }
         await persistAttempt(sessionResults.length >= currentQuiz.questions.length, true);
     }
 
@@ -1915,17 +1968,37 @@
     }
 
     async function persistAttempt(isCompleted, returnToHome = false) {
+        saveLocalHintsState(currentQuiz.id, questionHintsState);
         const sessionElapsedSec = Math.round((Date.now() - sessionStartTime) / 1000);
         const totalTimeSec = accumulatedTimeSec + sessionElapsedSec;
         const correctCount = sessionResults.filter(r => r.is_correct).length;
 
-        const payload = { quiz_id: currentQuiz.id, user_email: currentNickname, score: correctCount, total_time: totalTimeSec, detailed_results: sessionResults, is_completed: isCompleted };
+        const payload = {
+            quiz_id: currentQuiz.id,
+            user_email: currentNickname,
+            score: correctCount,
+            total_time: totalTimeSec,
+            detailed_results: sessionResults,
+            question_hints_state: questionHintsState,
+            is_completed: isCompleted
+        };
         saveLocalAttempt(currentQuiz.id, payload);
 
         if (existingAttemptId) {
-            await supabaseClient.from('quiz_attempts').update(payload).eq('id', existingAttemptId);
+            const { error } = await supabaseClient.from('quiz_attempts').update(payload).eq('id', existingAttemptId);
+            if (error && Object.prototype.hasOwnProperty.call(payload, 'question_hints_state')) {
+                const fallbackPayload = { ...payload };
+                delete fallbackPayload.question_hints_state;
+                await supabaseClient.from('quiz_attempts').update(fallbackPayload).eq('id', existingAttemptId);
+            }
         } else {
-            const { data } = await supabaseClient.from('quiz_attempts').insert([payload]).select();
+            let { data, error } = await supabaseClient.from('quiz_attempts').insert([payload]).select();
+            if (error && Object.prototype.hasOwnProperty.call(payload, 'question_hints_state')) {
+                const fallbackPayload = { ...payload };
+                delete fallbackPayload.question_hints_state;
+                const retryInsert = await supabaseClient.from('quiz_attempts').insert([fallbackPayload]).select();
+                data = retryInsert.data;
+            }
             if (data && data[0]) existingAttemptId = data[0].id;
         }
 
