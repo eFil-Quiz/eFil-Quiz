@@ -321,20 +321,20 @@
         <!-- ПАНЕЛЬ ПОДСКАЗОК -->
         <div class="bg-teal-50/70 border border-teal-200/80 rounded-2xl p-2 space-y-1.5">
             <div class="flex justify-between items-center text-[10px] font-bold text-teal-900 uppercase tracking-wider px-1">
-                <span class="inline-flex items-center gap-1"><img src="morshanskoe-bottle.jpg" onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src=MORSHANSKOE_FALLBACK_SVG;}" alt="Моршанское" class="morshanskoe-icon"> Подсказки за Моршанское</span>
+                <span class="inline-flex items-center gap-1"><img src="morshanskoe-bottle.jpg" onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src=MORSHANSKOE_FALLBACK_SVG;}" alt="Моршанское" class="morshanskoe-icon"> Моршанские ништяки</span>
                 <span id="hint-status-text" class="text-teal-700 font-semibold normal-case"></span>
             </div>
             <div class="grid grid-cols-3 gap-1.5">
                 <button id="hint-5050-btn" type="button" onclick="useHint5050()" class="glass-btn px-2 py-2 rounded-xl text-[11px] font-semibold text-slate-800 flex flex-col items-center justify-center leading-tight transition-all">
-                    <span>50/50</span>
+                    <span>Двойная фильтрация</span>
                     <span class="text-[10px] text-teal-700 font-bold mt-0.5 inline-flex items-center gap-0.5">10 <img src="morshanskoe-bottle.jpg" onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src=MORSHANSKOE_FALLBACK_SVG;}" alt="Моршанское" class="morshanskoe-icon"></span>
                 </button>
                 <button id="hint-retry-btn" type="button" onclick="useHintRetry()" class="glass-btn px-2 py-2 rounded-xl text-[11px] font-semibold text-slate-800 flex flex-col items-center justify-center leading-tight transition-all">
-                    <span>Право на ошибку</span>
+                    <span>Пробник</span>
                     <span class="text-[10px] text-teal-700 font-bold mt-0.5 inline-flex items-center gap-0.5">15 <img src="morshanskoe-bottle.jpg" onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src=MORSHANSKOE_FALLBACK_SVG;}" alt="Моршанское" class="morshanskoe-icon"></span>
                 </button>
                 <button id="hint-host-btn" type="button" onclick="useHintHost()" class="glass-btn px-2 py-2 rounded-xl text-[11px] font-semibold text-slate-800 flex flex-col items-center justify-center leading-tight transition-all">
-                    <span>Подсказка</span>
+                    <span>Хмельной намек</span>
                     <span class="text-[10px] text-teal-700 font-bold mt-0.5 inline-flex items-center gap-0.5">20 <img src="morshanskoe-bottle.jpg" onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src=MORSHANSKOE_FALLBACK_SVG;}" alt="Моршанское" class="morshanskoe-icon"></span>
                 </button>
             </div>
@@ -562,6 +562,13 @@
     function morshanskoeTag(large = false) {
         const cls = large ? 'morshanskoe-icon-lg' : 'morshanskoe-icon';
         return `<img src="${MORSHANSKOE_IMG_URL}" onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='${MORSHANSKOE_FALLBACK_SVG}';}" alt="Моршанское" class="${cls}">`;
+    }
+
+    function formatBottleWord(count) {
+        const n = Math.abs(parseInt(count, 10) || 0);
+        if (n === 1) return 'бутылочка';
+        if (n >= 2 && n <= 4) return 'бутылочки';
+        return 'бутылочек';
     }
 
     function formatDuration(totalSeconds) {
@@ -1312,7 +1319,8 @@
             "Анатомия", "Пословицы/Поговорки", "СССР", "Общие",
             "География", "Математика", "Геометрия", "Искусство", "Физика",
             "Химия", "Биология", "Другое", "Интернет", "Информатика",
-            "Еда и кулинария", "Мифология", "Логика и загадки"
+            "Еда и кулинария", "Мифология", "Логика и загадки",
+            "Животные", "Охота/Рыбалка"
         ].sort((a, b) => a.localeCompare(b, 'ru'));
 
         let optionsHtml = categoriesList.map(cat => `<option value="${cat}" ${cat === qCat ? 'selected' : ''}>${cat}</option>`).join('');
@@ -1477,9 +1485,9 @@
 
         if (statusText) {
             if (isGeneratingHostHint) {
-                statusText.innerText = '🤖 Подбираю подсказку...';
+                statusText.innerText = '🤖 Подбираю намек...';
             } else if (currentQuestionRetryArmed) {
-                statusText.innerText = '🛡️ Право на ошибку активно';
+                statusText.innerText = '🛡️ Пробник активен';
             } else {
                 statusText.innerText = '';
             }
@@ -1654,11 +1662,11 @@
             opKey: `hint_5050_${currentQuiz.id}_${qKey}`,
             type: 'spend',
             amount: HINT_COSTS.fifty,
-            description: `Подсказка «50/50» (${currentQuiz.title}, вопр. №${currentQIndex + 1})`
+            description: `Двойная фильтрация (${currentQuiz.title}, вопр. №${currentQIndex + 1})`
         });
 
         if (!tx.ok) {
-            alert('Недостаточно «Моршанское» для подсказки «50/50» (нужно 10).');
+            alert('Недостаточно «Моршанское» для «Двойной фильтрации» (нужно 10).');
             updateHintButtonsState();
             return;
         }
@@ -1682,7 +1690,7 @@
             }
         });
 
-        showHintMessage('✂️ Подсказка «50/50» убрала два неверных варианта ответа.');
+        showHintMessage('✂️ «Двойная фильтрация» убрала два неверных варианта ответа.');
         updateHintButtonsState();
     }
 
@@ -1697,11 +1705,11 @@
             opKey: `hint_retry_${currentQuiz.id}_${qKey}`,
             type: 'spend',
             amount: HINT_COSTS.retry,
-            description: `Подсказка «Право на ошибку» (${currentQuiz.title}, вопр. №${currentQIndex + 1})`
+            description: `Пробник (${currentQuiz.title}, вопр. №${currentQIndex + 1})`
         });
 
         if (!tx.ok) {
-            alert('Недостаточно «Моршанское» для подсказки «Право на ошибку» (нужно 15).');
+            alert('Недостаточно «Моршанское» для «Пробника» (нужно 15).');
             updateHintButtonsState();
             return;
         }
@@ -1709,7 +1717,7 @@
         hState.retryUsed = true;
         saveLocalHintsState(currentQuiz.id, questionHintsState);
         currentQuestionRetryArmed = true;
-        showHintMessage('🛡️ «Право на ошибку» активировано: если ответите неверно, сможете выбрать другой вариант.');
+        showHintMessage('🛡️ «Пробник» активирован: если ответите неверно, сможете выбрать другой вариант.');
         updateHintButtonsState();
     }
 
@@ -1724,11 +1732,11 @@
             opKey: `hint_host_${currentQuiz.id}_${qKey}`,
             type: 'spend',
             amount: HINT_COSTS.host,
-            description: `Подсказка ИИ (${currentQuiz.title}, вопр. №${currentQIndex + 1})`
+            description: `Хмельной намек (${currentQuiz.title}, вопр. №${currentQIndex + 1})`
         });
 
         if (!tx.ok) {
-            alert('Недостаточно «Моршанское» для подсказки (нужно 20).');
+            alert('Недостаточно «Моршанское» для «Хмельного намека» (нужно 20).');
             updateHintButtonsState();
             return;
         }
@@ -1737,7 +1745,7 @@
         saveLocalHintsState(currentQuiz.id, questionHintsState);
         isGeneratingHostHint = true;
         updateHintButtonsState();
-        showHintMessage('🤖 Анализирую ответ и подбираю подсказку...');
+        showHintMessage('🤖 Анализирую ответ и подбираю хмельной намек...');
 
         const correctAnswerText = Array.isArray(q.options) ? q.options[q.correct_index] : '';
         let hintText = '';
@@ -1752,7 +1760,7 @@
         saveAnswerHintToHistory(correctAnswerText, hintText);
         hState.hostHintText = hintText;
         saveLocalHintsState(currentQuiz.id, questionHintsState);
-        showHintMessage(`💡 <b>Подсказка:</b> ${hintText}`);
+        showHintMessage(`💡 <b>Хмельной намек:</b> ${hintText}`);
         updateHintButtonsState();
     }
 
@@ -1790,7 +1798,7 @@
 
         const hintBox = document.getElementById('hint-message-box');
         if (hState.hostHintText) {
-            hintBox.innerHTML = `💡 <b>Подсказка:</b> ${hState.hostHintText}`;
+            hintBox.innerHTML = `💡 <b>Хмельной намек:</b> ${hState.hostHintText}`;
             hintBox.classList.remove('hidden');
         } else {
             hintBox.classList.add('hidden');
@@ -1867,7 +1875,7 @@
                 buttons[selectedIdx].className = 'w-full text-center px-4 py-3 bg-rose-50 border border-rose-300 text-rose-800 rounded-2xl text-xs sm:text-sm font-semibold opacity-60 cursor-not-allowed animate-wrong';
             }
             refreshPendingOptionHighlight(q);
-            showHintMessage('❌ Неверный вариант! Вы потратили «Право на ошибку» — выберите другой вариант ответа.');
+            showHintMessage('❌ Неверный вариант! Вы потратили «Пробник» — выберите другой вариант ответа.');
             updateHintButtonsState();
             return;
         }
@@ -1928,7 +1936,7 @@
         });
 
         const uniqueCorrectCount = Array.from(uniqueAnswersByQ.values()).filter(r => r.is_correct).length;
-        const awardedItems = [];
+        let earnedTotal = 0;
 
         if (uniqueCorrectCount > 0) {
             const resCorrect = await applyBeerTransaction({
@@ -1938,7 +1946,7 @@
                 description: `Верные ответы в викторине «${quizObj.title}» (${uniqueCorrectCount})`
             });
             if (resCorrect.ok && !resCorrect.duplicate) {
-                awardedItems.push(`+${uniqueCorrectCount} ${morshanskoeTag(false)} за верные ответы`);
+                earnedTotal += uniqueCorrectCount;
             }
         }
 
@@ -1949,7 +1957,7 @@
             description: `Прохождение викторины «${quizObj.title}»`
         });
         if (resFinish.ok && !resFinish.duplicate) {
-            awardedItems.push(`+1 ${morshanskoeTag(false)} за прохождение`);
+            earnedTotal += 1;
         }
 
         if (quizObj.winner_name && quizObj.winner_name.trim().toLowerCase() === currentNickname.trim().toLowerCase()) {
@@ -1960,11 +1968,11 @@
                 description: `Победа в викторине «${quizObj.title}»`
             });
             if (resWin.ok && !resWin.duplicate) {
-                awardedItems.push(`+3 ${morshanskoeTag(false)} за победу`);
+                earnedTotal += 3;
             }
         }
 
-        return awardedItems;
+        return earnedTotal;
     }
 
     async function persistAttempt(isCompleted, returnToHome = false) {
@@ -2002,30 +2010,20 @@
             if (data && data[0]) existingAttemptId = data[0].id;
         }
 
-        let awardedList = [];
+        let earnedTotal = 0;
         if (isCompleted) {
-            awardedList = await awardCompletedQuizBeers(currentQuiz, sessionResults);
+            earnedTotal = await awardCompletedQuizBeers(currentQuiz, sessionResults);
         }
 
         if (returnToHome) { showScreen('home-screen'); return; }
-        await displayResultsScreen(correctCount, totalTimeSec, sessionResults, awardedList);
+        await displayResultsScreen(correctCount, totalTimeSec, sessionResults, earnedTotal);
     }
 
-    async function displayResultsScreen(correctCount, totalTimeSec, resultsList, awardedList = []) {
+    async function displayResultsScreen(correctCount, totalTimeSec, resultsList, earnedTotal = 0) {
         document.getElementById('res-summary').innerText = `Правильных ответов: ${correctCount} из ${currentQuiz.questions.length}`;
 
         const beerRewardEl = document.getElementById('res-beer-reward');
-        if (awardedList.length > 0) {
-            beerRewardEl.innerHTML = `Начислено за завершение: ${awardedList.join(', ')}. Сейчас в холодильнике: ${beerBalance} ${morshanskoeTag(false)}`;
-        } else {
-            beerRewardEl.innerHTML = `Баллы начисляются после прохождения всей викторины и не дублируются повторно. Сейчас в холодильнике: ${beerBalance} ${morshanskoeTag(false)}`;
-        }
-
-        const tbody = document.getElementById('res-tbody');
-        tbody.innerHTML = '';
-        resultsList.forEach((res, idx) => {
-            tbody.innerHTML += `<tr><td class="py-0.5 pr-1.5 font-medium text-slate-500">${idx + 1}</td><td class="py-0.5 px-1 truncate max-w-[175px] sm:max-w-[260px] text-slate-800">${res.question_text}</td><td class="py-0.5 pl-1.5 text-right whitespace-nowrap">${res.is_correct ? '<span class="text-emerald-600 font-semibold">Верно ✅</span>' : '<span class="text-rose-600 font-semibold">Ошибка ❌</span>'}</td></tr>`;
-        });
+        let displayEarned = earnedTotal;
 
         const winnerContainer = document.getElementById('winner-badge-container');
         if (currentQuiz.winner_name) {
@@ -2039,14 +2037,20 @@
                     description: `Победа в викторине «${currentQuiz.title}»`
                 });
                 if (winRes.ok && !winRes.duplicate) {
-                    beerRewardEl.innerHTML = `Начислено за победу: +3 ${morshanskoeTag(false)}! Сейчас в холодильнике: ${beerBalance} ${morshanskoeTag(false)}`;
-                } else {
-                    beerRewardEl.innerHTML = beerRewardEl.innerHTML.replace(/Сейчас в холодильнике:\s*\d+/, `Сейчас в холодильнике: ${beerBalance}`);
+                    displayEarned += 3;
                 }
             }
         } else {
             winnerContainer.classList.add('hidden');
         }
+
+        beerRewardEl.innerHTML = `Спасибо за участие, в холодильник закинуто ${displayEarned} ${formatBottleWord(displayEarned)} Моршанского ${morshanskoeTag(false)}`;
+
+        const tbody = document.getElementById('res-tbody');
+        tbody.innerHTML = '';
+        resultsList.forEach((res, idx) => {
+            tbody.innerHTML += `<tr><td class="py-0.5 pr-1.5 font-medium text-slate-500">${idx + 1}</td><td class="py-0.5 px-1 truncate max-w-[175px] sm:max-w-[260px] text-slate-800">${res.question_text}</td><td class="py-0.5 pl-1.5 text-right whitespace-nowrap">${res.is_correct ? '<span class="text-emerald-600 font-semibold">Верно ✅</span>' : '<span class="text-rose-600 font-semibold">Ошибка ❌</span>'}</td></tr>`;
+        });
 
         await loadQuizLeaderboard(currentQuiz.id);
         document.getElementById('res-review-btn').onclick = () => reviewQuiz(currentQuizIdx);
